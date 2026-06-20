@@ -1,22 +1,12 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "vue-app/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
+    { "src": "api/**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/assets/(.*)", "dest": "/vue-app/dist/assets/$1" },
-    { "src": "/(favicon\\.ico|logo\\.webp)", "dest": "/vue-app/dist/$1" },
-    { "src": "/((?!api/).*)", "dest": "/vue-app/dist/index.html" }
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(favicon\\.ico|logo\\.webp)", "dest": "/$1" },
+    { "src": "/((?!api/).*)", "dest": "/index.html" }
   ]
 }
