@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { submissionsApi, adminFeedbackApi, recruitmentsApi, recruitApplicantsApi, authApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import GlassSelect from '@/components/common/GlassSelect.vue'
+import GlassDateTime from '@/components/common/GlassDateTime.vue'
 
 const { show: showToast } = useToast()
 
@@ -99,8 +101,12 @@ function showTab(tab) {
 
 function initNow() {
   const now = new Date()
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-  fieldTime.value = now.toISOString().slice(0, 16)
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  const h = String(now.getHours()).padStart(2, '0')
+  const mi = String(now.getMinutes()).padStart(2, '0')
+  fieldTime.value = `${y}-${m}-${d} ${h}:${mi}`
 }
 
 async function doLogin() {
@@ -340,7 +346,9 @@ function enterEditMode(id) {
   const r = DB.value.find(r => r.id === id)
   if (!r) return showToast('未找到该稿件', 'error')
   fieldEditId.value = r.id
-  fieldTime.value = new Date(r.created_at).toISOString().slice(0, 16)
+  const d = new Date(r.created_at)
+  const pad = n => String(n).padStart(2, '0')
+  fieldTime.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   fieldType.value = r.type
   fieldContent.value = r.content
   showTab('add')
@@ -631,14 +639,11 @@ onMounted(() => {
           <div class="form-grid-3">
             <div class="form-group">
               <label class="form-label">投稿时间</label>
-              <input type="datetime-local" class="glass-input" v-model="fieldTime" />
+              <GlassDateTime v-model="fieldTime" placeholder="选择投稿时间" />
             </div>
             <div class="form-group">
               <label class="form-label">投稿类型</label>
-              <select class="glass-select" v-model="fieldType">
-                <option value="">请选择类型</option>
-                <option v-for="t in types" :key="t" :value="t">{{ typeEmojiMap[t] }} {{ t }}</option>
-              </select>
+              <GlassSelect v-model="fieldType" :options="[{ value: '', label: '请选择类型' }, ...types.map(t => ({ value: t, label: typeEmojiMap[t] + ' ' + t }))]" placeholder="请选择类型" />
             </div>
             <div class="form-group">
               <label class="form-label">稿件 ID</label>
@@ -717,10 +722,9 @@ onMounted(() => {
             <div class="table-toolbar-title">稿件数据列表</div>
             <div class="table-search">
               <input type="text" class="glass-input table-search-input" v-model="tableSearch" @input="filterTable" placeholder="搜索稿件内容…" />
-              <select class="glass-select table-filter-select" v-model="tableTypeFilter" @change="filterTable">
-                <option value="">全部类型</option>
-                <option v-for="t in types" :key="t" :value="t">{{ t }}</option>
-              </select>
+              <div style="min-width: 140px;">
+                <GlassSelect v-model="tableTypeFilter" :options="[{ value: '', label: '全部类型' }, ...types.map(t => ({ value: t, label: t }))]" placeholder="全部类型" @update:modelValue="filterTable" />
+              </div>
             </div>
           </div>
           <div style="overflow-x: auto;">

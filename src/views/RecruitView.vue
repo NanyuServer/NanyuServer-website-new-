@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { recruitmentsApi, recruitApplicantsApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import GlassSelect from '@/components/common/GlassSelect.vue'
 
 const { show: showToast } = useToast()
 
@@ -13,6 +14,10 @@ const positionId = ref('')
 const qq = ref('')
 const note = ref('')
 const formNote = ref('我们会尽快联系你，请保证联系方式正确。')
+const positionOptions = computed(() => [
+  { value: '', label: '请选择意向岗位' },
+  ...positions.value.map(p => ({ value: String(p.id), label: p.title }))
+])
 const formNoteColor = ref('')
 const submitting = ref(false)
 
@@ -123,10 +128,7 @@ onMounted(async () => {
         </div>
         <div class="form-group">
           <label class="form-label">意向岗位</label>
-          <select class="glass-select" v-model="positionId">
-            <option value="">请选择意向岗位</option>
-            <option v-for="pos in positions" :key="pos.id" :value="String(pos.id)">{{ pos.title }}</option>
-          </select>
+          <GlassSelect v-model="positionId" :options="positionOptions" placeholder="请选择意向岗位" />
         </div>
         <div class="form-group">
           <label class="form-label">联系方式（QQ）</label>

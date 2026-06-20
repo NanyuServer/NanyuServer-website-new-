@@ -2,10 +2,16 @@
 import { ref, onMounted } from 'vue'
 import { feedbackApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import GlassSelect from '@/components/common/GlassSelect.vue'
 
 const { show: showToast } = useToast()
 
 const category = ref('')
+const categoryOptions = [
+  { value: '', label: '请选择反馈类型' },
+  { value: '校园资讯', label: '校园资讯' },
+  { value: '问题反馈', label: '问题反馈' }
+]
 const content = ref('')
 const submitting = ref(false)
 const feedbacks = ref([])
@@ -68,11 +74,7 @@ onMounted(loadFeedback)
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">反馈类型 *</label>
-            <select class="glass-select" v-model="category" required>
-              <option value="">请选择反馈类型</option>
-              <option value="校园资讯">校园资讯</option>
-              <option value="问题反馈">问题反馈</option>
-            </select>
+            <GlassSelect v-model="category" :options="categoryOptions" placeholder="请选择反馈类型" />
           </div>
           <div class="form-group full">
             <label class="form-label">反馈内容 *</label>

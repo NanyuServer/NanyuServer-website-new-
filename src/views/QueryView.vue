@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { submissionsApi } from '@/services/api'
+import GlassSelect from '@/components/common/GlassSelect.vue'
+import GlassDateTime from '@/components/common/GlassDateTime.vue'
 
 const allData = ref([])
 const filteredData = ref([])
@@ -15,6 +17,7 @@ const typeFilter = ref('')
 const keywordFilter = ref('')
 
 const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子']
+const typeOptions = [{ value: '', label: '全部类型' }, ...types.map(t => ({ value: t, label: t }))]
 
 const typeEmojiMap = {
   '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
@@ -106,18 +109,15 @@ onMounted(async () => {
     <div class="filter-bar glass-card">
       <div class="filter-group">
         <div class="filter-label">开始时间</div>
-        <input type="date" class="glass-input" v-model="dateStart" />
+        <GlassDateTime v-model="dateStart" placeholder="选择开始日期" date-only />
       </div>
       <div class="filter-group">
         <div class="filter-label">结束时间</div>
-        <input type="date" class="glass-input" v-model="dateEnd" />
+        <GlassDateTime v-model="dateEnd" placeholder="选择结束日期" date-only />
       </div>
       <div class="filter-group">
         <div class="filter-label">投稿类型</div>
-        <select class="glass-select" v-model="typeFilter">
-          <option value="">全部类型</option>
-          <option v-for="t in types" :key="t" :value="t">{{ t }}</option>
-        </select>
+        <GlassSelect v-model="typeFilter" :options="typeOptions" placeholder="全部类型" />
       </div>
       <div class="filter-group">
         <div class="filter-label">内容关键词</div>
