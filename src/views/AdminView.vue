@@ -384,7 +384,7 @@ onMounted(() => {
     <div class="login-card glass-card">
       <div class="login-card-top" />
       <div class="login-logo">
-        <div class="login-logo-icon">🛡️</div>
+        <div class="login-logo-icon"><img src="/logomini.webp" alt="管理后台" style="width:36px;height:36px;border-radius:8px;" /></div>
         <div class="login-logo-title">南渝万能墙</div>
         <div class="login-logo-sub">运营管理后台</div>
       </div>
@@ -406,7 +406,7 @@ onMounted(() => {
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <div class="sidebar-logo-icon">🏫</div>
+        <div class="sidebar-logo-icon"><img src="/logomini.webp" alt="管理后台" style="width:28px;height:28px;border-radius:6px;" /></div>
         <div>
           <div class="sidebar-logo-text">南渝万能墙</div>
           <div class="sidebar-logo-sub">运营后台</div>
