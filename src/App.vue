@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AppNavbar from '@/components/layout/AppNavbar.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
@@ -6,20 +7,20 @@ import CustomCursor from '@/components/common/CustomCursor.vue'
 import ToastContainer from '@/components/common/ToastContainer.vue'
 
 const route = useRoute()
-const isAdminRoute = () => route.path === '/admin'
+const isAdmin = computed(() => route.path === '/admin')
 </script>
 
 <template>
   <CustomCursor />
-  <AppNavbar v-if="!isAdminRoute()" />
-  <main :class="{ 'admin-main': isAdminRoute() }">
-    <router-view v-slot="{ Component }">
-      <transition name="page-fade" mode="out-in">
+  <AppNavbar v-if="!isAdmin" />
+  <router-view v-slot="{ Component }">
+    <transition name="page-fade" mode="out-in">
+      <main :key="route.path" :class="{ 'admin-main': isAdmin }">
         <component :is="Component" />
-      </transition>
-    </router-view>
-  </main>
-  <AppFooter v-if="!isAdminRoute()" />
+      </main>
+    </transition>
+  </router-view>
+  <AppFooter v-if="!isAdmin" />
   <ToastContainer />
 </template>
 
