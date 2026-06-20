@@ -79,10 +79,16 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch (e) { body = {}; }
+    }
+    if (!body || typeof body !== 'object') body = {};
+
     const action = req.headers['x-action'] || 'login';
 
     if (action === 'login') {
-      const { username, password } = req.body || {};
+      const { username, password } = body;
       if (!username || !password) {
         return res.status(400).json({ error: '缺少用户名或密码' });
       }
@@ -151,7 +157,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'change-password') {
-      const { username, old_password, new_password } = req.body || {};
+      const { username, old_password, new_password } = body;
       if (!username || !old_password || !new_password) {
         return res.status(400).json({ error: '缺少必要参数' });
       }

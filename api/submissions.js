@@ -71,7 +71,9 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ error: '未授权，请检查管理员密钥' });
     }
 
-    const { created_at, content, type } = req.body;
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+    const { created_at, content, type } = body || {};
 
     // Validate
     if (!created_at || !content || !type) {
