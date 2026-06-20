@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "vue-app/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(css|js|assets|favicon\\.ico|logo\\.webp)(.*)", "dest": "/vue-app/$1$2" },
+    { "src": "/((?!api/).*)", "dest": "/vue-app/index.html" }
+  ]
+}
