@@ -25,6 +25,11 @@ const fieldType = ref('')
 const fieldContent = ref('')
 const fieldEditId = ref('')
 
+const bulkFile = ref(null)
+const bulkPreview = ref([])
+const bulkImporting = ref(false)
+const bulkResult = ref(null)
+
 const feedbackRecords = ref([])
 const feedbackSearch = ref('')
 
@@ -169,6 +174,139 @@ function clearForm() {
   fieldType.value = ''
   fieldEditId.value = ''
   initNow()
+}
+
+function downloadTemplate() {
+  const header = '投稿时间,投稿类型,稿件内容\n'
+  const example = '2026-06-20 12:00:00,扩列,这是一条示例稿件内容\n'
+  const typesNote = '# 可用类型: 寻物启事, 表白, 挂人, 扩列, 吐槽, 交易, 捞人、物, 打听资讯, 寻找搭子\n'
+  const bom = '\uFEFF'
+  const blob = new Blob([bom + header + example + typesNote], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = '稿件批量导入模板.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+async function parseBulkFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  bulkResult.value = null
+
+  const ext = file.name.split('.').pop().toLowerCase()
+
+  if (ext === 'csv') {
+    const text = await file.text()
+    const lines = text.split('\n').filter(l => l.trim() && !l.startsWith('#'))
+    if (lines.length < 2) { showToast('CSV 文件无数据行', 'error'); return }
+    const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+    const contentIdx = header.findIndex(h => h.includes('内容'))
+    const typeIdx = header.findIndex(h => h.includes('类型'))
+    const timeIdx = header.findIndex(h => h.includes('时间'))
+
+    const rows = []
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i])
+      rows.push({
+        created_at: timeIdx >= 0 ? cols[timeIdx] : '',
+        type: typeIdx >= 0 ? cols[typeIdx] : '',
+        content: contentIdx >= 0 ? cols[contentIdx] : cols.join(',')
+      })
+    }
+    bulkPreview.value = rows
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    try {
+      const XLSX = await loadXlsx()
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data, { type: 'array' })
+      const sheet = workbook.Sheets[workbook.SheetNames[0]]
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+      if (json.length < 2) { showToast('Excel 文件无数据行', 'error'); return }
+      const header = json[0].map(h => String(h || '').trim())
+      const contentIdx = header.findIndex(h => h.includes('内容'))
+      const typeIdx = header.findIndex(h => h.includes('类型'))
+      const timeIdx = header.findIndex(h => h.includes('时间'))
+
+      const rows = []
+      for (let i = 1; i < json.length; i++) {
+        const row = json[i]
+        if (!row || row.every(c => !c)) continue
+        rows.push({
+          created_at: timeIdx >= 0 ? String(row[timeIdx] || '') : '',
+          type: typeIdx >= 0 ? String(row[typeIdx] || '') : '',
+          content: contentIdx >= 0 ? String(row[contentIdx] || '') : row.map(c => String(c || '')).join(',')
+        })
+      }
+      bulkPreview.value = rows
+    } catch (err) {
+      showToast('Excel 解析失败: ' + err.message, 'error')
+    }
+  } else {
+    showToast('请上传 .csv 或 .xlsx 文件', 'error')
+  }
+}
+
+function parseCSVLine(line) {
+  const result = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') { inQuotes = !inQuotes }
+    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = '' }
+    else { current += ch }
+  }
+  result.push(current.trim())
+  return result
+}
+
+async function loadXlsx() {
+  if (window.XLSX) return window.XLSX
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+    s.onload = resolve
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+  return window.XLSX
+}
+
+async function submitBulkImport() {
+  if (bulkPreview.value.length === 0) { showToast('无数据可导入', 'error'); return }
+  bulkImporting.value = true
+  bulkResult.value = null
+
+  try {
+    const res = await fetch('/api/submissions-bulk', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': ADMIN_SECRET.value
+      },
+      body: JSON.stringify({ rows: bulkPreview.value })
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+    bulkResult.value = json
+    bulkPreview.value = []
+    if (json.imported > 0) {
+      showToast(`成功导入 ${json.imported} 条稿件`, 'success')
+      loadAllData()
+    }
+  } catch (e) {
+    showToast('导入失败: ' + e.message, 'error')
+  } finally {
+    bulkImporting.value = false
+  }
+}
+
+function clearBulk() {
+  bulkPreview.value = []
+  bulkResult.value = null
+  bulkFile.value = null
 }
 
 async function submitEntry() {
@@ -517,6 +655,57 @@ onMounted(() => {
             <button class="glass-btn glass-btn-primary glass-btn-sm" @click="submitEntry">
               {{ fieldEditId ? '保存修改' : '提交至数据库' }}
             </button>
+          </div>
+        </div>
+
+        <div class="form-card glass-card" style="margin-top: 1.5rem;">
+          <div class="form-card-top" />
+          <div class="form-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" /></svg>
+            批量导入稿件
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+            上传 CSV 或 Excel 文件，表头须包含「投稿类型」和「稿件内容」列，「投稿时间」为可选列（不填则使用当前时间）。
+          </p>
+          <div class="bulk-actions">
+            <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="downloadTemplate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+              下载 CSV 模板
+            </button>
+            <label class="glass-btn glass-btn-ghost glass-btn-sm" style="cursor: pointer;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+              选择文件
+              <input type="file" accept=".csv,.xlsx,.xls" style="display:none" @change="parseBulkFile" />
+            </label>
+          </div>
+
+          <div v-if="bulkPreview.length" class="bulk-preview">
+            <div class="bulk-preview-header">
+              <span>已解析 {{ bulkPreview.length }} 条数据（预览前 5 条）</span>
+              <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="clearBulk">清空</button>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="data-table">
+                <thead><tr><th>时间</th><th>类型</th><th>内容</th></tr></thead>
+                <tbody>
+                  <tr v-for="(row, i) in bulkPreview.slice(0, 5)" :key="i">
+                    <td style="white-space:nowrap;font-size:0.78rem;">{{ row.created_at || '当前时间' }}</td>
+                    <td><span class="type-badge" :class="'type-' + row.type">{{ typeEmojiMap[row.type] }} {{ row.type }}</span></td>
+                    <td class="content-cell" :title="row.content">{{ row.content }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="bulk-actions" style="margin-top: 1rem;">
+              <button class="glass-btn glass-btn-primary glass-btn-sm" @click="submitBulkImport" :disabled="bulkImporting">
+                {{ bulkImporting ? '导入中…' : '确认导入 ' + bulkPreview.length + ' 条' }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="bulkResult" class="bulk-result">
+            <span style="color: var(--color-success);">✓ 成功导入 {{ bulkResult.imported }} 条</span>
+            <span v-if="bulkResult.skipped" style="color: var(--color-warning); margin-left: 1rem;">跳过 {{ bulkResult.skipped }} 条</span>
           </div>
         </div>
       </div>
@@ -1045,6 +1234,33 @@ onMounted(() => {
   display: flex;
   gap: 0.8rem;
   justify-content: flex-end;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.bulk-preview {
+  margin-top: 1.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(123, 85, 212, 0.15);
+}
+.bulk-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  font-size: 0.82rem;
+  color: var(--accent-light);
+}
+.bulk-result {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  font-size: 0.85rem;
 }
 
 /* Table */
