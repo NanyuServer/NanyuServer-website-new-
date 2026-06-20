@@ -116,23 +116,40 @@ a:hover {
   background: rgba(123, 85, 212, 0.55);
 }
 
-/* ── Glass Card 基础类 ── */
+/* ── Glass Card 基础类 (Liquid Glass) ── */
 .glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background: rgba(30, 10, 50, 0.35);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 0 12px rgba(179, 136, 255, 0.06);
   transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out), border-color 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%);
+  pointer-events: none;
 }
 .glass-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  border-color: var(--glass-highlight);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 24px rgba(179, 136, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
-/* ── Button 基础类 ── */
+/* ── Button 基础类 (Liquid Glass) ── */
 .glass-btn {
   display: inline-flex;
   align-items: center;
@@ -142,54 +159,66 @@ a:hover {
   font-size: 0.88rem;
   font-weight: 500;
   letter-spacing: 0.06em;
-  padding: 0.8rem 1.8rem;
-  border: none;
-  border-radius: var(--radius-md);
+  padding: 0.7rem 1.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 100px;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s var(--ease-out), box-shadow 0.3s;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s, border-color 0.3s, background 0.3s;
 }
-.glass-btn:active {
-  transform: scale(0.97);
-}
-
-.glass-btn-primary {
-  background: linear-gradient(135deg, #4c2fa3 0%, #7b55d4 50%, #e86fa3 100%);
-  color: white;
-  box-shadow: 0 8px 28px rgba(75, 47, 163, 0.5);
-}
-.glass-btn-primary::before {
+.glass-btn::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.3s;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.04) 100%);
+  pointer-events: none;
+}
+.glass-btn:active {
+  transform: scale(0.96);
+}
+
+.glass-btn-primary {
+  background: rgba(75, 47, 163, 0.5);
+  color: white;
+  box-shadow:
+    0 8px 28px rgba(75, 47, 163, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 16px rgba(179, 136, 255, 0.1);
 }
 .glass-btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 40px rgba(75, 47, 163, 0.65);
-}
-.glass-btn-primary:hover::before {
-  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 36px rgba(75, 47, 163, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 28px rgba(179, 136, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(75, 47, 163, 0.6);
 }
 
 .glass-btn-ghost {
-  background: transparent;
-  border: 1px solid rgba(168, 127, 232, 0.4);
+  background: rgba(15, 10, 26, 0.35);
   color: var(--text-secondary);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .glass-btn-ghost:hover {
-  border-color: var(--accent-light);
+  border-color: rgba(179, 136, 255, 0.4);
   color: var(--text-primary);
-  background: rgba(123, 85, 212, 0.1);
+  background: rgba(75, 47, 163, 0.2);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 20px rgba(179, 136, 255, 0.1);
 }
 
 .glass-btn-sm {
-  padding: 0.5rem 1.2rem;
+  padding: 0.45rem 1.2rem;
   font-size: 0.8rem;
-  border-radius: var(--radius-sm);
 }
 
 /* ── Input 基础类 ── */
