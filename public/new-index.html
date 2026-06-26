@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>南渝万能墙 — 新首页</title>
+  <link rel="icon" href="/websitelogo.ico" />
+  <link rel="stylesheet" href="/new-index/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ═══════ Page Transition ═══════ -->
+<div class="transition-overlay" id="transitionOverlay">
+  <svg class="transition-svg" viewBox="0 0 1600 905" fill="none" preserveAspectRatio="none">
+    <defs>
+      <mask id="transitionMask">
+        <rect width="100%" height="100%" fill="white" />
+        <path class="mask-path" d="M0.5 154C50 140,250 40,270 61C301 91,18 300,42 341C66 382,390 129,531 95C707 51,39 737,42 781C45 824,954 8,1047 1C1140 -7,265 834,314 902C364 970,1356 61,1428 62C1517 62,815 836,825 886C835 936,1554 356,1588 359C1623 363,1201 884,1216 902C1232 920,1570 669,1597 685C1624 701,1496 867,1543 906" stroke="black" stroke-width="999" stroke-linecap="round" stroke-linejoin="round" />
+      </mask>
+    </defs>
+    <rect width="100%" height="100%" fill="var(--violet)" mask="url(#transitionMask)" />
+  </svg>
+</div>
+
+<!-- ═══════ Navbar ═══════ -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="/new-index.html" class="navbar-logo">
+      <img src="/logo.webp" alt="南渝万能墙" />
+    </a>
+
+    <div class="navbar-links-desktop">
+      <a href="#approach" class="nav-text-link" data-hover-text>
+        <span class="nav-text-top">关于我们</span>
+        <span class="nav-text-bottom">关于我们</span>
+      </a>
+      <a href="#features" class="nav-text-link" data-hover-text>
+        <span class="nav-text-top">核心功能</span>
+        <span class="nav-text-bottom">核心功能</span>
+      </a>
+      <a href="#stats" class="nav-text-link" data-hover-text>
+        <span class="nav-text-top">数据展示</span>
+        <span class="nav-text-bottom">数据展示</span>
+      </a>
+      <a href="/query" class="nav-text-link" data-hover-text>
+        <span class="nav-text-top">稿件查询</span>
+        <span class="nav-text-bottom">稿件查询</span>
+      </a>
+    </div>
+
+    <div class="navbar-right">
+      <a href="https://qm.qq.com/q/FHAbiDBIQO" target="_blank" class="nav-social-btn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12.67 0H3.33C1.49 0 0 1.49 0 3.33v9.34C0 14.51 1.49 16 3.33 16h9.34C14.51 16 16 14.51 16 12.67V3.33C16 1.49 14.51 0 12.67 0zM5.33 12.67H3.33V5.33h2v7.34zM4.33 4.49a1.16 1.16 0 110-2.32 1.16 1.16 0 010 2.32zM13.33 12.67h-2V8.93c0-2.24-3.67-2.07-3.67.01v3.73h-2V5.33h2v1.18c.93-1.72 4.67-1.85 4.67 1.65v4.51z" fill="currentColor"/></svg>
+      </a>
+      <button class="navbar-menu-btn" id="menuBtn" aria-label="菜单">
+        <div class="menu-line line-closed-top"></div>
+        <div class="menu-line line-closed-bottom"></div>
+        <div class="menu-line line-opened-top"></div>
+        <div class="menu-line line-opened-bottom"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Full-screen Menu Overlay -->
+  <div class="menu-overlay" id="menuOverlay">
+    <div class="menu-content">
+      <div class="menu-links">
+        <a href="#approach" class="menu-link" data-hover-text>
+          <span class="nav-text-top">关于我们</span>
+          <span class="nav-text-bottom">关于我们</span>
+        </a>
+        <a href="#features" class="menu-link" data-hover-text>
+          <span class="nav-text-top">核心功能</span>
+          <span class="nav-text-bottom">核心功能</span>
+        </a>
+        <a href="#stats" class="menu-link" data-hover-text>
+          <span class="nav-text-top">数据展示</span>
+          <span class="nav-text-bottom">数据展示</span>
+        </a>
+        <a href="/query" class="menu-link" data-hover-text>
+          <span class="nav-text-top">稿件查询</span>
+          <span class="nav-text-bottom">稿件查询</span>
+        </a>
+        <a href="/course" class="menu-link" data-hover-text>
+          <span class="nav-text-top">公益课程</span>
+          <span class="nav-text-bottom">公益课程</span>
+        </a>
+        <a href="/feedback" class="menu-link" data-hover-text>
+          <span class="nav-text-top">有求必应</span>
+          <span class="nav-text-bottom">有求必应</span>
+        </a>
+      </div>
+      <div class="menu-footer">
+        <a href="mailto:contact@nanyuwall.com" class="menu-contact" data-hover-text>
+          <span class="nav-text-top">加入南渝万能墙</span>
+          <span class="nav-text-bottom">加入南渝万能墙</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════ Main Content ═══════ -->
+<main class="page-wrapper">
+
+  <!-- ── Hero Section ── -->
+  <section class="section-hero">
+    <div class="hero-body">
+      <h1 class="hero-title">
+        <span class="hero-title-line">南渝万能墙</span>
+      </h1>
+      <div class="hero-subtitle-wrap">
+        <div class="hero-subtitle">
+          <span class="hero-subtitle-line">打造南渝学子的一站式服务平台</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll-hint">
+      <span>SCROLL</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ── Approach / About Section ── -->
+  <section class="section-approach" id="approach" element-parallax-trigger>
+    <div class="padding-global">
+      <div class="approach-body">
+        <h2 class="approach-title" data-split-text>
+          我们致力于<br/>为南渝学子<br/>创造价值
+        </h2>
+        <div class="approach-text">
+          <p data-reveal>南渝万能墙隶属于重庆校墙联，成立于2024年8月8日。不属于学校组织、不代表学校立场、不表明学校观点。</p>
+          <p data-reveal>我们坚持打造南渝学子的一站式服务平台，让每一位南渝学子都能在这里找到归属感。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats Section ── -->
+  <section class="section-stats" id="stats">
+    <div class="padding-global">
+      <div class="stats-body">
+        <h2 class="stats-title" data-split-text>我们真的很<br/>擅长这些</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="countup-wrapper" data-countup>
+              <div data-number>1</div>
+              <div data-number>9</div>
+              <div data-number>0</div>
+              <div data-number>0</div>
+            </div>
+            <div class="stat-label">服务学子</div>
+            <div class="stat-tag">人</div>
+          </div>
+          <div class="stats-divider"></div>
+          <div class="stat-item">
+            <div class="countup-wrapper" data-countup>
+              <div data-number>1</div>
+              <div data-number>2</div>
+              <div data-number>0</div>
+              <div data-number>0</div>
+            </div>
+            <div class="stat-label">累计稿件</div>
+            <div class="stat-tag">篇</div>
+          </div>
+          <div class="stats-divider"></div>
+          <div class="stat-item">
+            <div class="countup-wrapper" data-countup>
+              <div data-number>6</div>
+            </div>
+            <div class="stat-label">核心版块</div>
+          </div>
+          <div class="stats-divider"></div>
+          <div class="stat-item">
+            <div class="countup-wrapper" data-countup>
+              <div data-number>9</div>
+              <div data-number>9</div>
+              <div data-number>.</div>
+              <div data-number>9</div>
+            </div>
+            <div class="stat-label">系统可用率</div>
+            <div class="stat-tag">%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features Section ── -->
+  <section class="section-features" id="features" element-parallax-trigger>
+    <div class="padding-global">
+      <div class="features-body">
+        <div class="feature-row" data-reveal>
+          <div class="feature-number">01</div>
+          <div class="feature-content">
+            <h3>课业互助</h3>
+            <p>在这里提问、解答、分享笔记与学习资料，让优秀的南渝学子相互成就，共同进步，让知识在校园中自由流动。</p>
+          </div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+        </div>
+        <div class="feature-row" data-reveal>
+          <div class="feature-number">02</div>
+          <div class="feature-content">
+            <h3>表白心意</h3>
+            <p>匿名倾诉、表白心意，校园中那些说不出口的话，都可以在这里被倾听。温暖与支持，从未缺席。</p>
+          </div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+        </div>
+        <div class="feature-row" data-reveal>
+          <div class="feature-number">03</div>
+          <div class="feature-content">
+            <h3>二手交易</h3>
+            <p>教辅书籍、文具器材、闲置好物，统统在这里循环利用。打造绿色校园，南渝万能墙先行。</p>
+          </div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          </div>
+        </div>
+        <div class="feature-row" data-reveal>
+          <div class="feature-number">04</div>
+          <div class="feature-content">
+            <h3>活动公告</h3>
+            <p>社团招新、运动会、艺术节、校级通知……所有校园动态一网打尽，再也不错过任何重要信息。</p>
+          </div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M16 2v4M8 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
+          </div>
+        </div>
+        <div class="feature-row" data-reveal>
+          <div class="feature-number">05</div>
+          <div class="feature-content">
+            <h3>失物招领</h3>
+            <p>丢失了水杯、钥匙、学生卡？在南渝万能墙快速发布或查询，让校园里的失物找到回家的路。</p>
+          </div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          </div>
+        </div>
+        <div class="feature-row" data-reveal>
+          <div class="feature-number">06</div>
+          <div class="feature-content">
+            <h3>寻找搭子</h3>
+            <p>假期没有人出来玩？来南渝万能墙寻找志同道合的搭子！认识新同学、结实新朋友、分享快乐时光。</p>
+          </div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA Section ── -->
+  <section class="section-cta">
+    <div class="padding-global">
+      <div class="cta-body">
+        <h2 class="cta-title" data-split-text>
+          进入南渝万能墙<br/>让校园生活更精彩
+        </h2>
+        <p class="cta-sub" data-reveal>
+          1900+ 南渝学子已在这里相遇。无论你需要学业帮助、想结交朋友，还是只想分享今天的心情——南渝万能墙永远为你敞开。
+        </p>
+        <div class="cta-buttons" data-reveal>
+          <a href="https://qm.qq.com/q/FHAbiDBIQO" target="_blank" class="button-main">
+            <div class="button-main-shadow"></div>
+            <div class="button-main-inner">
+              <div class="button-main-inner-shadow"></div>
+              <span class="button-text-top" button-text-top>立即进入</span>
+              <span class="button-text-bottom" button-text-bottom>立即进入</span>
+            </div>
+          </a>
+          <a href="/recruit" class="button-main is-yellow">
+            <div class="button-main-shadow"></div>
+            <div class="button-main-inner">
+              <div class="button-main-inner-shadow"></div>
+              <span class="button-text-top" button-text-top>成为运营队员</span>
+              <span class="button-text-bottom" button-text-bottom>成为运营队员</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════ Footer ═══════ -->
+<footer class="site-footer">
+  <div class="padding-global">
+    <div class="footer-inner">
+      <div class="footer-copy">&copy; 2026 南渝万能墙运营队 &middot; 保留所有权利</div>
+      <a href="/admin" class="footer-admin">管理登录</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════ SVG Filters ═══════ -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <filter id="noise-distortion" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.2128 0.2128" numOctaves="3" seed="4138"/>
+      <feDisplacementMap in="shape" scale="80" xChannelSelector="R" yChannelSelector="G"/>
+      <feMerge><feMergeNode/></feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="/new-index/main.js"></script>
+</body>
+</html>
