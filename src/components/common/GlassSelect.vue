@@ -81,10 +81,7 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
   text-align: left;
   -webkit-appearance: none;
   appearance: none;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='2' y='2' width='96' height='96' rx='22' ry='22' fill='white'/%3E%3C/svg%3E");
-  mask-size: 100% 100%;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='2' y='2' width='96' height='96' rx='22' ry='22' fill='white'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% 100%;
+  border-radius: var(--radius-sm, 8px);
 }
 
 .gs-trigger.placeholder {
@@ -122,10 +119,7 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
   padding: 0.35rem;
   max-height: 260px;
   overflow-y: auto;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' rx='20' ry='20' fill='white'/%3E%3C/svg%3E");
-  mask-size: 100% 100%;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' rx='20' ry='20' fill='white'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% 100%;
+  border-radius: var(--radius-md, 16px);
 }
 
 .gs-option {
