@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import GlassModal from '@/components/common/GlassModal.vue'
-import BeamsBackground from '@/components/common/BeamsBackground.vue'
+import ColorBendsBackground from '@/components/common/ColorBendsBackground.vue'
 import TrueFocus from '@/components/common/TrueFocus.vue'
 
 const showModal = ref(false)
@@ -74,15 +74,21 @@ onUnmounted(() => {})
 <template>
   <!-- Hero Section -->
   <section class="hero">
-    <BeamsBackground
-      :beamWidth="2"
-      :beamHeight="15"
-      :beamNumber="12"
-      lightColor="#ffffff"
-      :speed="6.5"
-      :noiseIntensity="1.75"
-      :scale="0.2"
-      :rotation="0"
+    <ColorBendsBackground
+      :rotation="90"
+      :speed="0.2"
+      :colors="['#5227FF', '#FF9FFC', '#7cff67']"
+      :transparent="true"
+      :autoRotate="0"
+      :scale="1"
+      :frequency="1"
+      :warpStrength="1"
+      :mouseInfluence="1"
+      :parallax="0.5"
+      :noise="0.15"
+      :iterations="1"
+      :intensity="1.5"
+      :bandWidth="6"
     />
     <div class="hero-content">
       <div class="school-badge">重庆校墙联核心成员</div>
