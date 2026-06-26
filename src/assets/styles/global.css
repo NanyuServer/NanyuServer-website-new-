@@ -34,15 +34,15 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* 圆角 (Continuous Curvature / Squircle via mask) */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 
   /* Squircle mask URLs (continuous curvature) */
-  --squircle-sm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='2' y='2' width='96' height='96' rx='24' ry='24' fill='white'/%3E%3C/svg%3E");
-  --squircle-md: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' rx='20' ry='20' fill='white'/%3E%3C/svg%3E");
-  --squircle-lg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' rx='18' ry='18' fill='white'/%3E%3C/svg%3E");
+  --squircle-sm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='2' y='2' width='96' height='96' rx='14' ry='14' fill='white'/%3E%3C/svg%3E");
+  --squircle-md: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' rx='12' ry='12' fill='white'/%3E%3C/svg%3E");
+  --squircle-lg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' rx='10' ry='10' fill='white'/%3E%3C/svg%3E");
   --squircle-pill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' rx='50' ry='50' fill='white'/%3E%3C/svg%3E");
 
   /* 字体 */

@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
 
   // Connect to Neon using the connection string from environment variable
   const sql = neon(process.env.DATABASE_URL);
-  const VALID_TYPES = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子'];
+  const VALID_TYPES = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥'];
 
   // ── GET: fetch all submissions with optional filters ──
   if (req.method === 'GET') {

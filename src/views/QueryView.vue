@@ -16,12 +16,12 @@ const dateEnd = ref('')
 const typeFilter = ref('')
 const keywordFilter = ref('')
 
-const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子']
+const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥']
 const typeOptions = [{ value: '', label: '全部类型' }, ...types.map(t => ({ value: t, label: t }))]
 
 const typeEmojiMap = {
   '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
-  '吐槽': '💬', '交易': '💰', '捞人、物': '🎣', '打听资讯': '❓', '寻找搭子': '👫'
+  '吐槽': '💬', '交易': '💰', '捞人、物': '🎣', '打听资讯': '❓', '寻找搭子': '👫', '有啥说啥': '🗣️'
 }
 
 const totalPages = computed(() => Math.ceil(filteredData.value.length / PAGE_SIZE))
@@ -299,6 +299,7 @@ onMounted(async () => {
 .type-捞人、物 { color: #60a5fa; border-color: rgba(96, 165, 250, 0.35); background: rgba(96, 165, 250, 0.08); }
 .type-打听资讯 { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.08); }
 .type-寻找搭子 { color: #ec4899; border-color: rgba(236, 72, 153, 0.35); background: rgba(236, 72, 153, 0.08); }
+.type-有啥说啥 { color: #c084fc; border-color: rgba(192, 132, 252, 0.35); background: rgba(192, 132, 252, 0.08); }
 .card-time {
   font-family: var(--font-ui);
   font-size: 0.72rem;

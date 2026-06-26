@@ -51,11 +51,11 @@ const replyModalVisible = ref(false)
 const replyContent = ref('')
 const currentReplyId = ref(null)
 
-const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子']
+const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥']
 
 const typeEmojiMap = {
   '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
-  '吐槽': '💬', '交易': '💰', '捞人、物': '🎣', '打听资讯': '❓', '寻找搭子': '👫'
+  '吐槽': '💬', '交易': '💰', '捞人、物': '🎣', '打听资讯': '❓', '寻找搭子': '👫', '有啥说啥': '🗣️'
 }
 
 const statTotal = computed(() => DB.value.length)
@@ -185,7 +185,7 @@ function clearForm() {
 function downloadTemplate() {
   const header = '投稿时间,投稿类型,稿件内容\n'
   const example = '2026-06-20 12:00:00,扩列,这是一条示例稿件内容\n'
-  const typesNote = '# 可用类型: 寻物启事, 表白, 挂人, 扩列, 吐槽, 交易, 捞人、物, 打听资讯, 寻找搭子\n'
+  const typesNote = '# 可用类型: 寻物启事, 表白, 挂人, 扩列, 吐槽, 交易, 捞人、物, 打听资讯, 寻找搭子, 有啥说啥\n'
   const bom = '\uFEFF'
   const blob = new Blob([bom + header + example + typesNote], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
@@ -1351,6 +1351,7 @@ onMounted(() => {
 .type-捞人、物 { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); background: rgba(96, 165, 250, 0.08); }
 .type-打听资讯 { color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.08); }
 .type-寻找搭子 { color: #ec4899; border-color: rgba(236, 72, 153, 0.3); background: rgba(236, 72, 153, 0.08); }
+.type-有啥说啥 { color: #c084fc; border-color: rgba(192, 132, 252, 0.3); background: rgba(192, 132, 252, 0.08); }
 
 .action-btn {
   font-size: 0.72rem;

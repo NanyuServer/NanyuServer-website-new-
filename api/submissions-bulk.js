@@ -27,7 +27,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: '单次最多导入 500 条' });
   }
 
-  const VALID_TYPES = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子'];
+  const VALID_TYPES = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥'];
   const sql = neon(process.env.DATABASE_URL);
 
   const valid = [];
