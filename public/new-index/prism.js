@@ -185,8 +185,7 @@
     var animType = options.animationType || 'rotate';
 
     var canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
-    container.style.position = 'relative';
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;';
     container.appendChild(canvas);
 
     var gl = canvas.getContext('webgl', {
