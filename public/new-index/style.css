@@ -318,9 +318,8 @@ img { display: block; max-width: 100%; }
   transform: translate(-50%, -50%);
   width: min(90vw, 1080px);
   height: min(90vh, 1080px);
-  pointer-events: none;
   z-index: 0;
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
 .hero-body {
@@ -340,7 +339,7 @@ img { display: block; max-width: 100%; }
 
 .hero-title-line {
   display: block;
-  background: linear-gradient(135deg, var(--yellow) 0%, var(--white) 30%, var(--violet) 60%, var(--rose) 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #ffd4ff 35%, #e8b8ff 65%, #c9a0ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -348,6 +347,7 @@ img { display: block; max-width: 100%; }
   animation: heroShimmer 6s ease infinite;
   transform: translateY(120%);
   opacity: 0;
+  text-shadow: none;
 }
 
 .hero-title-line.is-revealed {

@@ -18,25 +18,23 @@
   ready(function () {
 
     /* ═══════════════════════════════════════════════════════════
-       0. COLORBENDS HERO BACKGROUND
+       0. GRADIENTBLINDS HERO BACKGROUND
        ═══════════════════════════════════════════════════════════ */
-    var cbContainer = document.getElementById('colorBendsContainer');
-    if (cbContainer && typeof window.ColorBends === 'function') {
-      window.ColorBends(cbContainer, {
-        rotation: 90,
-        speed: 0.2,
-        colors: ['#5227FF', '#31088b', '#7C3AED'],
-        transparent: true,
-        autoRotate: 0,
-        scale: 0.8,
-        frequency: 1,
-        warpStrength: 1,
-        mouseInfluence: 1.2,
-        parallax: 0.5,
-        noise: 0,
-        iterations: 1,
-        intensity: 1.5,
-        bandWidth: 6
+    var gbContainer = document.getElementById('colorBendsContainer');
+    if (gbContainer && typeof window.GradientBlinds === 'function') {
+      window.GradientBlinds(gbContainer, {
+        gradientColors: ['#FF9FFC', '#5227FF'],
+        angle: 0,
+        noise: 0.25,
+        blindCount: 16,
+        blindMinWidth: 60,
+        mouseDampening: 0.3,
+        mirrorGradient: false,
+        spotlightRadius: 0.5,
+        spotlightSoftness: 1,
+        spotlightOpacity: 1,
+        distortAmount: 0,
+        shineDirection: 'left'
       });
     }
 
