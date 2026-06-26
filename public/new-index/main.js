@@ -18,6 +18,29 @@
   ready(function () {
 
     /* ═══════════════════════════════════════════════════════════
+       0. COLORBENDS HERO BACKGROUND
+       ═══════════════════════════════════════════════════════════ */
+    var cbContainer = document.getElementById('colorBendsContainer');
+    if (cbContainer && typeof window.ColorBends === 'function') {
+      window.ColorBends(cbContainer, {
+        rotation: 90,
+        speed: 0.2,
+        colors: ['#5227FF', '#31088b', '#7C3AED'],
+        transparent: true,
+        autoRotate: 0,
+        scale: 0.8,
+        frequency: 1,
+        warpStrength: 1,
+        mouseInfluence: 1.2,
+        parallax: 0.5,
+        noise: 0,
+        iterations: 1,
+        intensity: 1.5,
+        bandWidth: 6
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════
        1. LENIS SMOOTH SCROLL
        ═══════════════════════════════════════════════════════════ */
     var lenis;
