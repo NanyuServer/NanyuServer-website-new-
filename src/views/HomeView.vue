@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import GlassModal from '@/components/common/GlassModal.vue'
+import BeamsBackground from '@/components/common/BeamsBackground.vue'
+import TrueFocus from '@/components/common/TrueFocus.vue'
 
 const showModal = ref(false)
 const videoLoaded = ref(false)
@@ -64,71 +66,36 @@ const stats = [
   { value: '99.9', suffix: '%', label: '系统可用率' }
 ]
 
-const particles = ref([])
-let particleTimer = null
+onMounted(() => {})
 
-onMounted(() => {
-  particleTimer = setInterval(() => {
-    const colors = ['#7b55d4', '#a87fe8', '#e8c97a', '#e86fa3', '#5de8d0']
-    particles.value.push({
-      id: Date.now() + Math.random(),
-      size: Math.random() * 4 + 2,
-      left: Math.random() * 100,
-      bottom: Math.random() * 20,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      duration: 4 + Math.random() * 8,
-      delay: Math.random() * 6
-    })
-    if (particles.value.length > 30) particles.value.shift()
-  }, 600)
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('revealed'), i * 90)
-      }
-    })
-  }, { threshold: 0.1 })
-
-  setTimeout(() => {
-    document.querySelectorAll('.feature-card[data-reveal]').forEach(el => observer.observe(el))
-  }, 100)
-})
-
-onUnmounted(() => {
-  clearInterval(particleTimer)
-})
+onUnmounted(() => {})
 </script>
 
 <template>
   <!-- Hero Section -->
   <section class="hero">
-    <div class="orb orb-1" />
-    <div class="orb orb-2" />
-    <div class="orb orb-3" />
-    <div class="orb orb-4" />
-    <div class="hero-grid" />
-    <div class="particles-container">
-      <div
-        v-for="p in particles"
-        :key="p.id"
-        class="particle"
-        :style="{
-          width: p.size + 'px',
-          height: p.size + 'px',
-          left: p.left + '%',
-          bottom: p.bottom + '%',
-          background: p.color,
-          '--dur': p.duration + 's',
-          '--delay': p.delay + 's'
-        }"
-      />
-    </div>
-
+    <BeamsBackground
+      :beamWidth="2"
+      :beamHeight="15"
+      :beamNumber="12"
+      lightColor="#ffffff"
+      :speed="6.5"
+      :noiseIntensity="1.75"
+      :scale="0.2"
+      :rotation="0"
+    />
     <div class="hero-content">
       <div class="school-badge">重庆校墙联核心成员</div>
       <h1 class="hero-title">
-        <span class="line1">南渝万能墙</span>
+        <TrueFocus
+          sentence="南渝 万能墙"
+          separator=" "
+          :blurAmount="5"
+          borderColor="#7b55d4"
+          glowColor="rgba(123, 85, 212, 0.6)"
+          :animationDuration="0.5"
+          :pauseBetweenAnimations="1"
+        />
         <span class="line2">坚持打造南渝学子的一站式服务平台</span>
       </h1>
       <p class="hero-sub">
@@ -162,21 +129,21 @@ onUnmounted(() => {
   </div>
 
   <!-- Features -->
-  <section class="features-section">
+  <section class="features-section" id="features">
     <div class="features-inner">
       <div class="features-header">
         <div class="section-label">平台核心功能</div>
         <h2 class="section-title">专为<strong>南渝学子</strong>打造六大版块</h2>
         <p class="section-body">南渝万能墙汇聚校园生活中最真实的需求，以互联互通的方式，让每一位南渝学子都能在这里找到归属感。</p>
       </div>
-      <div class="features-grid">
-        <div
-          v-for="(f, i) in features"
-          :key="i"
-          class="feature-card glass-card"
-          data-reveal
-        >
-          <div class="feature-icon" :style="{ '--g1': f.gradient[0], '--g2': f.gradient[1] }">
+      <div class="features-body">
+        <div v-for="(f, i) in features" :key="i" class="feature-row">
+          <div class="feature-number">{{ String(i + 1).padStart(2, '0') }}</div>
+          <div class="feature-content">
+            <h3>{{ f.title }}</h3>
+            <p>{{ f.desc }}</p>
+          </div>
+          <div class="feature-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round">
               <defs>
                 <linearGradient :id="'fg' + i" x1="0" y1="0" x2="1" y2="1">
@@ -192,8 +159,6 @@ onUnmounted(() => {
               />
             </svg>
           </div>
-          <h3>{{ f.title }}</h3>
-          <p>{{ f.desc }}</p>
         </div>
       </div>
     </div>
@@ -310,68 +275,7 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   padding: 8rem 2rem 5rem;
-}
-
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  animation: drift 12s ease-in-out infinite alternate;
-  pointer-events: none;
-}
-.orb-1 {
-  width: 650px; height: 650px;
-  background: radial-gradient(circle, rgba(75, 47, 163, 0.65) 0%, transparent 70%);
-  top: -120px; left: -120px;
-}
-.orb-2 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(232, 111, 163, 0.35) 0%, transparent 70%);
-  top: 8%; right: -80px;
-  animation-delay: -4s; animation-duration: 9s;
-}
-.orb-3 {
-  width: 420px; height: 420px;
-  background: radial-gradient(circle, rgba(93, 232, 208, 0.22) 0%, transparent 70%);
-  bottom: 5%; left: 18%;
-  animation-delay: -7s; animation-duration: 14s;
-}
-.orb-4 {
-  width: 360px; height: 360px;
-  background: radial-gradient(circle, rgba(168, 127, 232, 0.38) 0%, transparent 70%);
-  bottom: 18%; right: 8%;
-  animation-delay: -2s; animation-duration: 11s;
-}
-@keyframes drift {
-  0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -40px) scale(1.05); }
-  66% { transform: translate(-20px, 20px) scale(0.95); }
-  100% { transform: translate(15px, -15px) scale(1.02); }
-}
-
-.hero-grid {
-  position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(75, 47, 163, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(75, 47, 163, 0.07) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
-}
-
-.particles-container {
-  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
-}
-.particle {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0;
-  animation: floatUp var(--dur, 7s) var(--delay, 0s) ease-in-out infinite;
-}
-@keyframes floatUp {
-  0% { opacity: 0; transform: translateY(0) scale(0); }
-  20% { opacity: 0.55; transform: translateY(-20px) scale(1); }
-  80% { opacity: 0.25; }
-  100% { opacity: 0; transform: translateY(-130px) scale(0.4); }
+  background: #09090a;
 }
 
 .hero-content {
@@ -404,15 +308,6 @@ onUnmounted(() => {
   margin-bottom: 15px;
   animation: fadeUp 1s var(--ease-out) 0.5s both;
 }
-.hero-title .line1 {
-  display: block;
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--text-secondary) 40%, var(--accent-light) 70%, var(--accent-rose) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  background-size: 200% 200%;
-  animation: shimmer 5s ease infinite;
-}
 .hero-title .line2 {
   display: block;
   font-size: clamp(1.1rem, 2.8vw, 2rem);
@@ -420,7 +315,6 @@ onUnmounted(() => {
   letter-spacing: 0.06em;
   color: white;
   margin-top: 20px;
-  -webkit-text-fill-color: white;
 }
 
 .hero-sub {
@@ -519,11 +413,87 @@ onUnmounted(() => {
   max-width: 620px;
   margin-bottom: 5rem;
 }
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+.features-body {
+  display: flex;
+  flex-direction: column;
 }
+.feature-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: clamp(2rem, 4vw, 5rem);
+  align-items: center;
+  padding: clamp(2rem, 3vw, 3.5rem) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  transition: color 0.4s;
+}
+.feature-row.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.feature-row::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #7b55d4;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+}
+.feature-row:hover::after { transform: scaleX(1); }
+.feature-row:hover { color: #7b55d4; }
+.feature-number {
+  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+  font-weight: 400;
+  color: rgba(236, 234, 239, 0.4);
+  letter-spacing: 0.05em;
+  min-width: 3rem;
+  transition: color 0.4s;
+}
+.feature-row:hover .feature-number { color: #7b55d4; }
+.feature-content h3 {
+  font-family: var(--font-title);
+  font-size: clamp(1.5rem, 3vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+  color: #f0e6ff;
+  transition: color 0.4s;
+}
+.feature-row:hover .feature-content h3 { color: #7b55d4; }
+.feature-content p {
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  color: rgba(236, 234, 239, 0.6);
+  line-height: 1.8;
+  max-width: 500px;
+  letter-spacing: 0.02em;
+}
+.feature-icon-wrap {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.4s, border-color 0.4s, transform 0.4s;
+  flex-shrink: 0;
+}
+.feature-icon-wrap svg {
+  width: 24px;
+  height: 24px;
+  stroke: rgba(236, 234, 239, 0.5);
+  transition: stroke 0.4s;
+}
+.feature-row:hover .feature-icon-wrap {
+  background: #7b55d4;
+  border-color: #7b55d4;
+  transform: rotate(45deg);
+}
+.feature-row:hover .feature-icon-wrap svg { stroke: #fff; }
 .feature-card {
   padding: 2.4rem 2rem;
   position: relative;
@@ -814,7 +784,8 @@ onUnmounted(() => {
   .hero-title .line2 { font-size: clamp(0.9rem, 4vw, 1.3rem); margin-top: 12px; }
   .hero-sub { font-size: 0.9rem; }
   .hero-ctas { flex-direction: column; align-items: center; gap: 0.9rem; }
-  .features-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .feature-row { grid-template-columns: 1fr; gap: 1rem; }
+  .feature-number, .feature-icon-wrap { display: none; }
   .cta-section { padding: 5rem 1.25rem; }
   .cta-title { font-size: clamp(1.8rem, 7vw, 3rem); }
 }
