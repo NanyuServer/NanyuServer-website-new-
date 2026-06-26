@@ -18,23 +18,24 @@
   ready(function () {
 
     /* ═══════════════════════════════════════════════════════════
-       0. GRADIENTBLINDS HERO BACKGROUND
+       0. PRISM HERO BACKGROUND
        ═══════════════════════════════════════════════════════════ */
-    var gbContainer = document.getElementById('colorBendsContainer');
-    if (gbContainer && typeof window.GradientBlinds === 'function') {
-      window.GradientBlinds(gbContainer, {
-        gradientColors: ['#FF9FFC', '#5227FF'],
-        angle: 0,
-        noise: 0.25,
-        blindCount: 16,
-        blindMinWidth: 60,
-        mouseDampening: 0.3,
-        mirrorGradient: false,
-        spotlightRadius: 0.5,
-        spotlightSoftness: 1,
-        spotlightOpacity: 1,
-        distortAmount: 0,
-        shineDirection: 'left'
+    var prismContainer = document.getElementById('colorBendsContainer');
+    if (prismContainer && typeof window.Prism === 'function') {
+      window.Prism(prismContainer, {
+        height: 3.5,
+        baseWidth: 5.5,
+        animationType: 'rotate',
+        glow: 1,
+        noise: 0,
+        transparent: true,
+        scale: 3.6,
+        hueShift: 0,
+        colorFrequency: 1,
+        hoverStrength: 2,
+        inertia: 0.05,
+        bloom: 1,
+        timeScale: 0.5
       });
     }
 
