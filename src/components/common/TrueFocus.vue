@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
-  sentence: { type: String, default: '南渝 万能墙' },
+  sentence: { type: String, default: 'True Focus' },
   separator: { type: String, default: ' ' },
   blurAmount: { type: Number, default: 5 },
   borderColor: { type: String, default: '#7b55d4' },
@@ -21,16 +21,17 @@ let interval = null
 let resizeObserver = null
 
 function updateFocusRect() {
-  if (currentIndex.value < 0 || !wordRefs.value[currentIndex.value] || !containerRef.value) return
-  const parentRect = containerRef.value.getBoundingClientRect()
-  const activeEl = wordRefs.value[currentIndex.value]
-  if (!activeEl) return
-  const activeRect = activeEl.getBoundingClientRect()
+  if (currentIndex.value < 0) return
+  const el = wordRefs.value[currentIndex.value]
+  const cont = containerRef.value
+  if (!el || !cont) return
+  const pr = cont.getBoundingClientRect()
+  const ar = el.getBoundingClientRect()
   focusRect.value = {
-    x: activeRect.left - parentRect.left,
-    y: activeRect.top - parentRect.top,
-    width: activeRect.width,
-    height: activeRect.height
+    x: ar.left - pr.left,
+    y: ar.top - pr.top,
+    width: ar.width,
+    height: ar.height
   }
 }
 
@@ -40,7 +41,6 @@ onMounted(() => {
     setTimeout(updateFocusRect, 0)
   }, (props.animationDuration + props.pauseBetweenAnimations) * 1000)
   setTimeout(updateFocusRect, 200)
-
   if (containerRef.value) {
     resizeObserver = new ResizeObserver(() => updateFocusRect())
     resizeObserver.observe(containerRef.value)
@@ -63,6 +63,8 @@ onUnmounted(() => {
       :class="{ active: index === currentIndex }"
       :style="{
         filter: index === currentIndex ? 'blur(0px)' : `blur(${blurAmount}px)`,
+        '--border-color': borderColor,
+        '--glow-color': glowColor,
         transition: `filter ${animationDuration}s ease`
       }"
     >{{ word }}</span>
@@ -92,32 +94,46 @@ onUnmounted(() => {
 .focus-container {
   position: relative;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.3em;
+  gap: 1em;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  outline: none;
+  user-select: none;
 }
 .focus-word {
-  display: inline-block;
-  will-change: filter;
+  position: relative;
+  font-size: 3rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: filter 0.3s ease, color 0.3s ease;
+  outline: none;
+  user-select: none;
   color: #fff;
+}
+.focus-word.active {
+  filter: blur(0);
 }
 .focus-frame {
   position: absolute;
+  top: 0;
+  left: 0;
   pointer-events: none;
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 0 20px var(--glow-color), 0 0 60px var(--glow-color);
+  box-sizing: content-box;
+  border: none;
   z-index: 1;
 }
 .corner {
   position: absolute;
-  width: 16px;
-  height: 16px;
-  border-color: var(--border-color);
-  border-style: solid;
+  width: 1rem;
+  height: 1rem;
+  border: 3px solid var(--border-color, #fff);
+  filter: drop-shadow(0px 0px 4px var(--border-color, #fff));
+  border-radius: 3px;
+  transition: none;
 }
-.top-left { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
-.top-right { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
-.bottom-left { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
-.bottom-right { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+.top-left { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+.top-right { top: -10px; right: -10px; border-left: none; border-bottom: none; }
+.bottom-left { bottom: -10px; left: -10px; border-right: none; border-top: none; }
+.bottom-right { bottom: -10px; right: -10px; border-left: none; border-top: none; }
 </style>

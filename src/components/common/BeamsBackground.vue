@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import * as THREE from 'three'
+
+const THREE = window.THREE
 
 const props = defineProps({
   beamWidth: { type: Number, default: 2 },
@@ -183,7 +184,7 @@ void main() {
 
 onMounted(() => {
   const container = containerRef.value
-  if (!container) return
+  if (!container || !window.THREE) return
 
   const w = container.clientWidth
   const h = container.clientHeight

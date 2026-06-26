@@ -301,10 +301,8 @@ onUnmounted(() => {})
 
 .hero-title {
   font-family: var(--font-title);
-  font-size: clamp(2.4rem, 6.5vw, 5.2rem);
   font-weight: 700;
   line-height: 1.25;
-  letter-spacing: 0.03em;
   margin-bottom: 15px;
   animation: fadeUp 1s var(--ease-out) 0.5s both;
 }
