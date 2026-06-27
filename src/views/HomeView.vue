@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import GlassModal from '@/components/common/GlassModal.vue'
-import BeamsBackground from '@/components/common/BeamsBackground.vue'
+import FloatingLinesBackground from '@/components/common/FloatingLinesBackground.vue'
 import TrueFocus from '@/components/common/TrueFocus.vue'
 import SplitText from '@/components/common/SplitText.vue'
 import ShinyText from '@/components/common/ShinyText.vue'
@@ -76,15 +76,15 @@ onUnmounted(() => {})
 <template>
   <!-- Hero Section -->
   <section class="hero">
-    <BeamsBackground
-      :beamWidth="2"
-      :beamHeight="15"
-      :beamNumber="12"
-      lightColor="#ffffff"
-      :speed="2"
-      :noiseIntensity="1.75"
-      :scale="0.2"
-      :rotation="0"
+    <FloatingLinesBackground
+      :linesGradient="['#E945F5','#7C3AED','#E945F5']"
+      :animationSpeed="1"
+      :interactive="true"
+      :bendRadius="5"
+      :bendStrength="-0.5"
+      :mouseDamping="0.11"
+      :parallax="true"
+      :parallaxStrength="0.2"
     />
     <div class="hero-content">
       <div class="school-badge"><ShinyText text="重庆校墙联核心成员" color="#b5a5d4" shineColor="#d6adfc" :speed="2" :spread="120" /></div>
