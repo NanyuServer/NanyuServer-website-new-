@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import GlassModal from '@/components/common/GlassModal.vue'
-import PrismBackground from '@/components/common/PrismBackground.vue'
+import BeamsBackground from '@/components/common/BeamsBackground.vue'
 import TrueFocus from '@/components/common/TrueFocus.vue'
 
 const showModal = ref(false)
@@ -74,20 +74,15 @@ onUnmounted(() => {})
 <template>
   <!-- Hero Section -->
   <section class="hero">
-    <PrismBackground
-      :height="3.5"
-      :baseWidth="5.5"
-      animationType="rotate"
-      :glow="1"
-      :noise="0"
-      :transparent="true"
-      :scale="3.6"
-      :hueShift="0"
-      :colorFrequency="1"
-      :hoverStrength="2"
-      :inertia="0.05"
-      :bloom="1"
-      :timeScale="0.5"
+    <BeamsBackground
+      :beamWidth="2"
+      :beamHeight="15"
+      :beamNumber="12"
+      lightColor="#ffffff"
+      :speed="2"
+      :noiseIntensity="1.75"
+      :scale="0.2"
+      :rotation="0"
     />
     <div class="hero-content">
       <div class="school-badge">重庆校墙联核心成员</div>
