@@ -13,44 +13,16 @@ const props = defineProps({
 })
 
 const containerRef = ref(null)
-let raf = 0, renderer, scene, camera, mesh, clock, ro
+let raf = 0, renderer, scene, camera, mesh, clock, ro, canvas
 
-function createPlanes(n, w, h) {
-  const THREE = window.THREE
-  const geo = new THREE.BufferGeometry()
-  const seg = 100
-  const nv = n * (seg + 1) * 2
-  const pos = new Float32Array(nv * 3)
-  const idx = []
-  const uv = new Float32Array(nv * 2)
-  let vo = 0
-  const tw = n * w, x0 = -tw / 2
+const VERT = `
+varying vec2 vUv;
+varying vec3 vPos;
+uniform float uTime, uSpeed, uScale;
 
-  for (let i = 0; i < n; i++) {
-    const x = x0 + i * w
-    const ux = Math.random() * 300
-    const uy = Math.random() * 300
-    for (let j = 0; j <= seg; j++) {
-      const y = h * (j / seg - 0.5)
-      pos[vo * 3] = x; pos[vo * 3 + 1] = y; pos[vo * 3 + 2] = 0
-      pos[(vo + 1) * 3] = x + w; pos[(vo + 1) * 3 + 1] = y; pos[(vo + 1) * 3 + 2] = 0
-      uv[vo * 2] = ux; uv[vo * 2 + 1] = j / seg + uy
-      uv[(vo + 1) * 2] = ux + 1; uv[(vo + 1) * 2 + 1] = j / seg + uy
-      if (j < seg) { const a = vo, b = vo + 1, c = vo + 2, d = vo + 3; idx.push(a, b, c, c, b, d) }
-      vo += 2
-    }
-  }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
-  geo.setIndex(idx)
-  geo.computeVertexNormals()
-  return geo
-}
-
-const NOISE_GLSL = `
-float random(in vec2 st){ return fract(sin(dot(st, vec2(12.9898,78.233)))*43758.5453123); }
+float random(in vec2 st){ return fract(sin(dot(st,vec2(12.9898,78.233)))*43758.5453123); }
 float noise(in vec2 st){ vec2 i=floor(st); vec2 f=fract(st); float a=random(i); float b=random(i+vec2(1,0)); float c=random(i+vec2(0,1)); float d=random(i+vec2(1,1)); vec2 u=f*f*(3.-2.*f); return mix(a,b,u.x)+(c-a)*u.y*(1.-u.x)+(d-b)*u.x*u.y; }
-vec4 permute(vec4 x){ return mod(((x*34.)+1.)*x, 289.); }
+vec4 permute(vec4 x){ return mod(((x*34.)+1.)*x,289.); }
 vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159-0.85373472095314*r; }
 vec3 fade(vec3 t){ return t*t*t*(t*(t*6.-15.)+10.); }
 float cnoise(vec3 P){
@@ -68,58 +40,121 @@ float cnoise(vec3 P){
   float n001=dot(g001,vec3(Pf0.xy,Pf1.z)), n101=dot(g101,vec3(Pf1.x,Pf0.y,Pf1.z)), n011=dot(g011,vec3(Pf0.x,Pf1.yz)), n111=dot(g111,Pf1);
   vec3 fade_xyz=fade(Pf0); vec4 n_z=mix(vec4(n000,n100,n010,n110),vec4(n001,n101,n011,n111),fade_xyz.z);
   vec2 n_yz=mix(n_z.xy,n_z.zw,fade_xyz.y); return 2.2*mix(n_yz.x,n_yz.y,fade_xyz.x);
+}
+
+float getPos(vec3 p){ return cnoise(vec3(p.x*0.,p.y-vUv.y,p.z+uTime*uSpeed*3.)*uScale); }
+void main(){
+  vUv=uv;
+  vec3 p=position;
+  p.z+=getPos(p);
+  vPos=p;
+  vec4 mv=modelViewMatrix*vec4(p,1.);
+  gl_Position=projectionMatrix*mv;
 }`
 
-const VERT = `varying vec2 vUv; varying vec3 vPos;
-uniform float uTime, uSpeed, uScale;
-${NOISE_GLSL}
-float getPos(vec3 p){ return cnoise(vec3(p.x*0.,p.y-vUv.y,p.z+uTime*uSpeed*3.)*uScale); }
-void main(){ vUv=uv; vec3 p=position; p.z+=getPos(p); vPos=p; vec4 mv=modelViewMatrix*vec4(p,1.); gl_Position=projectionMatrix*mv; }`
-
-const FRAG = `varying vec3 vPos; varying vec2 vUv;
+const FRAG = `
+varying vec3 vPos;
+varying vec2 vUv;
 uniform float uNoiseIntensity;
-${NOISE_GLSL}
-void main(){ float d=(vPos.z+1.)*.5; vec3 c=mix(vec3(.02,.01,.1),vec3(.15,.08,.4),d); c+=vec3(.05,.02,.2)*(1.-abs(vUv.y-.5)*2.); float r=noise(gl_FragCoord.xy); c-=r/15.*uNoiseIntensity; c=clamp(c,0.,1.); gl_FragColor=vec4(c,1.); }`
 
-onMounted(() => {
-  const T = window.THREE
-  if (!T) { console.warn('[Beams] THREE not loaded'); return }
+float random(in vec2 st){ return fract(sin(dot(st,vec2(12.9898,78.233)))*43758.5453123); }
+float noise(in vec2 st){ vec2 i=floor(st); vec2 f=fract(st); float a=random(i); float b=random(i+vec2(1,0)); float c=random(i+vec2(0,1)); float d=random(i+vec2(1,1)); vec2 u=f*f*(3.-2.*f); return mix(a,b,u.x)+(c-a)*u.y*(1.-u.x)+(d-b)*u.x*u.y; }
+
+void main(){
+  float d=(vPos.z+1.)*.5;
+  vec3 c=mix(vec3(.02,.01,.1),vec3(.15,.08,.4),d);
+  c+=vec3(.05,.02,.2)*(1.-abs(vUv.y-.5)*2.);
+  float r=noise(gl_FragCoord.xy);
+  c-=r/15.*uNoiseIntensity;
+  c=clamp(c,0.,1.);
+  gl_FragColor=vec4(c,1.);
+}`
+
+function init() {
+  const THREE = window.THREE
+  if (!THREE) { setTimeout(init, 100); return }
+
   const ct = containerRef.value
-  if (!ct || !ct.clientWidth) { requestAnimationFrame(() => onMounted.call ? onMounted() : 0); return }
+  if (!ct || ct.clientWidth < 2) { setTimeout(init, 100); return }
 
-  renderer = new T.WebGLRenderer({ antialias: true, alpha: true })
-  ct.appendChild(renderer.domElement)
-  renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;'
+  canvas = document.createElement('canvas')
+  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;'
+  ct.appendChild(canvas)
 
-  scene = new T.Scene()
-  scene.background = new T.Color(0x000000)
-  camera = new T.PerspectiveCamera(30, 1, 1, 100)
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+  scene = new THREE.Scene()
+  scene.background = new THREE.Color(0x000000)
+
+  camera = new THREE.PerspectiveCamera(30, 1, 1, 100)
   camera.position.set(0, 0, 20)
-  clock = new T.Clock()
 
-  const mat = new T.ShaderMaterial({
-    vertexShader: VERT, fragmentShader: FRAG,
-    uniforms: { uTime: { value: 0 }, uSpeed: { value: props.speed }, uScale: { value: props.scale }, uNoiseIntensity: { value: props.noiseIntensity } },
-    side: T.DoubleSide
+  clock = new THREE.Clock()
+
+  const seg = 100
+  const n = props.beamNumber
+  const w = props.beamWidth
+  const h = props.beamHeight
+  const nv = n * (seg + 1) * 2
+  const pos = new Float32Array(nv * 3)
+  const idx = []
+  const uv = new Float32Array(nv * 2)
+  let vo = 0
+  const tw = n * w
+  const x0 = -tw / 2
+
+  for (let i = 0; i < n; i++) {
+    const x = x0 + i * w
+    const ux = Math.random() * 100
+    const uy = Math.random() * 100
+    for (let j = 0; j <= seg; j++) {
+      const y = h * (j / seg - 0.5)
+      pos[vo * 3] = x; pos[vo * 3 + 1] = y; pos[vo * 3 + 2] = 0
+      pos[(vo + 1) * 3] = x + w; pos[(vo + 1) * 3 + 1] = y; pos[(vo + 1) * 3 + 2] = 0
+      uv[vo * 2] = ux; uv[vo * 2 + 1] = j / seg + uy
+      uv[(vo + 1) * 2] = ux + 1; uv[(vo + 1) * 2 + 1] = j / seg + uy
+      if (j < seg) { const a = vo, b = vo + 1, c = vo + 2, d = vo + 3; idx.push(a, b, c, c, b, d) }
+      vo += 2
+    }
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+  geo.setIndex(idx)
+  geo.computeVertexNormals()
+
+  const mat = new THREE.ShaderMaterial({
+    vertexShader: VERT,
+    fragmentShader: FRAG,
+    uniforms: {
+      uTime: { value: 0 },
+      uSpeed: { value: props.speed },
+      uScale: { value: props.scale },
+      uNoiseIntensity: { value: props.noiseIntensity }
+    },
+    side: THREE.DoubleSide
   })
-  const geo = createPlanes(props.beamNumber, props.beamWidth, props.beamHeight)
-  mesh = new T.Mesh(geo, mat)
-  mesh.rotation.z = T.MathUtils.degToRad(props.rotation)
 
-  const dir = new T.DirectionalLight(props.lightColor, 1)
+  mesh = new THREE.Mesh(geo, mat)
+  mesh.rotation.z = THREE.MathUtils.degToRad(props.rotation)
+
+  const dir = new THREE.DirectionalLight(props.lightColor, 1)
   dir.position.set(0, 3, 10)
-  const amb = new T.AmbientLight(0x404040, 0.5)
-  const group = new T.Group()
+  const amb = new THREE.AmbientLight(0x404040, 0.5)
+
+  const group = new THREE.Group()
   group.add(mesh)
   group.add(dir)
   group.add(amb)
+  scene.add(group)
 
   function resize() {
-    const w = ct.clientWidth || 1
-    const h = ct.clientHeight || 1
-    renderer.setSize(w, h)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    camera.aspect = w / Math.max(h, 1)
+    const cw = ct.clientWidth || 1
+    const ch = ct.clientHeight || 1
+    renderer.setSize(cw, ch)
+    camera.aspect = cw / Math.max(ch, 1)
     camera.updateProjectionMatrix()
   }
   resize()
@@ -130,19 +165,19 @@ onMounted(() => {
     raf = requestAnimationFrame(loop)
     const dt = clock.getDelta()
     mat.uniforms.uTime.value += dt
-    group.rotation.z += T.MathUtils.degToRad(props.rotation * dt * 0.1)
-    scene.children = []
-    scene.add(group)
+    group.rotation.z += THREE.MathUtils.degToRad(props.rotation * dt * 0.1)
     renderer.render(scene, camera)
   }
   loop()
-})
+}
+
+onMounted(() => { setTimeout(init, 50) })
 
 onUnmounted(() => {
   if (raf) cancelAnimationFrame(raf)
   if (ro) ro.disconnect()
-  if (renderer) { renderer.domElement.remove(); renderer.dispose() }
-  if (mesh) mesh.geometry.dispose()
+  if (renderer) renderer.dispose()
+  if (canvas && canvas.parentElement) canvas.remove()
 })
 </script>
 
@@ -151,5 +186,12 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.beams-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; }
+.beams-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
 </style>
