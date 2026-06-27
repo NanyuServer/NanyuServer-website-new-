@@ -1,113 +1,218 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const expanded = ref(false)
-const scrolled = ref(false)
-const animating = ref(false)
-const barsRef = ref(null)
+const navRef = ref(null)
+const isHamburgerOpen = ref(false)
+const isExpanded = ref(false)
+const cardsRef = ref([])
 
 const menuItems = [
   {
     label: '万能墙服务',
+    bgColor: 'rgba(59, 31, 126, 0.55)',
+    textColor: '#e0d7ff',
     links: [
-      { label: '稿件查询', to: '/query' },
-      { label: '有求必应', to: '/feedback' },
-      { label: '公益课程', to: '/course' }
+      { label: '稿件查询', to: '/query', ariaLabel: '稿件查询' },
+      { label: '有求必应', to: '/feedback', ariaLabel: '有求必应' },
+      { label: '公益课程', to: '/course', ariaLabel: '公益课程' }
     ]
   },
   {
     label: '合作服务',
+    bgColor: 'rgba(45, 27, 107, 0.55)',
+    textColor: '#e0d7ff',
     links: [
-      { label: '合作与共创', to: '/cooperation' }
+      { label: '合作与共创', to: '/cooperation', ariaLabel: '合作与共创' }
     ]
   },
   {
     label: '关于我们',
+    bgColor: 'rgba(31, 18, 80, 0.55)',
+    textColor: '#e0d7ff',
     links: [
-      { label: '招贤纳士', to: '/recruit' },
-      { label: '关于我们', to: '/about' }
+      { label: '招贤纳士', to: '/recruit', ariaLabel: '招贤纳士' },
+      { label: '关于我们', to: '/about', ariaLabel: '关于我们' }
     ]
   }
 ]
 
-const isActive = (path) => route.path === path
+const expandedHeight = 260
+let animating = false
 
-function toggle() {
-  if (animating.value) return
-  animating.value = true
-  expanded.value = !expanded.value
-  if (expanded.value) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
+function calculateHeight() {
+  const navEl = navRef.value
+  if (!navEl) return expandedHeight
+  const isMobile = window.matchMedia('(max-width: 768px)').matches
+  if (isMobile) {
+    const contentEl = navEl.querySelector('.card-nav-content')
+    if (contentEl) {
+      const topBar = 60
+      const padding = 16
+      const contentHeight = contentEl.scrollHeight
+      return topBar + contentHeight + padding
+    }
   }
-  setTimeout(() => { animating.value = false }, 500)
+  return expandedHeight
+}
+
+function animateHeight(from, to, duration, onDone) {
+  const navEl = navRef.value
+  if (!navEl) return
+  const start = performance.now()
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1)
+    const ease = 1 - Math.pow(1 - t, 3)
+    navEl.style.height = (from + (to - from) * ease) + 'px'
+    if (t < 1) requestAnimationFrame(tick)
+    else if (onDone) onDone()
+  }
+  requestAnimationFrame(tick)
+}
+
+function animateCards(show, delayBase) {
+  const cards = cardsRef.value
+  cards.forEach((card, i) => {
+    if (!card) return
+    const delay = delayBase + i * 80
+    if (show) {
+      card.style.transition = 'none'
+      card.style.transform = 'translateY(50px)'
+      card.style.opacity = '0'
+      card.offsetHeight
+      setTimeout(() => {
+        card.style.transition = 'transform 0.4s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.4s cubic-bezier(0.33, 1, 0.68, 1)'
+        card.style.transform = 'translateY(0)'
+        card.style.opacity = '1'
+      }, delay)
+    } else {
+      card.style.transition = 'transform 0.3s ease, opacity 0.3s ease'
+      card.style.transform = 'translateY(30px)'
+      card.style.opacity = '0'
+    }
+  })
+}
+
+function toggleMenu() {
+  const navEl = navRef.value
+  if (!navEl || animating) return
+
+  if (!isHamburgerOpen.value) {
+    isHamburgerOpen.value = true
+    isExpanded.value = true
+    animating = true
+    document.body.style.overflow = 'hidden'
+
+    nextTick(() => {
+      const targetH = calculateHeight()
+      animateHeight(60, targetH, 400, () => { animating = false })
+      animateCards(true, 100)
+    })
+  } else {
+    isHamburgerOpen.value = false
+    animating = true
+
+    animateCards(false, 0)
+    setTimeout(() => {
+      const currentH = navRef.value ? navRef.value.offsetHeight : expandedHeight
+      animateHeight(currentH, 60, 350, () => {
+        isExpanded.value = false
+        animating = false
+        document.body.style.overflow = ''
+      })
+    }, 100)
+  }
 }
 
 function closeMenu() {
-  if (!expanded.value) return
-  expanded.value = false
-  document.body.style.overflow = ''
+  if (!isExpanded.value || !navRef.value) return
+  isHamburgerOpen.value = false
+  animating = true
+
+  animateCards(false, 0)
+  setTimeout(() => {
+    const currentH = navRef.value ? navRef.value.offsetHeight : expandedHeight
+    animateHeight(currentH, 60, 350, () => {
+      isExpanded.value = false
+      animating = false
+      document.body.style.overflow = ''
+    })
+  }, 100)
 }
 
 function goQQ() {
   window.open('https://qm.qq.com/q/FHAbiDBIQO', '_blank')
 }
 
-let scrollHandler = null
+function setCardRef(i) {
+  return (el) => { if (el) cardsRef.value[i] = el }
+}
+
+let resizeHandler = null
 onMounted(() => {
-  scrollHandler = () => { scrolled.value = window.scrollY > 80 }
-  window.addEventListener('scroll', scrollHandler, { passive: true })
+  resizeHandler = () => {
+    if (isExpanded.value && navRef.value) {
+      navRef.value.style.height = calculateHeight() + 'px'
+    }
+  }
+  window.addEventListener('resize', resizeHandler)
 })
 onUnmounted(() => {
-  window.removeEventListener('scroll', scrollHandler)
+  if (resizeHandler) window.removeEventListener('resize', resizeHandler)
   document.body.style.overflow = ''
 })
 </script>
 
 <template>
-  <div class="cardnav-wrap" :class="{ expanded, scrolled }">
-    <nav class="cardnav" ref="barsRef">
-      <div class="cardnav-bar">
-        <button
-          class="cardnav-hamburger"
-          :class="{ open: expanded }"
-          @click="toggle"
-          :aria-label="expanded ? '关闭菜单' : '打开菜单'"
-          :aria-expanded="expanded"
+  <div class="card-nav-container">
+    <nav ref="navRef" class="card-nav" :class="{ open: isExpanded }">
+      <div class="card-nav-top">
+        <div
+          class="hamburger-menu"
+          :class="{ open: isHamburgerOpen }"
+          @click="toggleMenu"
+          role="button"
+          :aria-label="isExpanded ? '关闭菜单' : '打开菜单'"
+          :aria-expanded="isExpanded"
+          tabindex="0"
+          @keydown.enter="toggleMenu"
+          @keydown.space.prevent="toggleMenu"
         >
-          <div class="ham-line ham-top" />
-          <div class="ham-line ham-bottom" />
-        </button>
+          <div class="hamburger-line" />
+          <div class="hamburger-line" />
+        </div>
 
-        <router-link to="/" class="cardnav-logo" @click="closeMenu">
-          <img src="/logo.webp" alt="南渝万能墙" />
-        </router-link>
+        <div class="logo-container">
+          <router-link to="/" class="logo-link" @click="closeMenu">
+            <img src="/logo.webp" alt="南渝万能墙" class="logo" />
+          </router-link>
+        </div>
 
-        <button class="cardnav-cta" @click="goQQ">
+        <button type="button" class="card-nav-cta-button" @click="goQQ">
           进入万能墙
         </button>
       </div>
 
-      <div class="cardnav-content" :inert="!expanded || undefined">
+      <div class="card-nav-content" :aria-hidden="!isExpanded">
         <div
           v-for="(item, idx) in menuItems"
-          :key="idx"
-          class="cardnav-card"
+          :key="item.label"
+          :ref="setCardRef(idx)"
+          class="nav-card"
+          :style="{ backgroundColor: item.bgColor, color: item.textColor }"
         >
-          <div class="card-label">{{ item.label }}</div>
-          <div class="card-links">
+          <div class="nav-card-label">{{ item.label }}</div>
+          <div class="nav-card-links">
             <router-link
               v-for="link in item.links"
               :key="link.to"
               :to="link.to"
-              class="card-link"
-              :class="{ active: isActive(link.to) }"
+              class="nav-card-link"
+              :aria-label="link.ariaLabel"
               @click="closeMenu"
             >
-              <svg class="card-link-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="nav-card-link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="7" y1="17" x2="17" y2="7" />
                 <polyline points="7 7 17 7 17 17" />
               </svg>
@@ -116,365 +221,250 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-
-      <div class="cardnav-glow" />
     </nav>
-
-    <div class="cardnav-backdrop" :class="{ visible: expanded }" @click="closeMenu" />
   </div>
 </template>
 
 <style scoped>
-/* ── Container ── */
-.cardnav-wrap {
+.card-nav-container {
   position: fixed;
-  top: 1.4em;
+  top: 2em;
   left: 50%;
   transform: translateX(-50%);
-  width: min(92%, 700px);
+  width: 90%;
+  max-width: 800px;
   z-index: 9000;
-  transition: width 0.4s var(--ease-out);
+  box-sizing: border-box;
 }
 
-.cardnav-wrap.expanded {
-  width: min(92%, 720px);
-}
-
-.cardnav {
-  position: relative;
+.card-nav {
+  display: block;
+  height: 60px;
+  padding: 0;
+  background: rgba(18, 10, 32, 0.65);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.75rem;
-  overflow: hidden;
-  transition: box-shadow 0.5s ease, border-color 0.5s ease;
-  border: 1px solid rgba(179, 136, 255, 0.18);
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 40px rgba(123, 85, 212, 0.08);
-}
-
-.cardnav-wrap.scrolled .cardnav {
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 60px rgba(123, 85, 212, 0.12);
-  border-color: rgba(179, 136, 255, 0.25);
-}
-
-.cardnav-wrap.expanded .cardnav {
-  box-shadow:
-    0 12px 56px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 72px rgba(123, 85, 212, 0.15);
-  border-color: rgba(179, 136, 255, 0.3);
-}
-
-/* ── Fluid Glass background ── */
-.cardnav {
-  background: rgba(18, 10, 32, 0.78);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-}
-
-.cardnav::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    rgba(179, 136, 255, 0.03) 30%,
-    transparent 60%,
-    rgba(123, 85, 212, 0.04) 100%
-  );
-  pointer-events: none;
-  z-index: 5;
-}
-
-.cardnav-glow {
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 4;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  background: linear-gradient(
-    135deg,
-    transparent 0%,
-    rgba(179, 136, 255, 0.15) 30%,
-    transparent 50%,
-    rgba(232, 111, 163, 0.12) 70%,
-    transparent 100%
-  );
-  background-size: 200% 200%;
-  animation: glowShift 6s ease infinite paused;
-}
-
-.cardnav-wrap.expanded .cardnav-glow {
-  opacity: 1;
-  animation-play-state: running;
-}
-
-@keyframes glowShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* ── Top Bar ── */
-.cardnav-bar {
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   position: relative;
-  z-index: 6;
-  height: 44px;
+  overflow: hidden;
+  will-change: height;
+}
+
+.card-nav-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.75rem 0 0.85rem;
-  background: transparent;
+  padding: 0.5rem 0.45rem 0.55rem 1.1rem;
+  z-index: 2;
 }
 
-/* ── Hamburger ── */
-.cardnav-hamburger {
-  width: 36px;
-  height: 36px;
+.hamburger-menu {
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  background: none;
-  border: none;
   cursor: pointer;
+  gap: 6px;
   border-radius: 6px;
-  transition: background 0.3s;
+  padding: 0 4px;
+  transition: background 0.2s;
 }
-.cardnav-hamburger:hover {
+.hamburger-menu:hover {
   background: rgba(179, 136, 255, 0.1);
 }
 
-.ham-line {
-  width: 20px;
+.hamburger-line {
+  width: 30px;
   height: 2px;
-  background: rgba(236, 234, 239, 0.85);
-  border-radius: 2px;
-  transition: transform 0.35s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.25s;
+  background-color: rgba(236, 234, 239, 0.9);
+  transition:
+    transform 0.25s ease,
+    opacity 0.2s ease,
+    margin 0.3s ease;
   transform-origin: 50% 50%;
 }
-.cardnav-hamburger:hover .ham-line {
-  background: #b388ff;
+
+.hamburger-menu.open .hamburger-line:first-child {
+  transform: translateY(4px) rotate(45deg);
 }
-.cardnav-hamburger.open .ham-top {
-  transform: translateY(3.5px) rotate(45deg);
-}
-.cardnav-hamburger.open .ham-bottom {
-  transform: translateY(-3.5px) rotate(-45deg);
+.hamburger-menu.open .hamburger-line:last-child {
+  transform: translateY(-4px) rotate(-45deg);
 }
 
-/* ── Logo ── */
-.cardnav-logo {
+.logo-container {
+  display: flex;
+  align-items: center;
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+}
+.logo-link {
   display: flex;
   align-items: center;
-  z-index: 7;
   text-decoration: none;
 }
-.cardnav-logo img {
-  height: 1.6rem;
-  width: auto;
+.logo {
+  height: 28px;
   filter: brightness(1.15);
 }
 
-/* ── CTA ── */
-.cardnav-cta {
+.card-nav-cta-button {
+  background: rgba(123, 85, 212, 0.35);
+  color: white;
+  border: 1px solid rgba(179, 136, 255, 0.2);
+  border-radius: calc(0.75rem - 0.35rem);
+  padding: 0 1rem;
+  height: 100%;
+  font-weight: 500;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
   display: flex;
   align-items: center;
-  height: 30px;
-  padding: 0 0.85rem;
-  border: 1px solid rgba(179, 136, 255, 0.25);
-  border-radius: 0.5rem;
-  background: rgba(123, 85, 212, 0.25);
-  color: #f0e6ff;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
   white-space: nowrap;
+}
+.card-nav-cta-button:hover {
+  background: rgba(123, 85, 212, 0.55);
+}
+
+.card-nav-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 60px;
+  bottom: 0;
+  padding: 0.5rem;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-nav.open .card-nav-content {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.nav-card {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: calc(0.75rem - 0.2rem);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   position: relative;
-  z-index: 7;
-}
-.cardnav-cta:hover {
-  background: rgba(123, 85, 212, 0.45);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(75, 47, 163, 0.4);
-}
-
-/* ── Expandable Content ── */
-.cardnav-content {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: 0fr;
-  gap: 8px;
-  padding: 0 6px;
-  overflow: hidden;
-  transition: grid-template-rows 0.45s cubic-bezier(0.77, 0, 0.175, 1);
-  position: relative;
-  z-index: 3;
-}
-
-.cardnav-wrap.expanded .cardnav-content {
-  grid-template-rows: 1fr;
-  padding-bottom: 10px;
-}
-
-.cardnav-content > * {
-  overflow: hidden;
-  min-height: 0;
-}
-
-/* ── Cards ── */
-.cardnav-card {
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  padding: 12px 16px;
+  gap: 8px;
+  user-select: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 0.35s cubic-bezier(0.77, 0, 0.175, 1),
-    transform 0.35s cubic-bezier(0.77, 0, 0.175, 1),
-    border-color 0.3s;
-  position: relative;
+  transform: translateY(50px);
 }
 
-.cardnav-wrap.expanded .cardnav-card {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.cardnav-wrap.expanded .cardnav-card:nth-child(1) { transition-delay: 0.1s; }
-.cardnav-wrap.expanded .cardnav-card:nth-child(2) { transition-delay: 0.16s; }
-.cardnav-wrap.expanded .cardnav-card:nth-child(3) { transition-delay: 0.22s; }
-
-.cardnav-card:hover {
-  border-color: rgba(255, 255, 255, 0.45);
-}
-
-.card-label {
+.nav-card-label {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 22px;
+  letter-spacing: -0.5px;
   color: #f0e6ff;
 }
 
-.card-links {
+.nav-card-links {
+  margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
-.card-link {
+.nav-card-link {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  color: rgba(224, 215, 255, 0.7);
+  transition: color 0.25s, opacity 0.3s ease;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 0.82rem;
-  color: rgba(224, 215, 255, 0.7);
-  text-decoration: none;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: color 0.25s, background 0.25s, transform 0.2s;
-  width: fit-content;
+  gap: 6px;
+  padding: 3px 0;
 }
-.card-link:hover {
+.nav-card-link:hover {
   color: #ffffff;
-  background: rgba(179, 136, 255, 0.15);
-  transform: translateX(2px);
-}
-.card-link.active {
-  color: #b388ff;
-  background: rgba(179, 136, 255, 0.12);
+  opacity: 1;
 }
 
-.card-link-arrow {
+.nav-card-link-icon {
   flex-shrink: 0;
   opacity: 0.5;
   transition: opacity 0.25s, transform 0.25s;
 }
-.card-link:hover .card-link-arrow {
+.nav-card-link:hover .nav-card-link-icon {
   opacity: 1;
   transform: translate(2px, -2px);
 }
 
-/* ── Backdrop ── */
-.cardnav-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-}
-.cardnav-backdrop.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* ── Responsive ── */
 @media (max-width: 768px) {
-  .cardnav-wrap {
-    width: min(92%, 480px);
-    top: 1em;
+  .card-nav-container {
+    width: 90%;
+    top: 1.2em;
   }
 
-  .cardnav-wrap.expanded {
-    width: 94%;
+  .card-nav-top {
+    padding: 0.5rem 1rem;
+    justify-content: space-between;
   }
 
-  .cardnav-content {
-    grid-template-columns: 1fr;
-    gap: 6px;
+  .hamburger-menu {
+    order: 2;
   }
 
-  .cardnav-wrap.expanded .cardnav-content {
-    grid-template-rows: 1fr;
-    padding-bottom: 8px;
+  .logo-container {
+    position: static;
+    transform: none;
+    order: 1;
   }
 
-  .cardnav-card {
-    padding: 10px 12px;
+  .card-nav-cta-button {
+    display: none;
   }
 
-  .card-label {
-    font-size: 0.95rem;
+  .card-nav-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 0.5rem;
+    bottom: 0;
+    justify-content: flex-start;
   }
 
-  .card-link {
-    font-size: 0.8rem;
+  .nav-card {
+    height: auto;
+    min-height: 60px;
+    flex: 1 1 auto;
+    max-height: none;
   }
-}
 
-@media (max-width: 480px) {
-  .cardnav-wrap {
-    width: 94%;
-    top: 0.7em;
+  .nav-card-label {
+    font-size: 18px;
   }
-  .cardnav-bar {
-    padding: 0 0.5rem 0 0.65rem;
-  }
-  .cardnav-logo img {
-    height: 1.4rem;
+
+  .nav-card-link {
+    font-size: 15px;
   }
 }
 </style>
