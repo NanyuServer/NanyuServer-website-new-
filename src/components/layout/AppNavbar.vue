@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -11,8 +11,6 @@ const barsRef = ref(null)
 const menuItems = [
   {
     label: '万能墙服务',
-    color: '#3b1f7e',
-    textColor: '#e0d7ff',
     links: [
       { label: '稿件查询', to: '/query' },
       { label: '有求必应', to: '/feedback' },
@@ -21,16 +19,12 @@ const menuItems = [
   },
   {
     label: '合作服务',
-    color: '#2d1b6b',
-    textColor: '#e0d7ff',
     links: [
       { label: '合作与共创', to: '/cooperation' }
     ]
   },
   {
     label: '关于我们',
-    color: '#1f1250',
-    textColor: '#e0d7ff',
     links: [
       { label: '招贤纳士', to: '/recruit' },
       { label: '关于我们', to: '/about' }
@@ -62,12 +56,6 @@ function goQQ() {
   window.open('https://qm.qq.com/q/FHAbiDBIQO', '_blank')
 }
 
-const cardStyle = (item) => ({
-  background: `linear-gradient(180deg, ${item.color}dd 0%, ${item.color}66 100%)`,
-  color: item.textColor,
-  borderColor: `${item.color}66`
-})
-
 let scrollHandler = null
 onMounted(() => {
   scrollHandler = () => { scrolled.value = window.scrollY > 80 }
@@ -82,7 +70,6 @@ onUnmounted(() => {
 <template>
   <div class="cardnav-wrap" :class="{ expanded, scrolled }">
     <nav class="cardnav" ref="barsRef">
-      <!-- Fluid Glass top bar -->
       <div class="cardnav-bar">
         <button
           class="cardnav-hamburger"
@@ -100,20 +87,15 @@ onUnmounted(() => {
         </router-link>
 
         <button class="cardnav-cta" @click="goQQ">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-right:6px">
-            <path d="M12.67 0H3.33C1.49 0 0 1.49 0 3.33v9.34C0 14.51 1.49 16 3.33 16h9.34C14.51 16 16 14.51 16 12.67V3.33C16 1.49 14.51 0 12.67 0zM5.33 12.67H3.33V5.33h2v7.34zM4.33 4.49a1.16 1.16 0 110-2.32 1.16 1.16 0 010 2.32zM13.33 12.67h-2V8.93c0-2.24-3.67-2.07-3.67.01v3.73h-2V5.33h2v1.18c.93-1.72 4.67-1.85 4.67 1.65v4.51z" fill="currentColor"/>
-          </svg>
           进入万能墙
         </button>
       </div>
 
-      <!-- Expandable card area -->
       <div class="cardnav-content" :inert="!expanded || undefined">
         <div
           v-for="(item, idx) in menuItems"
           :key="idx"
           class="cardnav-card"
-          :style="cardStyle(item)"
         >
           <div class="card-label">{{ item.label }}</div>
           <div class="card-links">
@@ -135,11 +117,9 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Fluid Glass border glow -->
       <div class="cardnav-glow" />
     </nav>
 
-    <!-- Backdrop overlay when expanded -->
     <div class="cardnav-backdrop" :class="{ visible: expanded }" @click="closeMenu" />
   </div>
 </template>
@@ -148,21 +128,21 @@ onUnmounted(() => {
 /* ── Container ── */
 .cardnav-wrap {
   position: fixed;
-  top: 1.6em;
+  top: 1.4em;
   left: 50%;
   transform: translateX(-50%);
-  width: min(90%, 420px);
+  width: min(92%, 700px);
   z-index: 9000;
   transition: width 0.4s var(--ease-out);
 }
 
 .cardnav-wrap.expanded {
-  width: min(92%, 680px);
+  width: min(92%, 720px);
 }
 
 .cardnav {
   position: relative;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   overflow: hidden;
   transition: box-shadow 0.5s ease, border-color 0.5s ease;
   border: 1px solid rgba(179, 136, 255, 0.18);
@@ -245,27 +225,27 @@ onUnmounted(() => {
 .cardnav-bar {
   position: relative;
   z-index: 6;
-  height: 58px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1rem 0 1.2rem;
+  padding: 0 0.75rem 0 0.85rem;
   background: transparent;
 }
 
 /* ── Hamburger ── */
 .cardnav-hamburger {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   background: none;
   border: none;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: background 0.3s;
 }
 .cardnav-hamburger:hover {
@@ -273,7 +253,7 @@ onUnmounted(() => {
 }
 
 .ham-line {
-  width: 22px;
+  width: 20px;
   height: 2px;
   background: rgba(236, 234, 239, 0.85);
   border-radius: 2px;
@@ -284,10 +264,10 @@ onUnmounted(() => {
   background: #b388ff;
 }
 .cardnav-hamburger.open .ham-top {
-  transform: translateY(4px) rotate(45deg);
+  transform: translateY(3.5px) rotate(45deg);
 }
 .cardnav-hamburger.open .ham-bottom {
-  transform: translateY(-4px) rotate(-45deg);
+  transform: translateY(-3.5px) rotate(-45deg);
 }
 
 /* ── Logo ── */
@@ -302,7 +282,7 @@ onUnmounted(() => {
   text-decoration: none;
 }
 .cardnav-logo img {
-  height: 1.8rem;
+  height: 1.6rem;
   width: auto;
   filter: brightness(1.15);
 }
@@ -311,14 +291,14 @@ onUnmounted(() => {
 .cardnav-cta {
   display: flex;
   align-items: center;
-  height: 36px;
-  padding: 0 1rem;
-  border: none;
-  border-radius: 0.6rem;
-  background: rgba(123, 85, 212, 0.35);
+  height: 30px;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(179, 136, 255, 0.25);
+  border-radius: 0.5rem;
+  background: rgba(123, 85, 212, 0.25);
   color: #f0e6ff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -328,7 +308,7 @@ onUnmounted(() => {
   z-index: 7;
 }
 .cardnav-cta:hover {
-  background: rgba(123, 85, 212, 0.5);
+  background: rgba(123, 85, 212, 0.45);
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(75, 47, 163, 0.4);
 }
@@ -338,8 +318,8 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: 0fr;
-  gap: 10px;
-  padding: 0 0.5rem 0 0.5rem;
+  gap: 8px;
+  padding: 0 6px;
   overflow: hidden;
   transition: grid-template-rows 0.45s cubic-bezier(0.77, 0, 0.175, 1);
   position: relative;
@@ -347,11 +327,8 @@ onUnmounted(() => {
 }
 
 .cardnav-wrap.expanded .cardnav-content {
-  padding-bottom: 14px;
-}
-
-.cardnav-wrap.expanded .cardnav-content {
   grid-template-rows: 1fr;
+  padding-bottom: 10px;
 }
 
 .cardnav-content > * {
@@ -361,14 +338,15 @@ onUnmounted(() => {
 
 /* ── Cards ── */
 .cardnav-card {
-  border-radius: 0.7rem;
-  border: 1px solid rgba(179, 136, 255, 0.18);
-  padding: 14px 16px 16px;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(8px);
   transition:
     opacity 0.35s cubic-bezier(0.77, 0, 0.175, 1),
     transform 0.35s cubic-bezier(0.77, 0, 0.175, 1),
@@ -381,36 +359,17 @@ onUnmounted(() => {
   transform: translateY(0);
 }
 
-/* Staggered card entrance */
 .cardnav-wrap.expanded .cardnav-card:nth-child(1) { transition-delay: 0.1s; }
 .cardnav-wrap.expanded .cardnav-card:nth-child(2) { transition-delay: 0.16s; }
 .cardnav-wrap.expanded .cardnav-card:nth-child(3) { transition-delay: 0.22s; }
 
-.cardnav-card:not(:defined) {
-  transition-delay: 0s;
-}
-
 .cardnav-card:hover {
-  border-color: rgba(179, 136, 255, 0.4);
-}
-
-.cardnav-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 50%,
-    transparent 100%
-  );
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .card-label {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: #f0e6ff;
@@ -419,27 +378,26 @@ onUnmounted(() => {
 .card-links {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-top: auto;
+  gap: 1px;
 }
 
 .card-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: rgba(224, 215, 255, 0.7);
   text-decoration: none;
-  padding: 5px 8px;
-  border-radius: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
   transition: color 0.25s, background 0.25s, transform 0.2s;
   width: fit-content;
 }
 .card-link:hover {
   color: #ffffff;
   background: rgba(179, 136, 255, 0.15);
-  transform: translateX(3px);
+  transform: translateX(2px);
 }
 .card-link.active {
   color: #b388ff;
@@ -476,43 +434,34 @@ onUnmounted(() => {
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .cardnav-wrap {
-    width: min(90%, 380px);
+    width: min(92%, 480px);
     top: 1em;
   }
 
   .cardnav-wrap.expanded {
-    width: min(92%, 500px);
+    width: 94%;
   }
 
   .cardnav-content {
     grid-template-columns: 1fr;
-    grid-template-rows: 0fr;
-    gap: 8px;
+    gap: 6px;
   }
 
   .cardnav-wrap.expanded .cardnav-content {
     grid-template-rows: 1fr;
-    padding-bottom: 12px;
+    padding-bottom: 8px;
   }
 
   .cardnav-card {
-    padding: 12px 14px;
+    padding: 10px 12px;
   }
 
   .card-label {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .card-link {
-    font-size: 0.85rem;
-  }
-
-  .cardnav-cta {
-    font-size: 0.72rem;
-    padding: 0 0.7rem;
-  }
-  .cardnav-cta svg {
-    display: none;
+    font-size: 0.8rem;
   }
 }
 
@@ -522,10 +471,10 @@ onUnmounted(() => {
     top: 0.7em;
   }
   .cardnav-bar {
-    padding: 0 0.6rem 0 0.8rem;
+    padding: 0 0.5rem 0 0.65rem;
   }
   .cardnav-logo img {
-    height: 1.5rem;
+    height: 1.4rem;
   }
 }
 </style>

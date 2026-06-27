@@ -2,17 +2,20 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
-  linesGradient: { type: Array, default: () => ['#E945F5', '#7C3AED', '#E945F5'] },
-  animationSpeed: { type: Number, default: 1 },
+  linesGradient: { type: Array, default: () => ['#7C3AED', '#7b63f1'] },
+  animationSpeed: { type: Number, default: 1.4 },
   interactive: { type: Boolean, default: true },
   bendRadius: { type: Number, default: 5 },
   bendStrength: { type: Number, default: -0.5 },
   mouseDamping: { type: Number, default: 0.11 },
   parallax: { type: Boolean, default: true },
-  parallaxStrength: { type: Number, default: 0.2 }
+  parallaxStrength: { type: Number, default: 0.2 },
+  lineCount: { type: Number, default: 9 },
+  enabledWaves: { type: Array, default: () => ['top', 'middle', 'bottom'] }
 })
 
 const MAX_GRADIENT = 8
+const MAX_LINES = 12
 const containerRef = ref(null)
 let raf = 0, active = true, renderer, ro
 
@@ -57,7 +60,7 @@ void mainImage(out vec4 fragColor,in vec2 fragCoord){
   vec2 mouseUv=vec2(0.);
   if(interactive){mouseUv=(2.*iMouse-vec2(iResolutionW,iResolutionH))/iResolutionH;mouseUv.y*=-1.;}
   if(enableBottom){
-    for(int i=0;i<6;i++){if(i>=bottomLineCount)break;
+    for(int i=0;i<12;i++){if(i>=bottomLineCount)break;
       float fi=float(i),t=fi/max(float(bottomLineCount-1),1.);
       vec3 lc=getLineColor(t,b);
       float a=bottomWavePos.z*log(length(uv)+1.);
@@ -66,7 +69,7 @@ void mainImage(out vec4 fragColor,in vec2 fragCoord){
     }
   }
   if(enableMiddle){
-    for(int i=0;i<6;i++){if(i>=middleLineCount)break;
+    for(int i=0;i<12;i++){if(i>=middleLineCount)break;
       float fi=float(i),t=fi/max(float(middleLineCount-1),1.);
       vec3 lc=getLineColor(t,b);
       float a=middleWavePos.z*log(length(uv)+1.);
@@ -75,7 +78,7 @@ void mainImage(out vec4 fragColor,in vec2 fragCoord){
     }
   }
   if(enableTop){
-    for(int i=0;i<6;i++){if(i>=topLineCount)break;
+    for(int i=0;i<12;i++){if(i>=topLineCount)break;
       float fi=float(i),t=fi/max(float(topLineCount-1),1.);
       vec3 lc=getLineColor(t,b);
       float a=topWavePos.z*log(length(uv)+1.);
@@ -118,14 +121,17 @@ function init() {
     return new T.Vector3(r,g,b)
   })
 
+  const lc = Math.min(props.lineCount, MAX_LINES)
+  const ew = props.enabledWaves
+
   const uniforms = {
     iTime: {value:0}, animationSpeed: {value:props.animationSpeed},
     interactive: {value:props.interactive}, bendRadius: {value:props.bendRadius},
     bendStrength: {value:props.bendStrength}, bendInfluence: {value:0},
     parallax: {value:props.parallax}, parallaxStrength: {value:props.parallaxStrength},
     parallaxOffset: {value:new T.Vector2(0,0)},
-    enableTop: {value:true}, enableMiddle: {value:true}, enableBottom: {value:true},
-    topLineCount: {value:6}, middleLineCount: {value:6}, bottomLineCount: {value:6},
+    enableTop: {value:ew.includes('top')}, enableMiddle: {value:ew.includes('middle')}, enableBottom: {value:ew.includes('bottom')},
+    topLineCount: {value:lc}, middleLineCount: {value:lc}, bottomLineCount: {value:lc},
     topLineDistance: {value:5*0.01}, middleLineDistance: {value:5*0.01}, bottomLineDistance: {value:5*0.01},
     topWavePos: {value:new T.Vector3(10,0.5,-0.4)},
     middleWavePos: {value:new T.Vector3(5,0,0.2)},
@@ -145,12 +151,10 @@ function init() {
   let targetInfluence = 0, currentInfluence = 0
   const targetParallax = new T.Vector2(0,0)
   const currentParallax = new T.Vector2(0,0)
-  let w2 = 0, h2 = 0
 
   function resize() {
     if (!active) return
     const w = ct.clientWidth||1, h = ct.clientHeight||1
-    w2 = w; h2 = h
     renderer.setSize(w, h, false)
     uniforms.iResolutionW = renderer.domElement.width
     uniforms.iResolutionH = renderer.domElement.height

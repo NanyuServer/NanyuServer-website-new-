@@ -78,14 +78,16 @@ onUnmounted(() => {})
   <!-- Hero Section -->
   <section class="hero">
     <FloatingLinesBackground
-      :linesGradient="['#E945F5','#7C3AED','#E945F5']"
-      :animationSpeed="1"
+      :linesGradient="['#7C3AED','#7b63f1']"
+      :animationSpeed="1.4"
       :interactive="true"
       :bendRadius="5"
       :bendStrength="-0.5"
       :mouseDamping="0.11"
       :parallax="true"
       :parallaxStrength="0.2"
+      :lineCount="9"
+      :enabledWaves="['top','middle','bottom']"
     />
     <div class="hero-content">
       <div class="school-badge"><ShinyText text="重庆校墙联核心成员" color="#b5a5d4" shineColor="#d6adfc" :speed="2" :spread="120" /></div>
