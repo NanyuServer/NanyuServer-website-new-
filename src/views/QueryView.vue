@@ -8,6 +8,7 @@ import BorderGlow from '@/components/common/BorderGlow.vue'
 const allData = ref([])
 const filteredData = ref([])
 const loading = ref(true)
+const loadError = ref('')
 const currentPage = ref(1)
 const sortOrder = ref('desc')
 const PAGE_SIZE = 10
@@ -85,11 +86,14 @@ function goPage(n) {
 onMounted(async () => {
   try {
     const json = await submissionsApi.getAll()
-    allData.value = Array.isArray(json.data) ? json.data : json
-    filteredData.value = [...allData.value]
+    const data = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
+    allData.value = data
+    filteredData.value = [...data]
     sortData()
+    if (!data.length) loadError.value = ''
   } catch (e) {
     console.warn('加载失败:', e)
+    loadError.value = e.message || '加载失败'
   } finally {
     loading.value = false
   }

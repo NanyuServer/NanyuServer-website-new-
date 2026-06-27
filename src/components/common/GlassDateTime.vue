@@ -263,7 +263,12 @@ watch(open, (v) => {
   transition: all 0.2s;
   border-radius: 50%;
 }
-.gdt-day.other { color: rgba(158, 139, 191, 0.3); }
+.gdt-day.other {
+  color: rgba(158, 139, 191, 0.3);
+  background: transparent;
+  cursor: default;
+  border-radius: 50%;
+}
 .gdt-day:hover:not(.other) { background: rgba(179, 136, 255, 0.15); color: var(--text-primary); }
 .gdt-day.selected {
   background: linear-gradient(135deg, rgba(75, 47, 163, 0.7), rgba(168, 127, 232, 0.5));

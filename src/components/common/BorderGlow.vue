@@ -263,7 +263,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: auto;
+  overflow: visible;
   z-index: 1;
 }
 </style>

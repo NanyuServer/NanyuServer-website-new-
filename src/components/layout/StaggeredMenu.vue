@@ -100,14 +100,8 @@ onUnmounted(() => {
           </li>
         </ul>
 
-        <div class="sm-cta" :class="{ visible: open }" :style="{ transitionDelay: open ? '0.8s' : '0s' }">
-          <a href="https://qm.qq.com/q/FHAbiDBIQO" target="_blank" rel="noopener" class="sm-cta-btn" @click="closeMenu">
-            进入万能墙
-          </a>
-        </div>
-
-        <div class="sm-socials" :class="{ visible: open }" :style="{ transitionDelay: open ? '0.9s' : '0s' }">
-          <h3 class="sm-socials-title">链接</h3>
+        <div class="sm-socials" :class="{ visible: open }" :style="{ transitionDelay: open ? '0.8s' : '0s' }">
+          <h3 class="sm-socials-title">进入万能墙</h3>
           <ul class="sm-socials-list">
             <li v-for="s in socialItems" :key="s.label">
               <a :href="s.link" target="_blank" rel="noopener noreferrer" class="sm-socials-link" @click="closeMenu">
@@ -165,7 +159,7 @@ onUnmounted(() => {
 }
 
 .sm-toggle.open {
-  color: #111;
+  color: #fff;
 }
 
 .sm-toggle-text {
@@ -343,37 +337,6 @@ onUnmounted(() => {
 
 .sm-panel-item:hover {
   color: #b388ff;
-}
-
-.sm-cta {
-  margin-top: 2.5rem;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-.sm-cta.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.sm-cta-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.9rem 2.2rem;
-  background: linear-gradient(135deg, #7b55d4, #a87fe8);
-  color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 14px;
-  letter-spacing: 0.02em;
-  transition: transform 0.2s, box-shadow 0.3s;
-}
-.sm-cta-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(123, 85, 212, 0.4);
 }
 
 .sm-socials {

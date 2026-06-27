@@ -211,7 +211,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-
+<style>
 .scroll-stack-scroller {
   position: relative;
   width: 100%;

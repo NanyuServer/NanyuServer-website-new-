@@ -7,9 +7,19 @@ import SplitText from '@/components/common/SplitText.vue'
 import ShinyText from '@/components/common/ShinyText.vue'
 import BorderGlow from '@/components/common/BorderGlow.vue'
 import ScrollStack from '@/components/common/ScrollStack.vue'
+import MagicBento from '@/components/common/MagicBento.vue'
 
 const showModal = ref(false)
 const videoLoaded = ref(false)
+
+const bentoCards = [
+  { color: '#120F17', title: '稿件查询', description: '快速搜索已审核发布的投稿，支持按时间、类型与关键词筛选', label: '查询', link: '/query' },
+  { color: '#120F17', title: '公益课程', description: '专业级剪辑软件教程等优质教育资源完全免费共享', label: '学习', link: '/course' },
+  { color: '#120F17', title: '有求必应', description: '有任何校园资讯提问或网站问题反馈，我们会及时处理', label: '反馈', link: '/feedback' },
+  { color: '#120F17', title: '合作与共创', description: '与南渝万能墙合作，共同打造更好的校园服务平台', label: '合作', link: '/cooperation' },
+  { color: '#120F17', title: '招贤纳士', description: '加入南渝万能墙团队，为校园文化建设贡献力量', label: '加入', link: '/recruit' },
+  { color: '#120F17', title: '关于我们', description: '了解南渝万能墙的创立初衷、发展历程与团队介绍', label: '了解', link: '/about' }
+]
 
 function initVideo() {
   videoLoaded.value = true
@@ -162,64 +172,23 @@ onUnmounted(() => {})
     </div>
   </div>
 
-  <!-- Features -->
-  <section class="features-section" id="features">
-    <div class="features-inner">
-      <div class="features-header">
-        <div class="section-label">平台核心功能</div>
-        <h2 class="section-title">专为<strong>南渝学子</strong>打造六大版块</h2>
-        <p class="section-body">南渝万能墙汇聚校园生活中最真实的需求，以互联互通的方式，让每一位南渝学子都能在这里找到归属感。</p>
-      </div>
-      <div class="features-body">
-        <div v-for="(f, i) in features" :key="i" class="feature-row">
-          <div class="feature-number">{{ String(i + 1).padStart(2, '0') }}</div>
-          <div class="feature-content">
-            <h3>{{ f.title }}</h3>
-            <p>{{ f.desc }}</p>
-          </div>
-          <div class="feature-icon-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round">
-              <defs>
-                <linearGradient :id="'fg' + i" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" :stop-color="f.gradient[0]" />
-                  <stop offset="100%" :stop-color="f.gradient[1]" />
-                </linearGradient>
-              </defs>
-              <path
-                v-for="(d, j) in iconPaths[f.icon]"
-                :key="j"
-                :d="d"
-                :stroke="'url(#fg' + i + ')'"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
+  <!-- MagicBento -->
+  <section class="bento-wrapper">
+    <div class="bento-header">
+      <div class="section-label">平台核心功能</div>
+      <h2 class="section-title">专为<strong>南渝学子</strong>打造的一站式平台</h2>
+      <p class="section-body">每个版块都承载着南渝学子的真实需求，点击卡片即可进入对应服务。</p>
     </div>
-  </section>
-
-  <!-- Query Promo -->
-  <section class="promo-section">
-    <div class="promo-inner">
-      <div class="section-label">一站式稿件服务</div>
-      <h2 class="section-title"><strong>稿件查询</strong> - 快速找到你需要的投稿</h2>
-      <p class="section-body" style="margin: 1rem auto 2rem; max-width: 600px; text-align: center;">
-        南渝万能墙提供强大的稿件搜索功能，让你轻松浏览各类稿件。支持关键词搜索、分类筛选，让稿件信息触手可及。
-      </p>
-      <router-link to="/query" class="glass-btn glass-btn-primary"><span>立即查询</span></router-link>
-    </div>
-  </section>
-
-  <!-- Course Promo -->
-  <section class="promo-section promo-dark">
-    <div class="promo-inner">
-      <div class="section-label">免费学习</div>
-      <h2 class="section-title"><strong>公益课程</strong> - 优质教育资源共享</h2>
-      <p class="section-body" style="margin: 1rem auto 2rem; max-width: 600px; text-align: center;">
-        南渝万能墙精心制作各类公益课程，现已包括专业级剪辑软件教程。所有课程完全免费，让知识在校园中自由流动。
-      </p>
-      <router-link to="/course" class="glass-btn glass-btn-ghost"><span>浏览课程</span></router-link>
-    </div>
+    <MagicBento
+      :cards="bentoCards"
+      :text-auto-hide="true"
+      :enable-spotlight="true"
+      :enable-border-glow="true"
+      :enable-tilt="false"
+      :spotlight-radius="300"
+      glow-color="132, 0, 255"
+      :click-effect="true"
+    />
   </section>
 
   <!-- Video Section -->
@@ -357,6 +326,17 @@ onUnmounted(() => {})
 .scrollstack-section {
   background: var(--bg-primary);
   padding: 0 2rem;
+}
+
+/* ── Bento ── */
+.bento-wrapper {
+  padding: 6rem 2rem;
+  background: var(--bg-primary);
+  text-align: center;
+}
+.bento-header {
+  max-width: 700px;
+  margin: 0 auto 3rem;
 }
 .scroll-stack-card {
   border-radius: 40px;
