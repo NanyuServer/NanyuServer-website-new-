@@ -30,6 +30,12 @@ function toggleMenu() {
   open.value = !open.value
   if (open.value) {
     document.body.style.overflow = 'hidden'
+  } else {
+    setTimeout(() => {
+      document.body.style.overflow = ''
+      busy.value = false
+    }, 500)
+    return
   }
   setTimeout(() => { busy.value = false }, 800)
 }
