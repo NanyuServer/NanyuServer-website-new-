@@ -6,8 +6,8 @@ export function useBorderGlow(options = {}) {
     coneSpread = 25,
     glowRadius = 40,
     fillOpacity = 0.5,
-    colors = ['#a87fe8', '#e86fa3', '#5de8d0'],
-    glowColor = '268 80 80',
+    colors = ['#c084fc', '#f472b6', '#38bdf8'],
+    glowColor = '40 80 80',
     glowIntensity = 1,
     backgroundColor = ''
   } = options
@@ -15,9 +15,12 @@ export function useBorderGlow(options = {}) {
   const elRef = ref(null)
   const edgeProximity = ref(0)
   const cursorAngle = ref(45)
-  const isHovering = ref(false)
 
-  const colorSensitivity = edgeSensitivity + 20
+  function parseHSL(hslStr) {
+    const m = hslStr.match(/([\d.]+)\s*([\d.]+)%?\s*([\d.]+)%?/)
+    if (!m) return { h: 40, s: 80, l: 80 }
+    return { h: parseFloat(m[1]), s: parseFloat(m[2]), l: parseFloat(m[3]) }
+  }
 
   function getEdgeProximity(el, x, y) {
     const w = el.clientWidth
@@ -52,12 +55,10 @@ export function useBorderGlow(options = {}) {
     const y = e.clientY - rect.top
     edgeProximity.value = getEdgeProximity(el, x, y) * 100
     cursorAngle.value = getCursorAngle(el, x, y)
-    isHovering.value = true
   }
 
   function onPointerLeave() {
     edgeProximity.value = 0
-    isHovering.value = false
   }
 
   onMounted(() => {
@@ -74,12 +75,6 @@ export function useBorderGlow(options = {}) {
     el.removeEventListener('pointerleave', onPointerLeave)
   })
 
-  function parseHSL(hslStr) {
-    const m = hslStr.match(/([\d.]+)\s*([\d.]+)%?\s*([\d.]+)%?/)
-    if (!m) return { h: 268, s: 80, l: 80 }
-    return { h: parseFloat(m[1]), s: parseFloat(m[2]), l: parseFloat(m[3]) }
-  }
-
   const glowHSL = computed(() => {
     const { h, s, l } = parseHSL(glowColor)
     const base = `${h}deg ${s}% ${l}%`
@@ -93,15 +88,16 @@ export function useBorderGlow(options = {}) {
   })
 
   const GRADIENT_POSITIONS = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%']
+  const GRADIENT_KEYS = ['--gradient-one', '--gradient-two', '--gradient-three', '--gradient-four', '--gradient-five', '--gradient-six', '--gradient-seven']
   const COLOR_MAP = [0, 1, 2, 0, 1, 2, 1]
 
   const gradientVars = computed(() => {
     const vars = {}
     for (let i = 0; i < 7; i++) {
       const c = colors[Math.min(COLOR_MAP[i], colors.length - 1)]
-      vars[`--gb-${i}`] = `radial-gradient(at ${GRADIENT_POSITIONS[i]}, ${c} 0px, transparent 50%)`
+      vars[GRADIENT_KEYS[i]] = `radial-gradient(at ${GRADIENT_POSITIONS[i]}, ${c} 0px, transparent 50%)`
     }
-    vars['--gb-base'] = `linear-gradient(${colors[0]} 0 100%)`
+    vars['--gradient-base'] = `linear-gradient(${colors[0]} 0 100%)`
     return vars
   })
 
@@ -112,11 +108,11 @@ export function useBorderGlow(options = {}) {
     '--edge-proximity': edgeProximity.value.toFixed(3),
     '--cursor-angle': cursorAngle.value.toFixed(3) + 'deg',
     '--edge-sensitivity': edgeSensitivity,
-    '--colour-sensitivity': colorSensitivity,
+    '--color-sensitivity': edgeSensitivity + 20,
     '--glow-padding': glowRadius + 'px',
     '--cone-spread': coneSpread,
     '--fill-opacity': fillOpacity
   }))
 
-  return { elRef, glowStyle, isHovering }
+  return { elRef, glowStyle }
 }

@@ -275,7 +275,7 @@ onUnmounted(() => {})
   position: relative;
   overflow: hidden;
   padding: 8rem 2rem 5rem;
-  background: #09090a;
+  background: transparent;
 }
 
 .hero-content {

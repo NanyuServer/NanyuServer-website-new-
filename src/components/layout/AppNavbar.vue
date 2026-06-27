@@ -151,9 +151,13 @@ onUnmounted(() => {
   top: 1.6em;
   left: 50%;
   transform: translateX(-50%);
-  width: min(92%, 820px);
+  width: min(90%, 420px);
   z-index: 9000;
   transition: width 0.4s var(--ease-out);
+}
+
+.cardnav-wrap.expanded {
+  width: min(92%, 680px);
 }
 
 .cardnav {
@@ -335,11 +339,15 @@ onUnmounted(() => {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: 0fr;
   gap: 10px;
-  padding: 0 0.5rem;
+  padding: 0 0.5rem 0 0.5rem;
   overflow: hidden;
   transition: grid-template-rows 0.45s cubic-bezier(0.77, 0, 0.175, 1);
   position: relative;
   z-index: 3;
+}
+
+.cardnav-wrap.expanded .cardnav-content {
+  padding-bottom: 14px;
 }
 
 .cardnav-wrap.expanded .cardnav-content {
@@ -468,8 +476,12 @@ onUnmounted(() => {
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .cardnav-wrap {
-    width: 92%;
+    width: min(90%, 380px);
     top: 1em;
+  }
+
+  .cardnav-wrap.expanded {
+    width: min(92%, 500px);
   }
 
   .cardnav-content {
@@ -480,6 +492,7 @@ onUnmounted(() => {
 
   .cardnav-wrap.expanded .cardnav-content {
     grid-template-rows: 1fr;
+    padding-bottom: 12px;
   }
 
   .cardnav-card {
