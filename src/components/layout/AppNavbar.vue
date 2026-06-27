@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import StaggeredMenu from './StaggeredMenu.vue'
 
 const route = useRoute()
 const navRef = ref(null)
@@ -165,6 +166,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <StaggeredMenu />
   <div class="card-nav-container">
     <nav ref="navRef" class="card-nav" :class="{ open: isExpanded }">
       <div class="card-nav-top">
@@ -420,51 +422,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .card-nav-container {
-    width: 90%;
-    top: 1.2em;
-  }
-
-  .card-nav-top {
-    padding: 0.5rem 1rem;
-    justify-content: space-between;
-  }
-
-  .hamburger-menu {
-    order: 2;
-  }
-
-  .logo-container {
-    position: static;
-    transform: none;
-    order: 1;
-  }
-
-  .card-nav-cta-button {
     display: none;
-  }
-
-  .card-nav-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    padding: 0.5rem;
-    bottom: 0;
-    justify-content: flex-start;
-  }
-
-  .nav-card {
-    height: auto;
-    min-height: 60px;
-    flex: 1 1 auto;
-    max-height: none;
-  }
-
-  .nav-card-label {
-    font-size: 18px;
-  }
-
-  .nav-card-link {
-    font-size: 15px;
   }
 }
 </style>
