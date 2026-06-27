@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import GlassModal from '@/components/common/GlassModal.vue'
-import FloatingLinesBackground from '@/components/common/FloatingLinesBackground.vue'
+import ColorBends from '@/components/common/ColorBends.vue'
 import TrueFocus from '@/components/common/TrueFocus.vue'
 import SplitText from '@/components/common/SplitText.vue'
 import ShinyText from '@/components/common/ShinyText.vue'
@@ -77,17 +77,20 @@ onUnmounted(() => {})
 <template>
   <!-- Hero Section -->
   <section class="hero">
-    <FloatingLinesBackground
-      :linesGradient="['#7C3AED','#7b63f1']"
-      :animationSpeed="1.4"
-      :interactive="true"
-      :bendRadius="5"
-      :bendStrength="-0.5"
-      :mouseDamping="0.11"
-      :parallax="true"
-      :parallaxStrength="0.2"
-      :lineCount="9"
-      :enabledWaves="['top','middle','bottom']"
+    <ColorBends
+      :rotation="90"
+      :speed="0.2"
+      :colors="['#7C3AED','#e86fa3','#5de8d0']"
+      :transparent="true"
+      :scale="1"
+      :frequency="1"
+      :warpStrength="1"
+      :mouseInfluence="1"
+      :parallax="0.5"
+      :noise="0.15"
+      :iterations="1"
+      :intensity="1.5"
+      :bandWidth="6"
     />
     <div class="hero-content">
       <div class="school-badge"><ShinyText text="重庆校墙联核心成员" color="#b5a5d4" shineColor="#d6adfc" :speed="2" :spread="120" /></div>

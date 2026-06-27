@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 const props = defineProps({
   className: { type: String, default: '' },
@@ -16,12 +16,37 @@ const props = defineProps({
 })
 
 const cardRef = ref(null)
-const sweepActive = ref(false)
 
 function parseHSL(hslStr) {
   const m = hslStr.match(/([\d.]+)\s*([\d.]+)%?\s*([\d.]+)%?/)
   if (!m) return { h: 40, s: 80, l: 80 }
   return { h: parseFloat(m[1]), s: parseFloat(m[2]), l: parseFloat(m[3]) }
+}
+
+function buildGlowVars(glowColor, intensity) {
+  const { h, s, l } = parseHSL(glowColor)
+  const base = `${h}deg ${s}% ${l}%`
+  const opacities = [100, 60, 50, 40, 30, 20, 10]
+  const keys = ['', '-60', '-50', '-40', '-30', '-20', '-10']
+  const vars = {}
+  for (let i = 0; i < opacities.length; i++) {
+    vars[`--glow-color${keys[i]}`] = `hsl(${base} / ${Math.min(opacities[i] * intensity, 100)}%)`
+  }
+  return vars
+}
+
+const GRADIENT_POSITIONS = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%']
+const GRADIENT_KEYS = ['--gradient-one', '--gradient-two', '--gradient-three', '--gradient-four', '--gradient-five', '--gradient-six', '--gradient-seven']
+const COLOR_MAP = [0, 1, 2, 0, 1, 2, 1]
+
+function buildGradientVars(colors) {
+  const vars = {}
+  for (let i = 0; i < 7; i++) {
+    const c = colors[Math.min(COLOR_MAP[i], colors.length - 1)]
+    vars[GRADIENT_KEYS[i]] = `radial-gradient(at ${GRADIENT_POSITIONS[i]}, ${c} 0px, transparent 50%)`
+  }
+  vars['--gradient-base'] = `linear-gradient(${colors[0]} 0 100%)`
+  return vars
 }
 
 function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3) }
@@ -39,31 +64,16 @@ function animateValue({ start = 0, end = 100, duration = 1000, delay = 0, ease =
   setTimeout(() => requestAnimationFrame(tick), delay)
 }
 
-const glowVars = computed(() => {
-  const { h, s, l } = parseHSL(props.glowColor)
-  const base = `${h}deg ${s}% ${l}%`
-  const opacities = [100, 60, 50, 40, 30, 20, 10]
-  const keys = ['', '-60', '-50', '-40', '-30', '-20', '-10']
-  const vars = {}
-  for (let i = 0; i < opacities.length; i++) {
-    vars[`--glow-color${keys[i]}`] = `hsl(${base} / ${Math.min(opacities[i] * props.glowIntensity, 100)}%)`
-  }
-  return vars
-})
-
-const GRADIENT_POSITIONS = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%']
-const GRADIENT_KEYS = ['--gradient-one', '--gradient-two', '--gradient-three', '--gradient-four', '--gradient-five', '--gradient-six', '--gradient-seven']
-const COLOR_MAP = [0, 1, 2, 0, 1, 2, 1]
-
-const gradientVars = computed(() => {
-  const vars = {}
-  for (let i = 0; i < 7; i++) {
-    const c = props.colors[Math.min(COLOR_MAP[i], props.colors.length - 1)]
-    vars[GRADIENT_KEYS[i]] = `radial-gradient(at ${GRADIENT_POSITIONS[i]}, ${c} 0px, transparent 50%)`
-  }
-  vars['--gradient-base'] = `linear-gradient(${props.colors[0]} 0 100%)`
-  return vars
-})
+const staticStyle = computed(() => ({
+  '--card-bg': props.backgroundColor || undefined,
+  '--edge-sensitivity': props.edgeSensitivity,
+  '--border-radius': `${props.borderRadius}px`,
+  '--glow-padding': `${props.glowRadius}px`,
+  '--cone-spread': props.coneSpread,
+  '--fill-opacity': props.fillOpacity,
+  ...buildGlowVars(props.glowColor, props.glowIntensity),
+  ...buildGradientVars(props.colors)
+}))
 
 function handlePointerMove(e) {
   const card = cardRef.value
@@ -71,8 +81,7 @@ function handlePointerMove(e) {
   const rect = card.getBoundingClientRect()
   const x = e.clientX - rect.left
   const y = e.clientY - rect.top
-  const w = rect.width
-  const h = rect.height
+  const w = rect.width, h = rect.height
   const cx = w / 2, cy = h / 2
   const dx = x - cx, dy = y - cy
   let kx = Infinity, ky = Infinity
@@ -81,43 +90,31 @@ function handlePointerMove(e) {
   const edge = Math.min(Math.max(1 / Math.min(kx, ky), 0), 1)
   let angle = 0
   if (dx !== 0 || dy !== 0) {
-    const rad = Math.atan2(dy, dx)
-    angle = rad * (180 / Math.PI) + 90
+    angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90
     if (angle < 0) angle += 360
   }
-  card.style.setProperty('--edge-proximity', (edge * 100).toFixed(3))
-  card.style.setProperty('--cursor-angle', angle.toFixed(3) + 'deg')
+  card.style.setProperty('--edge-proximity', `${(edge * 100).toFixed(3)}`)
+  card.style.setProperty('--cursor-angle', `${angle.toFixed(3)}deg`)
 }
-
-const cardStyle = computed(() => ({
-  '--card-bg': props.backgroundColor || 'transparent',
-  '--edge-sensitivity': props.edgeSensitivity,
-  '--border-radius': props.borderRadius + 'px',
-  '--glow-padding': props.glowRadius + 'px',
-  '--cone-spread': props.coneSpread,
-  '--fill-opacity': props.fillOpacity,
-  ...glowVars.value,
-  ...gradientVars.value
-}))
 
 onMounted(() => {
   if (!props.animated || !cardRef.value) return
   const card = cardRef.value
   const angleStart = 110
   const angleEnd = 465
-  sweepActive.value = true
-  card.style.setProperty('--cursor-angle', angleStart + 'deg')
+  card.classList.add('sweep-active')
+  card.style.setProperty('--cursor-angle', `${angleStart}deg`)
 
-  animateValue({ duration: 500, onUpdate: v => card.style.setProperty('--edge-proximity', v.toString()) })
+  animateValue({ duration: 500, onUpdate: v => card.style.setProperty('--edge-proximity', `${v}`) })
   animateValue({ ease: easeInCubic, duration: 1500, end: 50, onUpdate: v => {
-    card.style.setProperty('--cursor-angle', ((angleEnd - angleStart) * (v / 100) + angleStart).toFixed(0) + 'deg')
+    card.style.setProperty('--cursor-angle', `${((angleEnd - angleStart) * (v / 100) + angleStart).toFixed(0)}deg`)
   }})
   animateValue({ ease: easeOutCubic, delay: 1500, duration: 2250, start: 50, end: 100, onUpdate: v => {
-    card.style.setProperty('--cursor-angle', ((angleEnd - angleStart) * (v / 100) + angleStart).toFixed(0) + 'deg')
+    card.style.setProperty('--cursor-angle', `${((angleEnd - angleStart) * (v / 100) + angleStart).toFixed(0)}deg`)
   }})
   animateValue({ ease: easeInCubic, delay: 2500, duration: 1500, start: 100, end: 0,
-    onUpdate: v => card.style.setProperty('--edge-proximity', v.toString()),
-    onEnd: () => { sweepActive.value = false }
+    onUpdate: v => card.style.setProperty('--edge-proximity', `${v}`),
+    onEnd: () => card.classList.remove('sweep-active')
   })
 })
 </script>
@@ -125,8 +122,8 @@ onMounted(() => {
 <template>
   <div
     ref="cardRef"
-    :class="['border-glow-card', className, { 'sweep-active': sweepActive }]"
-    :style="cardStyle"
+    :class="['border-glow-card', className]"
+    :style="staticStyle"
     @pointermove="handlePointerMove"
   >
     <span class="edge-light" />
@@ -181,7 +178,6 @@ onMounted(() => {
   transition: opacity 0.75s ease-in-out;
 }
 
-/* colored mesh-gradient border */
 .border-glow-card::before {
   border: 1px solid transparent;
   background:
@@ -195,7 +191,6 @@ onMounted(() => {
     var(--gradient-six, radial-gradient(at 82% 18%, hsla(52, 100%, 65%, 1) 0px, transparent 50%)) border-box,
     var(--gradient-seven, radial-gradient(at 51% 4%, hsla(12, 100%, 72%, 1) 0px, transparent 50%)) border-box,
     var(--gradient-base, linear-gradient(#c299ff 0 100%)) border-box;
-
   opacity: calc((var(--edge-proximity) - var(--color-sensitivity)) / (100 - var(--color-sensitivity)));
   mask-image:
     conic-gradient(
@@ -207,7 +202,6 @@ onMounted(() => {
     );
 }
 
-/* colored mesh-gradient background fill near edges */
 .border-glow-card::after {
   border: 1px solid transparent;
   background:
@@ -219,7 +213,6 @@ onMounted(() => {
     var(--gradient-six, radial-gradient(at 82% 18%, hsla(52, 100%, 65%, 1) 0px, transparent 50%)) padding-box,
     var(--gradient-seven, radial-gradient(at 51% 4%, hsla(12, 100%, 72%, 1) 0px, transparent 50%)) padding-box,
     var(--gradient-base, linear-gradient(#c299ff 0 100%)) padding-box;
-
   mask-image:
     linear-gradient(to bottom, black, black),
     radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%),
@@ -233,17 +226,14 @@ onMounted(() => {
   mix-blend-mode: soft-light;
 }
 
-/* outer glow layer */
 .border-glow-card > .edge-light {
   inset: calc(var(--glow-padding) * -1);
   pointer-events: none;
   z-index: 1;
-
   mask-image:
     conic-gradient(
       from var(--cursor-angle) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%
     );
-
   opacity: calc((var(--edge-proximity) - var(--edge-sensitivity)) / (100 - var(--edge-sensitivity)));
   mix-blend-mode: plus-lighter;
 }
