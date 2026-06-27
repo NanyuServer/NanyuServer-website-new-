@@ -112,7 +112,15 @@ onUnmounted(() => {})
 
   <!-- ScrollStack -->
   <section class="scrollstack-section">
-    <ScrollStack :item-distance="120" :item-scale="0.04" :item-stack-distance="40" :base-scale="0.88" :stack-position="0.25" :scale-end-position="0.1">
+    <ScrollStack
+      :item-distance="120"
+      :item-scale="0.03"
+      :item-stack-distance="30"
+      :base-scale="0.85"
+      stack-position="20%"
+      scale-end-position="10%"
+      :use-window-scroll="true"
+    >
       <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(75, 47, 163, 0.7), rgba(123, 85, 212, 0.4));">
         <div class="ss-card-num">01</div>
         <h3 class="ss-card-title">稿件查询</h3>
