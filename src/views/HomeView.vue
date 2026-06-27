@@ -6,7 +6,6 @@ import TrueFocus from '@/components/common/TrueFocus.vue'
 import SplitText from '@/components/common/SplitText.vue'
 import ShinyText from '@/components/common/ShinyText.vue'
 import BorderGlow from '@/components/common/BorderGlow.vue'
-import ScrollStack from '@/components/common/ScrollStack.vue'
 import MagicBento from '@/components/common/MagicBento.vue'
 
 const showModal = ref(false)
@@ -118,44 +117,6 @@ onUnmounted(() => {})
         <div class="line2"><SplitText text="坚持打造南渝学子的一站式服务平台" :delay="30" :duration="0.7" tag="span" /></div>
       </h1>
     </div>
-  </section>
-
-  <!-- ScrollStack -->
-  <section class="scrollstack-section">
-    <ScrollStack
-      :item-distance="120"
-      :item-scale="0.03"
-      :item-stack-distance="30"
-      :base-scale="0.85"
-      stack-position="20%"
-      scale-end-position="10%"
-      :use-window-scroll="true"
-    >
-      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(75, 47, 163, 0.7), rgba(123, 85, 212, 0.4));">
-        <div class="ss-card-num">01</div>
-        <h3 class="ss-card-title">稿件查询</h3>
-        <p class="ss-card-desc">快速搜索已审核发布的投稿内容，支持按时间、类型与关键词筛选，让校园资讯触手可及。</p>
-      </div>
-      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(232, 111, 163, 0.5), rgba(168, 127, 232, 0.35));">
-        <div class="ss-card-num">02</div>
-        <h3 class="ss-card-title">公益课程</h3>
-        <p class="ss-card-desc">专业级剪辑软件教程等优质教育资源完全免费共享，让知识在校园中自由流动。</p>
-      </div>
-      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(93, 232, 208, 0.45), rgba(123, 85, 212, 0.35));">
-        <div class="ss-card-num">03</div>
-        <h3 class="ss-card-title">有求必应</h3>
-        <p class="ss-card-desc">有任何校园资讯提问或网站问题反馈，提交后我们会及时回复处理。</p>
-      </div>
-      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(232, 201, 122, 0.45), rgba(232, 111, 163, 0.35));">
-        <div class="ss-card-num">04</div>
-        <h3 class="ss-card-title">合作与共创</h3>
-        <p class="ss-card-desc">与南渝万能墙合作，共同打造更好的校园服务平台，携手并进。</p>
-      </div>
-      <div class="scroll-stack-card ss-card-final" style="background: linear-gradient(135deg, rgba(123, 85, 212, 0.6), rgba(75, 47, 163, 0.5));">
-        <h3 class="ss-card-title ss-card-title-big">均在南渝万能墙</h3>
-        <p class="ss-card-desc">1900+ 南渝学子已在这里相遇，让校园生活更精彩。</p>
-      </div>
-    </ScrollStack>
   </section>
 
   <!-- Marquee -->
@@ -323,11 +284,6 @@ onUnmounted(() => {})
 }
 
 /* ── ScrollStack ── */
-.scrollstack-section {
-  background: var(--bg-primary);
-  padding: 0 2rem;
-}
-
 /* ── Bento ── */
 .bento-wrapper {
   padding: 6rem 2rem;
