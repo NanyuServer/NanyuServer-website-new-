@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import GlassModal from '@/components/common/GlassModal.vue'
 import BeamsBackground from '@/components/common/BeamsBackground.vue'
 import TrueFocus from '@/components/common/TrueFocus.vue'
+import SplitText from '@/components/common/SplitText.vue'
+import ShinyText from '@/components/common/ShinyText.vue'
 
 const showModal = ref(false)
 const videoLoaded = ref(false)
@@ -85,7 +87,7 @@ onUnmounted(() => {})
       :rotation="0"
     />
     <div class="hero-content">
-      <div class="school-badge">重庆校墙联核心成员</div>
+      <div class="school-badge"><ShinyText text="重庆校墙联核心成员" color="#b5a5d4" shineColor="#d6adfc" :speed="2" :spread="120" /></div>
       <h1 class="hero-title">
         <TrueFocus
           sentence="南渝 万能墙"
@@ -96,11 +98,8 @@ onUnmounted(() => {})
           :animationDuration="0.5"
           :pauseBetweenAnimations="1"
         />
-        <span class="line2">坚持打造南渝学子的一站式服务平台</span>
+        <div class="line2"><SplitText text="坚持打造南渝学子的一站式服务平台" :delay="30" :duration="0.7" tag="span" /></div>
       </h1>
-      <p class="hero-sub">
-        南渝万能墙隶属于重庆校墙联，成立于2024年8月8日。不属于学校组织、不代表学校立场、不表明学校观点。
-      </p>
       <div class="hero-ctas">
         <button class="glass-btn glass-btn-primary" @click="window.open('https://qm.qq.com/q/FHAbiDBIQO', '_blank')">
           <span>立即进入</span>
@@ -308,23 +307,14 @@ onUnmounted(() => {})
 }
 .hero-title .line2 {
   display: block;
-  font-size: clamp(1.1rem, 2.8vw, 2rem);
+  font-size: clamp(0.85rem, 2.2vw, 1.4rem);
   font-weight: 400;
-  letter-spacing: 0.06em;
-  color: white;
-  margin-top: 20px;
+  letter-spacing: 0.04em;
+  color: rgba(236, 234, 239, 0.7);
+  margin-top: 18px;
 }
-
-.hero-sub {
-  font-family: var(--font-body);
-  font-size: clamp(0.95rem, 1.8vw, 1.12rem);
-  color: var(--text-secondary);
-  font-weight: 300;
-  max-width: 580px;
-  margin: 0 auto 2.8rem;
-  line-height: 2.1;
-  letter-spacing: 0.05em;
-  animation: fadeUp 1s var(--ease-out) 0.7s both;
+.hero-title :deep(.focus-word) {
+  font-size: clamp(3rem, 8vw, 6rem);
 }
 
 .hero-ctas {
