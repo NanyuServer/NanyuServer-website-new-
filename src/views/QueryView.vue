@@ -154,42 +154,34 @@ onMounted(async () => {
 
     <div class="cards-grid">
       <template v-if="loading">
-        <BorderGlow :border-radius="24">
-          <div class="state-box glass-card" style="border:none; box-shadow:none; background:transparent">
-            <div class="spinner" />
-            <div class="state-title">正在加载稿件</div>
-            <div class="state-sub">请稍候…</div>
-          </div>
-        </BorderGlow>
+        <div class="state-box">
+          <div class="spinner" />
+          <div class="state-title">正在加载稿件</div>
+          <div class="state-sub">请稍候…</div>
+        </div>
       </template>
       <template v-else-if="pageData.length">
-        <BorderGlow
+        <div
           v-for="(item, i) in pageData"
           :key="item.id"
-          :border-radius="24"
-          :glow-radius="36"
-          style="animation: cardIn 0.5s var(--ease-out) forwards; opacity:0; transform:translateY(16px)"
+          class="submission-card"
           :style="{ animationDelay: (i * 60) + 'ms' }"
         >
-          <div class="submission-card glass-card" style="border:none; box-shadow:none; background:transparent">
-            <div class="card-header">
-              <span class="card-type-badge" :class="'type-' + item.type">
-                {{ typeEmojiMap[item.type] || '📄' }} {{ item.type }}
-              </span>
-              <span class="card-time">{{ formatDate(item.created_at) }}</span>
-            </div>
-            <div class="card-content">{{ item.content }}</div>
+          <div class="card-header">
+            <span class="card-type-badge" :class="'type-' + item.type">
+              {{ typeEmojiMap[item.type] || '📄' }} {{ item.type }}
+            </span>
+            <span class="card-time">{{ formatDate(item.created_at) }}</span>
           </div>
-        </BorderGlow>
+          <div class="card-content">{{ item.content }}</div>
+        </div>
       </template>
       <template v-else>
-        <BorderGlow :border-radius="24">
-          <div class="state-box glass-card" style="border:none; box-shadow:none; background:transparent">
-            <div class="state-icon">🔍</div>
-            <div class="state-title">暂无符合条件的稿件</div>
-            <div class="state-sub">请尝试调整筛选条件</div>
-          </div>
-        </BorderGlow>
+        <div class="state-box">
+          <div class="state-icon">🔍</div>
+          <div class="state-title">暂无符合条件的稿件</div>
+          <div class="state-sub">请尝试调整筛选条件</div>
+        </div>
       </template>
     </div>
 
@@ -281,6 +273,14 @@ onMounted(async () => {
 }
 .submission-card {
   padding: 1.6rem 1.8rem;
+  background: rgba(30, 10, 50, 0.35);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg, 24px);
+  animation: cardIn 0.5s var(--ease-out) forwards;
+  opacity: 0;
+  transform: translateY(16px);
 }
 @keyframes cardIn {
   to { opacity: 1; transform: none; }
@@ -331,6 +331,10 @@ onMounted(async () => {
   text-align: center;
   padding: 5rem 2rem;
   border: 1px dashed rgba(123, 85, 212, 0.2);
+  background: rgba(30, 10, 50, 0.25);
+  border-radius: var(--radius-lg, 24px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 .state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
 .state-title { font-family: var(--font-title); font-size: 1.1rem; color: var(--accent-light); margin-bottom: 0.5rem; }
