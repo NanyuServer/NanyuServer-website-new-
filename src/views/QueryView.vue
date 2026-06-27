@@ -108,7 +108,7 @@ onMounted(async () => {
 
   <div class="filter-section">
     <BorderGlow :border-radius="24">
-      <div class="filter-bar glass-card" style="border:none; box-shadow:none; background:transparent">
+      <div class="filter-bar" style="border:none; box-shadow:none; background:transparent">
         <div class="filter-group">
           <div class="filter-label">开始时间</div>
           <GlassDateTime v-model="dateStart" placeholder="选择开始日期" date-only />
@@ -210,6 +210,7 @@ onMounted(async () => {
   max-width: 1100px;
   margin: 0 auto;
   padding: 2.5rem 2rem 1rem;
+  overflow: visible;
 }
 .filter-bar {
   padding: 1.6rem 2rem;
@@ -217,6 +218,7 @@ onMounted(async () => {
   gap: 1.2rem;
   align-items: flex-end;
   flex-wrap: wrap;
+  overflow: visible;
 }
 .filter-group {
   display: flex;

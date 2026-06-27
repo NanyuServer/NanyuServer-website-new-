@@ -631,7 +631,7 @@ onMounted(() => {
       <!-- Add Submission Tab -->
       <div v-show="currentTab === 'add'">
         <div class="form-card glass-card">
-          <div class="form-card-top" />
+
           <div class="form-card-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
             {{ fieldEditId ? '编辑稿件' : '新建稿件' }}
@@ -664,7 +664,7 @@ onMounted(() => {
         </div>
 
         <div class="form-card glass-card" style="margin-top: 1.5rem;">
-          <div class="form-card-top" />
+
           <div class="form-card-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" /></svg>
             批量导入稿件
@@ -815,7 +815,7 @@ onMounted(() => {
       <!-- Recruit Tab -->
       <div v-show="currentTab === 'recruit'">
         <div class="form-card glass-card">
-          <div class="form-card-top" />
+
           <div class="form-card-title">招贤纳士岗位管理</div>
           <div class="form-grid-3">
             <div class="form-group">
@@ -898,7 +898,7 @@ onMounted(() => {
       <!-- Account Tab -->
       <div v-show="currentTab === 'account'">
         <div class="form-card glass-card">
-          <div class="form-card-top" />
+
           <div class="form-card-title">账户设置</div>
           <div class="form-grid-3">
             <div class="form-group">

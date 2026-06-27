@@ -131,7 +131,6 @@ onMounted(async () => {
 
     <BorderGlow :border-radius="24">
       <div class="form-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
-        <div class="form-card-top" />
       <div class="form-card-title">📝 岗位报名</div>
       <div class="form-grid">
         <div class="form-group">

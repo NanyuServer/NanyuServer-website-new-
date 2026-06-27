@@ -6,6 +6,7 @@ import TrueFocus from '@/components/common/TrueFocus.vue'
 import SplitText from '@/components/common/SplitText.vue'
 import ShinyText from '@/components/common/ShinyText.vue'
 import BorderGlow from '@/components/common/BorderGlow.vue'
+import ScrollStack from '@/components/common/ScrollStack.vue'
 
 const showModal = ref(false)
 const videoLoaded = ref(false)
@@ -106,17 +107,37 @@ onUnmounted(() => {})
         />
         <div class="line2"><SplitText text="坚持打造南渝学子的一站式服务平台" :delay="30" :duration="0.7" tag="span" /></div>
       </h1>
-      <div class="hero-ctas">
-        <button class="glass-btn glass-btn-primary" @click="window.open('https://qm.qq.com/q/FHAbiDBIQO', '_blank')">
-          <span>立即进入</span>
-        </button>
-      </div>
     </div>
+  </section>
 
-    <div class="scroll-hint">
-      <span>SCROLL</span>
-      <div class="scroll-line" />
-    </div>
+  <!-- ScrollStack -->
+  <section class="scrollstack-section">
+    <ScrollStack :item-distance="120" :item-scale="0.04" :item-stack-distance="40" :base-scale="0.88" :stack-position="0.25" :scale-end-position="0.1">
+      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(75, 47, 163, 0.7), rgba(123, 85, 212, 0.4));">
+        <div class="ss-card-num">01</div>
+        <h3 class="ss-card-title">稿件查询</h3>
+        <p class="ss-card-desc">快速搜索已审核发布的投稿内容，支持按时间、类型与关键词筛选，让校园资讯触手可及。</p>
+      </div>
+      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(232, 111, 163, 0.5), rgba(168, 127, 232, 0.35));">
+        <div class="ss-card-num">02</div>
+        <h3 class="ss-card-title">公益课程</h3>
+        <p class="ss-card-desc">专业级剪辑软件教程等优质教育资源完全免费共享，让知识在校园中自由流动。</p>
+      </div>
+      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(93, 232, 208, 0.45), rgba(123, 85, 212, 0.35));">
+        <div class="ss-card-num">03</div>
+        <h3 class="ss-card-title">有求必应</h3>
+        <p class="ss-card-desc">有任何校园资讯提问或网站问题反馈，提交后我们会及时回复处理。</p>
+      </div>
+      <div class="scroll-stack-card" style="background: linear-gradient(135deg, rgba(232, 201, 122, 0.45), rgba(232, 111, 163, 0.35));">
+        <div class="ss-card-num">04</div>
+        <h3 class="ss-card-title">合作与共创</h3>
+        <p class="ss-card-desc">与南渝万能墙合作，共同打造更好的校园服务平台，携手并进。</p>
+      </div>
+      <div class="scroll-stack-card ss-card-final" style="background: linear-gradient(135deg, rgba(123, 85, 212, 0.6), rgba(75, 47, 163, 0.5));">
+        <h3 class="ss-card-title ss-card-title-big">均在南渝万能墙</h3>
+        <p class="ss-card-desc">1900+ 南渝学子已在这里相遇，让校园生活更精彩。</p>
+      </div>
+    </ScrollStack>
   </section>
 
   <!-- Marquee -->
@@ -321,42 +342,65 @@ onUnmounted(() => {})
 }
 .hero-title :deep(.focus-word) {
   font-size: clamp(3rem, 8vw, 6rem);
+  text-shadow: 0 0 40px rgba(123, 85, 212, 0.5), 0 0 80px rgba(123, 85, 212, 0.25), 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-.hero-ctas {
-  display: flex;
-  gap: 1.2rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  animation: fadeUp 1s var(--ease-out) 0.9s both;
+/* ── ScrollStack ── */
+.scrollstack-section {
+  background: var(--bg-primary);
+  padding: 0 2rem;
 }
-
-.scroll-hint {
-  position: absolute;
-  bottom: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+.scroll-stack-card {
+  border-radius: 40px;
+  padding: 3rem;
+  box-sizing: border-box;
+  min-height: 20rem;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+.ss-card-num {
+  font-family: var(--font-title);
+  font-size: 4rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.08);
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
+  line-height: 1;
+}
+.ss-card-title {
+  font-family: var(--font-title);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  color: #f0e6ff;
+  margin-bottom: 1rem;
+  letter-spacing: 0.02em;
+}
+.ss-card-title-big {
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  text-align: center;
+  background: linear-gradient(135deg, #f0e6ff, #e8c97a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.ss-card-desc {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: rgba(236, 234, 239, 0.75);
+  line-height: 2;
+  max-width: 600px;
+}
+.ss-card-final {
+  text-align: center;
   align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-ui);
-  font-size: 0.62rem;
-  letter-spacing: 0.18em;
-  color: var(--accent-light);
-  animation: fadeUp 1s var(--ease-out) 1.5s both;
 }
-.scroll-line {
-  width: 1px;
-  height: 50px;
-  background: linear-gradient(180deg, #7b55d4, transparent);
-  animation: scrollPulse 2s ease-in-out infinite;
-}
-@keyframes scrollPulse {
-  0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
-  50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
-  51% { transform-origin: bottom; }
-  100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+.ss-card-final .ss-card-desc {
+  text-align: center;
 }
 
 /* ── Marquee ── */

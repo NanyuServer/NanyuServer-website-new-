@@ -70,7 +70,6 @@ onMounted(loadFeedback)
     <!-- Form -->
     <BorderGlow :border-radius="24">
       <div class="form-card" style="border:none; box-shadow:none; background:transparent">
-        <div class="form-card-top" />
         <div class="form-card-title">📝 提交反馈</div>
         <form @submit="submitForm">
           <div class="form-grid">
