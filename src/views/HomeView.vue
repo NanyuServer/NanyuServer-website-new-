@@ -5,6 +5,7 @@ import FloatingLinesBackground from '@/components/common/FloatingLinesBackground
 import TrueFocus from '@/components/common/TrueFocus.vue'
 import SplitText from '@/components/common/SplitText.vue'
 import ShinyText from '@/components/common/ShinyText.vue'
+import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const showModal = ref(false)
 const videoLoaded = ref(false)
@@ -198,12 +199,12 @@ onUnmounted(() => {})
         </p>
       </div>
       <div class="video-box">
-        <div class="video-frame">
-          <div v-if="!videoLoaded" class="video-placeholder" @click="initVideo" role="button" tabindex="0" @keydown.enter="initVideo" @keydown.space.prevent="initVideo">
-            <div class="play-btn">▶</div>
-          </div>
-          <div id="plv-wrap" :style="{ display: videoLoaded ? 'block' : 'none', width: '100%', height: '100%' }" />
+      <BorderGlow :border-radius="24" :glow-radius="36"><div class="video-frame" style="border:none;box-shadow:none;border-radius:24px">
+        <div v-if="!videoLoaded" class="video-placeholder" @click="initVideo" role="button" tabindex="0" @keydown.enter="initVideo" @keydown.space.prevent="initVideo">
+          <div class="play-btn">▶</div>
         </div>
+        <div id="plv-wrap" :style="{ display: videoLoaded ? 'block' : 'none', width: '100%', height: '100%' }" />
+      </div></BorderGlow>
         <p class="video-caption">或前往抖音搜索 北关鱼的驿站 查看更多视频</p>
       </div>
     </div>

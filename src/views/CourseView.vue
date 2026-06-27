@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const pdfUrl = 'https://videotourl.com/documents/1777475377797-4308193f-0dd7-4ebf-a2fc-f5abceadccd4.pdf'
 const pdfLib = ref(null)
@@ -89,7 +90,8 @@ onMounted(async () => {
   </div>
 
   <div class="content-section">
-    <div class="info-card glass-card">
+    <BorderGlow :border-radius="24">
+    <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
       <h2 class="course-title">《南渝万能墙公益课程—剪辑软件进阶教程》</h2>
       <p class="course-note">南渝万能墙版权所有 未经允许任何人不得转载商用和署名</p>
 
@@ -120,6 +122,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    </BorderGlow>
   </div>
 </template>
 

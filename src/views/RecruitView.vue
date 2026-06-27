@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { recruitmentsApi, recruitApplicantsApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import GlassSelect from '@/components/common/GlassSelect.vue'
+import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const { show: showToast } = useToast()
 
@@ -88,38 +89,49 @@ onMounted(async () => {
   </div>
 
   <div class="content-section">
-    <div class="info-card glass-card">
-      <div class="info-title">📋 关于本岗位</div>
-      <div class="info-text">南渝万能墙是一个致力于为学生服务的校园平台，我们诚邀热心、有想法、有执行力的同学加入我们的运营团队。通过参与平台的日常运营，你将获得宝贵的团队协作、项目管理和沟通能力。</div>
-    </div>
+    <BorderGlow :border-radius="24">
+      <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
+        <div class="info-title">📋 关于本岗位</div>
+        <div class="info-text">南渝万能墙是一个致力于为学生服务的校园平台，我们诚邀热心、有想法、有执行力的同学加入我们的运营团队。通过参与平台的日常运营，你将获得宝贵的团队协作、项目管理和沟通能力。</div>
+      </div>
+    </BorderGlow>
 
     <div style="margin-bottom: 2rem;">
       <h2 class="section-heading">🎯 招聘岗位</h2>
       <div class="positions-grid">
         <template v-if="positions.length">
-          <div
+          <BorderGlow
             v-for="pos in positions"
             :key="pos.id"
-            class="position-card glass-card"
-            :class="{ selected: String(selectedId) === String(pos.id) }"
-            @click="selectPosition(pos.id)"
+            :border-radius="24"
+            :glow-radius="36"
           >
+            <div
+              class="position-card"
+              style="border:none; box-shadow:none; background:transparent; padding:1.5rem"
+              :class="{ selected: String(selectedId) === String(pos.id) }"
+              @click="selectPosition(pos.id)"
+            >
             <div class="position-title">{{ pos.title }}</div>
             <div class="position-desc">{{ pos.description }}</div>
             <template v-if="pos.tags">
               <span v-for="tag in pos.tags.split(',')" :key="tag" class="position-tag">{{ tag.trim() }}</span>
             </template>
-            <a v-if="pos.apply_url" :href="pos.apply_url" target="_blank" class="position-link glass-btn glass-btn-primary glass-btn-sm" @click.stop>立即报名</a>
-          </div>
+              <a v-if="pos.apply_url" :href="pos.apply_url" target="_blank" class="position-link glass-btn glass-btn-primary glass-btn-sm" @click.stop>立即报名</a>
+            </div>
+          </BorderGlow>
         </template>
         <template v-else>
-          <div class="empty-card glass-card">招聘岗位加载中，请稍候。</div>
+          <BorderGlow :border-radius="24">
+            <div class="empty-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">招聘岗位加载中，请稍候。</div>
+          </BorderGlow>
         </template>
       </div>
     </div>
 
-    <div class="form-card glass-card">
-      <div class="form-card-top" />
+    <BorderGlow :border-radius="24">
+      <div class="form-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
+        <div class="form-card-top" />
       <div class="form-card-title">📝 岗位报名</div>
       <div class="form-grid">
         <div class="form-group">
@@ -145,7 +157,8 @@ onMounted(async () => {
         </button>
       </div>
       <div class="form-note" :style="{ color: formNoteColor || '#7b55d4' }">{{ formNote }}</div>
-    </div>
+      </div>
+    </BorderGlow>
   </div>
 </template>
 

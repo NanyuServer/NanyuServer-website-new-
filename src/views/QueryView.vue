@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { submissionsApi } from '@/services/api'
 import GlassSelect from '@/components/common/GlassSelect.vue'
 import GlassDateTime from '@/components/common/GlassDateTime.vue'
+import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const allData = ref([])
 const filteredData = ref([])
@@ -106,26 +107,28 @@ onMounted(async () => {
   </div>
 
   <div class="filter-section">
-    <div class="filter-bar glass-card">
-      <div class="filter-group">
-        <div class="filter-label">开始时间</div>
-        <GlassDateTime v-model="dateStart" placeholder="选择开始日期" date-only />
+    <BorderGlow :border-radius="24">
+      <div class="filter-bar glass-card" style="border:none; box-shadow:none; background:transparent">
+        <div class="filter-group">
+          <div class="filter-label">开始时间</div>
+          <GlassDateTime v-model="dateStart" placeholder="选择开始日期" date-only />
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">结束时间</div>
+          <GlassDateTime v-model="dateEnd" placeholder="选择结束日期" date-only />
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">投稿类型</div>
+          <GlassSelect v-model="typeFilter" :options="typeOptions" placeholder="全部类型" />
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">内容关键词</div>
+          <input type="text" class="glass-input" v-model="keywordFilter" placeholder="输入关键词搜索" />
+        </div>
+        <button class="glass-btn glass-btn-primary glass-btn-sm" @click="applyFilter">搜索</button>
+        <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="resetFilter">重置</button>
       </div>
-      <div class="filter-group">
-        <div class="filter-label">结束时间</div>
-        <GlassDateTime v-model="dateEnd" placeholder="选择结束日期" date-only />
-      </div>
-      <div class="filter-group">
-        <div class="filter-label">投稿类型</div>
-        <GlassSelect v-model="typeFilter" :options="typeOptions" placeholder="全部类型" />
-      </div>
-      <div class="filter-group">
-        <div class="filter-label">内容关键词</div>
-        <input type="text" class="glass-input" v-model="keywordFilter" placeholder="输入关键词搜索" />
-      </div>
-      <button class="glass-btn glass-btn-primary glass-btn-sm" @click="applyFilter">搜索</button>
-      <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="resetFilter">重置</button>
-    </div>
+    </BorderGlow>
   </div>
 
   <div class="results-section">
@@ -147,34 +150,42 @@ onMounted(async () => {
 
     <div class="cards-grid">
       <template v-if="loading">
-        <div class="state-box glass-card">
-          <div class="spinner" />
-          <div class="state-title">正在加载稿件</div>
-          <div class="state-sub">请稍候…</div>
-        </div>
+        <BorderGlow :border-radius="24">
+          <div class="state-box glass-card" style="border:none; box-shadow:none; background:transparent">
+            <div class="spinner" />
+            <div class="state-title">正在加载稿件</div>
+            <div class="state-sub">请稍候…</div>
+          </div>
+        </BorderGlow>
       </template>
       <template v-else-if="pageData.length">
-        <div
+        <BorderGlow
           v-for="(item, i) in pageData"
           :key="item.id"
-          class="submission-card glass-card"
+          :border-radius="24"
+          :glow-radius="36"
+          style="animation: cardIn 0.5s var(--ease-out) forwards; opacity:0; transform:translateY(16px)"
           :style="{ animationDelay: (i * 60) + 'ms' }"
         >
-          <div class="card-header">
-            <span class="card-type-badge" :class="'type-' + item.type">
-              {{ typeEmojiMap[item.type] || '📄' }} {{ item.type }}
-            </span>
-            <span class="card-time">{{ formatDate(item.created_at) }}</span>
+          <div class="submission-card glass-card" style="border:none; box-shadow:none; background:transparent">
+            <div class="card-header">
+              <span class="card-type-badge" :class="'type-' + item.type">
+                {{ typeEmojiMap[item.type] || '📄' }} {{ item.type }}
+              </span>
+              <span class="card-time">{{ formatDate(item.created_at) }}</span>
+            </div>
+            <div class="card-content">{{ item.content }}</div>
           </div>
-          <div class="card-content">{{ item.content }}</div>
-        </div>
+        </BorderGlow>
       </template>
       <template v-else>
-        <div class="state-box glass-card">
-          <div class="state-icon">🔍</div>
-          <div class="state-title">暂无符合条件的稿件</div>
-          <div class="state-sub">请尝试调整筛选条件</div>
-        </div>
+        <BorderGlow :border-radius="24">
+          <div class="state-box glass-card" style="border:none; box-shadow:none; background:transparent">
+            <div class="state-icon">🔍</div>
+            <div class="state-title">暂无符合条件的稿件</div>
+            <div class="state-sub">请尝试调整筛选条件</div>
+          </div>
+        </BorderGlow>
       </template>
     </div>
 
@@ -264,9 +275,6 @@ onMounted(async () => {
 }
 .submission-card {
   padding: 1.6rem 1.8rem;
-  animation: cardIn 0.5s var(--ease-out) forwards;
-  opacity: 0;
-  transform: translateY(16px);
 }
 @keyframes cardIn {
   to { opacity: 1; transform: none; }

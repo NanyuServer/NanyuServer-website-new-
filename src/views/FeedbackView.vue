@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { feedbackApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import GlassSelect from '@/components/common/GlassSelect.vue'
+import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const { show: showToast } = useToast()
 
@@ -67,34 +68,37 @@ onMounted(loadFeedback)
 
   <div class="content-section">
     <!-- Form -->
-    <div class="form-card glass-card">
-      <div class="form-card-top" />
-      <div class="form-card-title">📝 提交反馈</div>
-      <form @submit="submitForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">反馈类型 *</label>
-            <GlassSelect v-model="category" :options="categoryOptions" placeholder="请选择反馈类型" />
+    <BorderGlow :border-radius="24">
+      <div class="form-card" style="border:none; box-shadow:none; background:transparent">
+        <div class="form-card-top" />
+        <div class="form-card-title">📝 提交反馈</div>
+        <form @submit="submitForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">反馈类型 *</label>
+              <GlassSelect v-model="category" :options="categoryOptions" placeholder="请选择反馈类型" />
+            </div>
+            <div class="form-group full">
+              <label class="form-label">反馈内容 *</label>
+              <textarea class="glass-textarea" v-model="content" placeholder="请输入您的反馈内容..." required />
+            </div>
           </div>
-          <div class="form-group full">
-            <label class="form-label">反馈内容 *</label>
-            <textarea class="glass-textarea" v-model="content" placeholder="请输入您的反馈内容..." required />
+          <div class="form-actions">
+            <button type="submit" class="glass-btn glass-btn-primary" :disabled="submitting">
+              {{ submitting ? '提交中…' : '提交反馈' }}
+            </button>
           </div>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="glass-btn glass-btn-primary" :disabled="submitting">
-            {{ submitting ? '提交中…' : '提交反馈' }}
-          </button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </BorderGlow>
 
     <!-- Feedback list -->
     <div class="feedback-list">
       <h2 class="list-title">📋 已审核内容</h2>
       <div class="cards-grid">
         <template v-if="feedbacks.length">
-          <div v-for="f in feedbacks" :key="f.id" class="submission-card glass-card">
+          <BorderGlow v-for="f in feedbacks" :key="f.id" :border-radius="24" :glow-radius="36">
+            <div class="submission-card" style="border:none;box-shadow:none;background:transparent">
             <div class="card-header">
               <span class="card-type-badge">{{ f.type }}</span>
               <span class="card-time">{{ new Date(f.createdAt).toLocaleString('zh-CN') }}</span>
@@ -108,12 +112,15 @@ onMounted(loadFeedback)
               <div class="reply-content">{{ f.reply }}</div>
             </div>
           </div>
+          </BorderGlow>
         </template>
         <template v-else>
-          <div class="state-box glass-card">
+          <BorderGlow :border-radius="24">
+            <div class="state-box" style="border:none;box-shadow:none;background:transparent">
             <div class="state-title">暂无已审核内容</div>
             <div class="state-sub">已审核的反馈将显示在此</div>
           </div>
+          </BorderGlow>
         </template>
       </div>
     </div>
@@ -123,14 +130,16 @@ onMounted(loadFeedback)
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="showSuccess" class="success-overlay">
-        <div class="success-card glass-card">
-          <div class="success-icon">✓</div>
-          <div class="success-title">反馈提交成功！</div>
-          <div class="success-msg">感谢您的建议，我们会认真审核您的反馈，并尽快给予回复。</div>
-          <div class="progress-bar">
-            <div class="progress-fill" />
+        <BorderGlow :border-radius="24">
+          <div class="success-card" style="border:none;box-shadow:none;background:transparent">
+            <div class="success-icon">✓</div>
+            <div class="success-title">反馈提交成功！</div>
+            <div class="success-msg">感谢您的建议，我们会认真审核您的反馈，并尽快给予回复。</div>
+            <div class="progress-bar">
+              <div class="progress-fill" />
+            </div>
           </div>
-        </div>
+        </BorderGlow>
       </div>
     </Transition>
   </Teleport>

@@ -1,4 +1,6 @@
 <script setup>
+import BorderGlow from '@/components/common/BorderGlow.vue'
+
 const cards = [
   {
     icon: 'monitor',
@@ -36,15 +38,17 @@ const iconPaths = {
 
   <div class="content-section">
     <div class="cooperation-grid">
-      <div v-for="(card, i) in cards" :key="i" class="cooperation-card glass-card">
-        <div class="cooperation-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path v-for="(d, j) in iconPaths[card.icon]" :key="j" :d="d" />
-          </svg>
+      <BorderGlow v-for="(card, i) in cards" :key="i" :border-radius="24" :glow-radius="36">
+        <div class="cooperation-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
+          <div class="cooperation-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path v-for="(d, j) in iconPaths[card.icon]" :key="j" :d="d" />
+            </svg>
+          </div>
+          <h3 class="cooperation-title">{{ card.title }}</h3>
+          <p class="cooperation-desc">{{ card.desc }}</p>
         </div>
-        <h3 class="cooperation-title">{{ card.title }}</h3>
-        <p class="cooperation-desc">{{ card.desc }}</p>
-      </div>
+      </BorderGlow>
     </div>
   </div>
 </template>
