@@ -58,6 +58,8 @@ const iconPaths = {
   max-width: 1100px;
   margin: 0 auto;
   padding: 3rem 2rem;
+  position: relative;
+  z-index: 1;
 }
 .cooperation-grid {
   display: grid;

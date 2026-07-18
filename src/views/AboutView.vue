@@ -66,6 +66,8 @@ import BorderGlow from '@/components/common/BorderGlow.vue'
   max-width: 1100px;
   margin: 0 auto;
   padding: 3rem 2rem;
+  position: relative;
+  z-index: 1;
 }
 .info-card {
   padding: 2rem;

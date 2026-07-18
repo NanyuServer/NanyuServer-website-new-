@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -9,7 +9,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const open = ref(false)
-const dropdownRef = ref(null)
+const wrapRef = ref(null)
+const triggerRef = ref(null)
+const dropStyle = ref({})
 const selectedLabel = computed(() => {
   const found = props.options.find(o => (o.value ?? o) === props.modelValue)
   return found ? (found.label ?? found) : ''
@@ -20,38 +22,74 @@ function select(val) {
   open.value = false
 }
 
-function toggle() { open.value = !open.value }
+function toggle() {
+  open.value = !open.value
+  if (open.value) nextTick(updateDropPosition)
+}
+
+function updateDropPosition() {
+  if (!triggerRef.value) return
+  const rect = triggerRef.value.getBoundingClientRect()
+  const spaceBelow = window.innerHeight - rect.bottom
+  const dropHeight = Math.min(props.options.length * 38 + 12, 260)
+  const openUp = spaceBelow < dropHeight + 8 && rect.top > dropHeight
+
+  dropStyle.value = {
+    position: 'fixed',
+    left: rect.left + 'px',
+    width: rect.width + 'px',
+    zIndex: 20000,
+    ...(openUp
+      ? { bottom: (window.innerHeight - rect.top + 6) + 'px' }
+      : { top: (rect.bottom + 6) + 'px' }
+    )
+  }
+}
 
 function onClickOutside(e) {
-  if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
+  if (wrapRef.value && !wrapRef.value.contains(e.target)) {
     open.value = false
   }
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside))
-onUnmounted(() => document.removeEventListener('click', onClickOutside))
+function onScroll() {
+  if (open.value) updateDropPosition()
+}
+
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+  window.addEventListener('scroll', onScroll, true)
+  window.addEventListener('resize', onScroll)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', onClickOutside)
+  window.removeEventListener('scroll', onScroll, true)
+  window.removeEventListener('resize', onScroll)
+})
 </script>
 
 <template>
-  <div class="gs-wrap" ref="dropdownRef">
-    <button class="gs-trigger" :class="{ open, placeholder: !selectedLabel }" @click="toggle" type="button">
+  <div class="gs-wrap" ref="wrapRef">
+    <button ref="triggerRef" class="gs-trigger" :class="{ open, placeholder: !selectedLabel }" @click="toggle" type="button">
       <span>{{ selectedLabel || placeholder }}</span>
       <svg class="gs-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
     </button>
-    <Transition name="gs-drop">
-      <div v-if="open" class="gs-dropdown">
-        <button
-          v-for="opt in options"
-          :key="opt.value ?? opt"
-          class="gs-option"
-          :class="{ active: (opt.value ?? opt) === modelValue }"
-          @click="select(opt.value ?? opt)"
-          type="button"
-        >
-          {{ opt.label ?? opt }}
-        </button>
-      </div>
-    </Transition>
+    <Teleport to="body">
+      <Transition name="gs-drop">
+        <div v-if="open" class="gs-dropdown" :style="dropStyle">
+          <button
+            v-for="opt in options"
+            :key="opt.value ?? opt"
+            class="gs-option"
+            :class="{ active: (opt.value ?? opt) === modelValue }"
+            @click.stop="select(opt.value ?? opt)"
+            type="button"
+          >
+            {{ opt.label ?? opt }}
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -104,14 +142,11 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
 .gs-trigger.open .gs-arrow {
   transform: rotate(180deg);
 }
+</style>
 
+<style>
 .gs-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 9000;
-  background: rgba(20, 12, 40, 0.95);
+  background: rgba(20, 12, 40, 0.97);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
   border: 1px solid rgba(179, 136, 255, 0.25);
@@ -145,7 +180,7 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
   background: rgba(179, 136, 255, 0.18);
 }
 
-.gs-drop-enter-active { transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out); }
+.gs-drop-enter-active { transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
 .gs-drop-leave-active { transition: opacity 0.15s ease-in, transform 0.15s ease-in; }
 .gs-drop-enter-from, .gs-drop-leave-to {
   opacity: 0;

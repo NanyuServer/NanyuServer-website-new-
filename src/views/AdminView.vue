@@ -83,6 +83,18 @@ function formatDT(iso) {
   return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
+function parseApplicantGrade(note) {
+  if (!note) return '—'
+  const m = note.match(/年级[：:]\s*([^|]+)/)
+  return m ? m[1].trim() : '—'
+}
+
+function parseApplicantSkills(note) {
+  if (!note) return ''
+  const m = note.match(/技能[：:]\s*(.+)/)
+  return m ? m[1].trim() : ''
+}
+
 const tabTitles = {
   add: { title: '添加稿件', sub: '填写信息后提交至数据库' },
   list: { title: '稿件列表', sub: '查看和管理所有已录入稿件' },
@@ -873,20 +885,21 @@ onMounted(() => {
           <div class="table-toolbar"><div class="table-toolbar-title">岗位报名列表</div></div>
           <div style="overflow-x: auto;">
             <table class="data-table">
-              <thead><tr><th>ID</th><th>报名时间</th><th>姓名</th><th>意向岗位</th><th>QQ</th><th>备注</th></tr></thead>
+              <thead><tr><th>ID</th><th>报名时间</th><th>姓名</th><th>年级</th><th>意向岗位</th><th>联系方式</th><th>技能</th></tr></thead>
               <tbody>
                 <template v-if="recruitApplicants.length">
                   <tr v-for="a in recruitApplicants" :key="a.id">
                     <td style="color: #7b55d4; font-size: 0.75rem">#{{ a.id }}</td>
                     <td style="white-space: nowrap; font-size: 0.78rem">{{ formatDT(a.created_at) }}</td>
                     <td>{{ a.name }}</td>
+                    <td>{{ parseApplicantGrade(a.note) }}</td>
                     <td>{{ a.position_title }}</td>
                     <td>{{ a.qq }}</td>
-                    <td class="content-cell" :title="a.note">{{ a.note || '—' }}</td>
+                    <td class="content-cell" :title="parseApplicantSkills(a.note)">{{ parseApplicantSkills(a.note) || '—' }}</td>
                   </tr>
                 </template>
                 <template v-else>
-                  <tr><td colspan="6" class="empty-table">暂无报名数据</td></tr>
+                  <tr><td colspan="7" class="empty-table">暂无报名数据</td></tr>
                 </template>
               </tbody>
             </table>

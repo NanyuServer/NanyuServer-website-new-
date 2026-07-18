@@ -1,68 +1,82 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { recruitmentsApi, recruitApplicantsApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
-import GlassSelect from '@/components/common/GlassSelect.vue'
-import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const { show: showToast } = useToast()
 
 const positions = ref([])
-const selectedId = ref(null)
+const selectedPositionId = ref('')
+const selectedGrade = ref('')
+const selectedContactType = ref('QQ')
+const currentStep = ref(0)
+const rotatingTextIndex = ref(0)
+let rotatingTimer = null
 
-const name = ref('')
-const positionId = ref('')
-const qq = ref('')
-const note = ref('')
-const formNote = ref('我们会尽快联系你，请保证联系方式正确。')
-const positionOptions = computed(() => [
-  { value: '', label: '请选择意向岗位' },
-  ...positions.value.map(p => ({ value: String(p.id), label: p.title }))
-])
-const formNoteColor = ref('')
+const ROTATING_TEXTS = ['南渝万能墙', '北关鱼的驿站', 'BEIGUANYU驿站']
+
+const STEPS = [
+  { title: '感谢选择南渝万能墙', desc: '我们提供了旗下各平台的运营岗位。在这里，你可以磨练自己的能力、结识新好友，创造无限可能！' },
+  { title: '选择你的意向岗位', desc: '你可以下滑看到我们目前提供的岗位，如感兴趣可以直接点击此岗位标签。' },
+  { title: '欢迎加入南渝万能墙', desc: '你可以填写我们准备的意向表让我们联系你。' }
+]
+
+const GRADES = ['初2029届', '初2028届', '初2027届', '高2029届', '高2028届', '高2027届', '已毕业']
+const CONTACT_TYPES = ['QQ', '微信', '抖音']
+
+const formName = ref('')
+const formContact = ref('')
+const formSkills = ref('')
+const formMsg = ref('')
+const formMsgColor = ref('')
 const submitting = ref(false)
 
-function setFormNote(msg, color = '') {
-  formNote.value = msg
-  formNoteColor.value = color
+function setFormMsg(msg, color = '') {
+  formMsg.value = msg
+  formMsgColor.value = color
 }
 
-function selectPosition(id) {
-  selectedId.value = id
-  positionId.value = String(id)
-  const pos = positions.value.find(p => String(p.id) === String(id))
-  if (pos) {
-    setFormNote(`已选择岗位：${pos.title}，请完成报名信息后提交。`, '#a0f0c0')
-  }
+function nextStep() {
+  if (currentStep.value < 2) currentStep.value++
+  else currentStep.value = 0
+}
+
+function prevStep() {
+  if (currentStep.value > 0) currentStep.value--
+}
+
+function selectPosition(pos) {
+  selectedPositionId.value = String(pos.id)
+  showToast('已选择：' + pos.title)
 }
 
 async function submitApplication() {
-  if (!name.value.trim()) { setFormNote('请输入姓名', '#ffb3b3'); return }
-  if (!positionId.value) { setFormNote('请选择意向岗位', '#ffb3b3'); return }
-  if (!qq.value.trim()) { setFormNote('请输入QQ联系方式', '#ffb3b3'); return }
+  if (!formName.value.trim()) { setFormMsg('请填写姓名', '#ffb3b3'); return }
+  if (!selectedGrade.value) { setFormMsg('请选择年级', '#ffb3b3'); return }
+  if (!selectedPositionId.value) { setFormMsg('请选择意向岗位', '#ffb3b3'); return }
+  if (!formContact.value.trim()) { setFormMsg('请填写联系方式', '#ffb3b3'); return }
 
-  const pos = positions.value.find(p => String(p.id) === positionId.value)
-  if (!pos) { setFormNote('请选择有效的意向岗位', '#ffb3b3'); return }
-
+  const pos = positions.value.find(p => String(p.id) === selectedPositionId.value)
   submitting.value = true
-  setFormNote('正在提交，请稍候…', '')
+  setFormMsg('', '')
 
   try {
     await recruitApplicantsApi.submit({
-      name: name.value.trim(),
-      position_id: pos.id,
-      position_title: pos.title,
-      qq: qq.value.trim(),
-      note: note.value.trim()
+      name: formName.value.trim(),
+      position_id: pos ? pos.id : selectedPositionId.value,
+      position_title: pos ? pos.title : '',
+      qq: selectedContactType.value + '：' + formContact.value.trim(),
+      note: '年级：' + selectedGrade.value + (formSkills.value.trim() ? ' | 技能：' + formSkills.value.trim() : '')
     })
-    name.value = ''
-    positionId.value = ''
-    qq.value = ''
-    note.value = ''
-    selectedId.value = null
-    setFormNote('报名提交成功，我们会尽快与你联系', '#a0f0c0')
+    formName.value = ''
+    formContact.value = ''
+    formSkills.value = ''
+    selectedPositionId.value = ''
+    selectedGrade.value = ''
+    showToast('报名提交成功，我们会尽快与你联系')
+    setFormMsg('提交成功', '#a0f0c0')
   } catch (e) {
-    setFormNote('提交失败：' + (e.message || '请稍后重试'), '#ffb3b3')
+    setFormMsg('提交失败：' + (e.message || '请稍后重试'), '#ffb3b3')
   } finally {
     submitting.value = false
   }
@@ -75,226 +89,500 @@ onMounted(async () => {
   } catch (e) {
     console.warn('加载招聘岗位失败:', e)
   }
+
+  rotatingTimer = setInterval(() => {
+    rotatingTextIndex.value = (rotatingTextIndex.value + 1) % ROTATING_TEXTS.length
+  }, 2000)
+})
+
+onBeforeUnmount(() => {
+  if (rotatingTimer) clearInterval(rotatingTimer)
 })
 </script>
 
 <template>
-  <div class="page-hero">
-    <div class="page-orb" />
-    <div class="page-hero-content">
-      <div class="page-label">加入我们</div>
-      <h1 class="page-title">招贤纳士</h1>
-      <p class="page-sub">诚邀优秀的学生加入运营团队，共同为校园服务</p>
-    </div>
-  </div>
-
-  <div class="content-section">
-    <BorderGlow :border-radius="24">
-      <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
-        <div class="info-title">📋 关于本岗位</div>
-        <div class="info-text">南渝万能墙是一个致力于为学生服务的校园平台，我们诚邀热心、有想法、有执行力的同学加入我们的运营团队。通过参与平台的日常运营，你将获得宝贵的团队协作、项目管理和沟通能力。</div>
+  <div class="recruit-page">
+    <div class="page-hero">
+      <div class="page-orb" />
+      <div class="page-hero-content">
+        <h1 class="page-title">
+          欢迎加入
+          <span class="tr-wrap">
+            <TransitionGroup name="tr">
+              <span :key="rotatingTextIndex" class="tr-text">{{ ROTATING_TEXTS[rotatingTextIndex] }}</span>
+            </TransitionGroup>
+          </span>
+        </h1>
+        <p class="page-sub">加入南渝万能墙运营团队</p>
       </div>
-    </BorderGlow>
+    </div>
 
-    <div style="margin-bottom: 2rem;">
-      <h2 class="section-heading">🎯 招聘岗位</h2>
+    <div class="content-section">
+      <div class="stepper-container">
+        <div class="step-indicator-row">
+          <div class="step-indicator">
+            <div class="step-indicator-inner" :class="currentStep === 0 ? 'active' : currentStep > 0 ? 'complete' : 'inactive'">
+              <div v-if="currentStep === 0" class="active-dot" />
+              <svg v-else-if="currentStep > 0" class="check-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span v-else class="step-number">1</span>
+            </div>
+          </div>
+          <div class="step-connector"><div class="step-connector-inner" :class="{ complete: currentStep > 0 }" /></div>
+          <div class="step-indicator">
+            <div class="step-indicator-inner" :class="currentStep === 1 ? 'active' : currentStep > 1 ? 'complete' : 'inactive'">
+              <div v-if="currentStep === 1" class="active-dot" />
+              <svg v-else-if="currentStep > 1" class="check-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span v-else class="step-number">2</span>
+            </div>
+          </div>
+          <div class="step-connector"><div class="step-connector-inner" :class="{ complete: currentStep > 1 }" /></div>
+          <div class="step-indicator">
+            <div class="step-indicator-inner" :class="currentStep === 2 ? 'active' : 'inactive'">
+              <div v-if="currentStep === 2" class="active-dot" />
+              <span v-else class="step-number">3</span>
+            </div>
+          </div>
+        </div>
+        <div class="step-content-area">
+          <div class="step-title">{{ STEPS[currentStep].title }}</div>
+          <div class="step-desc">{{ STEPS[currentStep].desc }}</div>
+        </div>
+        <div class="step-footer">
+          <div class="step-nav" :class="currentStep === 0 ? 'end' : 'spread'">
+            <button v-if="currentStep > 0" class="step-back" type="button" @click="prevStep">Back</button>
+            <button class="step-next" type="button" @click="nextStep">{{ currentStep === 2 ? '完成' : '下一步' }}</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="section-heading">岗位列表</h2>
       <div class="positions-grid">
         <template v-if="positions.length">
-          <BorderGlow
+          <div
             v-for="pos in positions"
             :key="pos.id"
-            :border-radius="24"
-            :glow-radius="36"
+            class="position-tag-card"
+            :class="{ selected: String(selectedPositionId) === String(pos.id) }"
+            @click="selectPosition(pos)"
           >
-            <div
-              class="position-card"
-              style="border:none; box-shadow:none; background:transparent; padding:1.5rem"
-              :class="{ selected: String(selectedId) === String(pos.id) }"
-              @click="selectPosition(pos.id)"
-            >
-            <div class="position-title">{{ pos.title }}</div>
-            <div class="position-desc">{{ pos.description }}</div>
-            <template v-if="pos.tags">
-              <span v-for="tag in pos.tags.split(',')" :key="tag" class="position-tag">{{ tag.trim() }}</span>
-            </template>
-              <a v-if="pos.apply_url" :href="pos.apply_url" target="_blank" class="position-link glass-btn glass-btn-primary glass-btn-sm" @click.stop>立即报名</a>
+            <div style="flex:1;min-width:0">
+              <div class="pos-name">{{ pos.title }}</div>
+              <div v-if="pos.description" class="pos-desc">{{ pos.description.substring(0, 60) }}{{ pos.description.length > 60 ? '…' : '' }}</div>
             </div>
-          </BorderGlow>
+            <div class="pos-check" />
+          </div>
         </template>
         <template v-else>
-          <BorderGlow :border-radius="24">
-            <div class="empty-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">招聘岗位加载中，请稍候。</div>
-          </BorderGlow>
+          <div class="empty-card">暂无招聘岗位</div>
         </template>
       </div>
-    </div>
 
-    <BorderGlow :border-radius="24">
-      <div class="form-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
-      <div class="form-card-title">📝 岗位报名</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">姓名</label>
-          <input type="text" class="glass-input" v-model="name" placeholder="请输入姓名" />
+      <div class="form-card">
+        <div class="form-card-title">报名意向表</div>
+        <div class="form-question">
+          <div class="form-q-label"><span class="q-num">1</span> 姓名 <span class="q-required">*</span></div>
+          <input type="text" class="glass-input" v-model="formName" placeholder="请输入你的姓名" />
         </div>
-        <div class="form-group">
-          <label class="form-label">意向岗位</label>
-          <GlassSelect v-model="positionId" :options="positionOptions" placeholder="请选择意向岗位" />
+        <div class="form-question">
+          <div class="form-q-label"><span class="q-num">2</span> 你的年级 <span class="q-required">*</span></div>
+          <div class="radio-group">
+            <div
+              v-for="g in GRADES"
+              :key="g"
+              class="radio-option"
+              :class="{ selected: selectedGrade === g }"
+              @click="selectedGrade = g"
+            >
+              <div class="radio-dot" />
+              <span class="radio-label">{{ g }}</span>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">联系方式（QQ）</label>
-          <input type="text" class="glass-input" v-model="qq" placeholder="请输入QQ号" />
+        <div class="form-question">
+          <div class="form-q-label"><span class="q-num">3</span> 选择意向岗位 <span class="q-required">*</span></div>
+          <div class="radio-group">
+            <div v-if="positions.length">
+              <div
+                v-for="pos in positions"
+                :key="pos.id"
+                class="radio-option"
+                :class="{ selected: String(selectedPositionId) === String(pos.id) }"
+                @click="selectPosition(pos)"
+              >
+                <div class="radio-dot" />
+                <span class="radio-label">{{ pos.title }}</span>
+              </div>
+            </div>
+            <div v-else class="empty-card" style="min-height:60px;font-size:0.82rem">暂无招聘岗位</div>
+          </div>
         </div>
-        <div class="form-group full">
-          <label class="form-label">备注（选填）</label>
-          <textarea class="glass-textarea" v-model="note" placeholder="如有特殊时间、技能或期望可以填写" rows="4" />
+        <div class="form-question">
+          <div class="form-q-label"><span class="q-num">4</span> 你的联系方式 <span class="q-required">*</span></div>
+          <div class="contact-row">
+            <div class="contact-type-group">
+              <button
+                v-for="ct in CONTACT_TYPES"
+                :key="ct"
+                class="contact-type-btn"
+                :class="{ selected: selectedContactType === ct }"
+                type="button"
+                @click="selectedContactType = ct"
+              >{{ ct }}</button>
+            </div>
+            <div class="contact-input">
+              <input type="text" class="glass-input" v-model="formContact" placeholder="请输入联系方式" />
+            </div>
+          </div>
         </div>
+        <div class="form-divider" />
+        <div class="form-question">
+          <div class="form-q-label"><span class="q-num">5</span> 你的技能 <span class="q-optional">（选填）</span></div>
+          <input type="text" class="glass-input" v-model="formSkills" placeholder="如：视频剪辑、文案写作、活动策划等" />
+        </div>
+        <div class="form-actions">
+          <button class="submit-btn" type="button" :disabled="submitting" @click="submitApplication">
+            {{ submitting ? '提交中…' : '提交报名' }}
+          </button>
+        </div>
+        <div v-if="formMsg" class="form-note" :style="{ color: formMsgColor }">{{ formMsg }}</div>
       </div>
-      <div class="form-actions">
-        <button class="glass-btn glass-btn-primary" @click="submitApplication" :disabled="submitting">
-          {{ submitting ? '提交中…' : '提交报名' }}
-        </button>
-      </div>
-      <div class="form-note" :style="{ color: formNoteColor || '#7b55d4' }">{{ formNote }}</div>
-      </div>
-    </BorderGlow>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.content-section {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
+.recruit-page {
+  min-height: 100vh;
 }
-.info-card {
-  padding: 2rem;
+
+.content-section {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Rotating text */
+.tr-wrap {
+  display: inline-flex;
+  overflow: hidden;
+  padding: 0.1em 0.4em;
+  background: var(--bg-tertiary, #5227FF);
+  border-radius: 0.35em;
+  vertical-align: bottom;
+  min-width: 8ch;
+  justify-content: center;
+}
+.tr-text {
+  display: inline-block;
+  animation: trSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tr-enter-active { animation: trSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.tr-leave-active { animation: trSlideOut 0.35s cubic-bezier(0.16, 1, 0.3, 1); position: absolute; }
+@keyframes trSlideIn {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes trSlideOut {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-120%); opacity: 0; }
+}
+
+/* Stepper */
+.stepper-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 28rem;
+  border-radius: 2rem;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  border: 1px solid #222;
+  background: var(--bg-primary);
+  overflow: hidden;
   margin-bottom: 2rem;
 }
-.info-title {
+.step-indicator-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0.5rem;
+}
+.step-indicator { position: relative; cursor: default; outline: none; }
+.step-indicator-inner {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: background-color 0.3s, color 0.3s;
+}
+.step-indicator-inner.inactive { background-color: #222; color: #a3a3a3; }
+.step-indicator-inner.active { background-color: var(--bg-tertiary, #5227FF); color: var(--bg-tertiary, #5227FF); }
+.step-indicator-inner.complete { background-color: var(--bg-tertiary, #5227FF); color: #3b82f6; }
+.active-dot { height: 0.75rem; width: 0.75rem; border-radius: 9999px; background-color: #fff; }
+.step-number { font-size: 0.875rem; }
+.check-icon { height: 1rem; width: 1rem; color: #fff; }
+.step-connector {
+  position: relative;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  height: 0.125rem;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 0.25rem;
+  background-color: #52525b;
+}
+.step-connector-inner {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 0;
+  background-color: var(--bg-tertiary, #5227FF);
+  transition: width 0.4s;
+  border-radius: 0.25rem;
+}
+.step-connector-inner.complete { width: 100%; }
+.step-content-area { padding: 0.5rem 1.5rem 0; }
+.step-title {
   font-family: var(--font-title);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--accent-gold);
-  margin-bottom: 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
 }
-.info-text {
+.step-desc {
   font-family: var(--font-body);
-  font-size: 0.95rem;
-  line-height: 1.8;
+  font-size: 0.82rem;
   color: var(--text-secondary);
+  line-height: 1.7;
+  opacity: 0.85;
 }
+.step-footer { padding: 0.5rem 1.5rem 1.5rem; }
+.step-nav { margin-top: 1rem; display: flex; }
+.step-nav.spread { justify-content: space-between; }
+.step-nav.end { justify-content: flex-end; }
+.step-back {
+  transition: all 350ms;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  color: #a3a3a3;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+.step-back:hover { color: #52525b; }
+.step-next {
+  transition: all 350ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: var(--bg-tertiary, #5227FF);
+  color: #fff;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  letter-spacing: -0.025em;
+  padding: 0.375rem 0.875rem;
+  border: none;
+  cursor: pointer;
+}
+.step-next:hover { opacity: 0.9; }
+.step-next:active { transform: scale(0.97); }
+
+/* Section heading */
 .section-heading {
   font-family: var(--font-title);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: var(--accent-gold);
-  margin-bottom: 1.5rem;
-}
-.positions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-.position-card {
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s var(--ease-out);
-  border: 1px solid rgba(123, 85, 212, 0.25);
-}
-.position-card.selected {
-  border-color: #a0f0c0;
-  box-shadow: 0 0 0 2px rgba(160, 240, 192, 0.18);
-}
-.position-title {
-  font-family: var(--font-title);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--accent-gold);
-  margin-bottom: 0.5rem;
-}
-.position-desc {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--accent-light);
-  line-height: 1.6;
   margin-bottom: 1rem;
 }
-.position-tag {
-  display: inline-block;
-  padding: 0.3rem 0.7rem;
-  background: rgba(123, 85, 212, 0.2);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  color: white;
-  font-weight: 500;
-  margin-right: 0.5rem;
-  margin-bottom: 0.5rem;
+
+/* Position cards */
+.positions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
 }
-.position-link {
-  margin-top: 0.75rem;
-  text-decoration: none;
+.position-tag-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.2rem;
+  background: rgba(15, 10, 26, 0.6);
+  border: 1px solid rgba(123, 85, 212, 0.25);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  width: 100%;
 }
+.position-tag-card:hover { border-color: var(--accent-light); background: rgba(75, 47, 163, 0.15); }
+.position-tag-card.selected { border-color: rgba(52, 211, 153, 0.6); background: rgba(52, 211, 153, 0.08); }
+.pos-name { font-family: var(--font-ui); font-size: 0.88rem; font-weight: 600; color: var(--text-primary); flex: 1; min-width: 0; }
+.pos-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+.pos-check {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(123, 85, 212, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+.position-tag-card.selected .pos-check { border-color: #34d399; background: #34d399; }
+.position-tag-card.selected .pos-check::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: white; }
+
 .empty-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 180px;
+  min-height: 80px;
   padding: 1.5rem;
-  color: var(--accent-light);
-  border: 1px dashed rgba(123, 85, 212, 0.4);
-  grid-column: 1 / -1;
+  color: var(--text-muted);
+  border: 1px dashed rgba(123, 85, 212, 0.3);
+  background: rgba(15, 10, 26, 0.4);
+  border-radius: var(--radius-lg);
+  font-size: 0.88rem;
 }
 
+/* Form */
 .form-card {
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-.form-card-top {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #4c2fa3, #a87fe8, #e86fa3);
+  padding: 1.5rem;
+  background: #120F17;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 .form-card-title {
   font-family: var(--font-title);
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--accent-gold);
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-.form-group {
+.form-question { margin-bottom: 1.5rem; }
+.form-question:last-of-type { margin-bottom: 0; }
+.form-q-label {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
 }
-.form-group.full {
-  grid-column: 1 / -1;
-}
-.form-label {
+.q-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: rgba(75, 47, 163, 0.4);
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--accent-light);
-  font-size: 0.9rem;
+  flex-shrink: 0;
 }
-.form-actions {
+.q-required { color: var(--accent-rose); font-size: 0.8rem; }
+.q-optional { color: var(--text-muted); font-size: 0.72rem; font-weight: 400; }
+
+/* Radio */
+.radio-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.radio-option {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.9rem;
-  margin-top: 1.2rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.9rem;
+  background: rgba(15, 10, 26, 0.5);
+  border: 1px solid rgba(123, 85, 212, 0.2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.25s;
+  user-select: none;
 }
-.form-note {
-  margin-top: 0.85rem;
-  font-size: 0.9rem;
-  transition: color 0.3s;
+.radio-option:hover { border-color: rgba(123, 85, 212, 0.4); background: rgba(75, 47, 163, 0.1); }
+.radio-option.selected { border-color: var(--accent-light); background: rgba(75, 47, 163, 0.2); }
+.radio-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(123, 85, 212, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s;
 }
+.radio-option.selected .radio-dot { border-color: var(--accent-light); background: var(--accent-light); }
+.radio-option.selected .radio-dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: white; }
+.radio-label { font-family: var(--font-ui); font-size: 0.85rem; color: var(--text-secondary); transition: color 0.25s; }
+.radio-option.selected .radio-label { color: var(--text-primary); }
+
+/* Contact */
+.contact-row { display: flex; gap: 0.5rem; }
+.contact-type-group {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid rgba(123, 85, 212, 0.3);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.contact-type-btn {
+  padding: 0.7rem 0.8rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: rgba(15, 10, 26, 0.5);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+  border-right: 1px solid rgba(123, 85, 212, 0.15);
+}
+.contact-type-btn:last-child { border-right: none; }
+.contact-type-btn.selected { background: rgba(75, 47, 163, 0.5); color: white; }
+.contact-input { flex: 1; min-width: 0; }
+.contact-input .glass-input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+.form-divider { height: 1px; background: rgba(123, 85, 212, 0.12); margin: 1.5rem 0; }
+
+.form-actions { display: flex; justify-content: center; margin-top: 1.5rem; }
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 0.85rem 0;
+  width: 100%;
+  border: 1px solid rgba(179, 136, 255, 0.3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(75, 47, 163, 0.6), rgba(100, 60, 180, 0.5));
+  color: white;
+  transition: all 0.3s var(--ease-out);
+}
+.submit-btn:hover { background: linear-gradient(135deg, rgba(75, 47, 163, 0.8), rgba(100, 60, 180, 0.7)); }
+.submit-btn:active { transform: scale(0.98); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.form-note { text-align: center; margin-top: 0.8rem; font-size: 0.78rem; }
 
 @media (max-width: 768px) {
-  .content-section { padding: 2rem 1.25rem; }
-  .positions-grid { grid-template-columns: 1fr; }
-  .form-grid { grid-template-columns: 1fr; }
+  .content-section { padding: 1.25rem 1rem; }
+  .contact-type-btn { padding: 0.6rem 0.6rem; font-size: 0.75rem; }
 }
 </style>

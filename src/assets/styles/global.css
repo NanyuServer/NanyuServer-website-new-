@@ -311,8 +311,9 @@ a:hover {
   padding: 7rem 2rem 2.5rem;
   background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   text-align: center;
+  isolation: isolate;
 }
 .page-hero::before {
   content: '';
@@ -324,17 +325,40 @@ a:hover {
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
 }
+.page-hero::after {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    conic-gradient(from 0deg at 50% 0%, transparent 0deg, rgba(123, 85, 212, 0.06) 10deg, transparent 20deg),
+    conic-gradient(from 30deg at 50% 0%, transparent 0deg, rgba(168, 127, 232, 0.04) 15deg, transparent 30deg),
+    conic-gradient(from 60deg at 50% 0%, transparent 0deg, rgba(232, 111, 163, 0.03) 12deg, transparent 24deg),
+    conic-gradient(from -30deg at 50% 0%, transparent 0deg, rgba(93, 232, 208, 0.03) 8deg, transparent 16deg),
+    conic-gradient(from 90deg at 50% 0%, transparent 0deg, rgba(123, 85, 212, 0.05) 18deg, transparent 36deg),
+    conic-gradient(from -60deg at 50% 0%, transparent 0deg, rgba(232, 201, 122, 0.03) 10deg, transparent 20deg),
+    conic-gradient(from 120deg at 50% 0%, transparent 0deg, rgba(168, 127, 232, 0.04) 14deg, transparent 28deg),
+    conic-gradient(from -90deg at 50% 0%, transparent 0deg, rgba(232, 111, 163, 0.03) 12deg, transparent 24deg);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 20%, black 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 20%, black 0%, transparent 100%);
+}
 .page-orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
   pointer-events: none;
-  top: -80px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
-  width: 600px;
-  height: 400px;
+  width: 700px;
+  height: 550px;
   background: radial-gradient(circle, rgba(75, 47, 163, 0.5) 0%, rgba(232, 111, 163, 0.2) 50%, transparent 70%);
+  z-index: 0;
 }
 .page-hero-content {
   position: relative;
@@ -382,6 +406,13 @@ a:hover {
   to { opacity: 1; transform: none; }
 }
 
+.page-hero + .filter-section,
+.page-hero + .content-section,
+.page-hero + .results-section {
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes shimmer {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -395,6 +426,14 @@ a:hover {
 @media (max-width: 768px) {
   .page-hero {
     padding: 6rem 1.25rem 2.5rem;
+    overflow: visible;
+  }
+  .page-hero::after {
+    width: 300%;
+  }
+  .page-orb {
+    width: 400px;
+    height: 350px;
   }
   .page-title {
     font-size: clamp(1.6rem, 7vw, 2.4rem);

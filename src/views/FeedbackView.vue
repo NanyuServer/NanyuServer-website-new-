@@ -149,6 +149,8 @@ onMounted(loadFeedback)
   max-width: 1100px;
   margin: 0 auto;
   padding: 2.5rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .form-card {

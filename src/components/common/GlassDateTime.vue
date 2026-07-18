@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -9,6 +9,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const open = ref(false)
+const wrapRef = ref(null)
+const triggerRef = ref(null)
+const panelStyle = ref({})
 const viewYear = ref(new Date().getFullYear())
 const viewMonth = ref(new Date().getMonth())
 const selectedDay = ref('')
@@ -78,6 +81,25 @@ function clear() {
   open.value = false
 }
 
+function updatePanelPosition() {
+  if (!triggerRef.value) return
+  const rect = triggerRef.value.getBoundingClientRect()
+  const panelHeight = props.dateOnly ? 380 : 520
+  const spaceBelow = window.innerHeight - rect.bottom
+  const openUp = spaceBelow < panelHeight + 8 && rect.top > panelHeight
+
+  panelStyle.value = {
+    position: 'fixed',
+    left: rect.left + 'px',
+    width: Math.min(320, window.innerWidth - 32) + 'px',
+    zIndex: 20000,
+    ...(openUp
+      ? { bottom: (window.innerHeight - rect.top + 8) + 'px' }
+      : { top: (rect.bottom + 8) + 'px' }
+    )
+  }
+}
+
 function toggle() {
   open.value = !open.value
   if (open.value && props.modelValue) {
@@ -94,67 +116,83 @@ function toggle() {
       minute.value = mi
     }
   }
+  if (open.value) nextTick(updatePanelPosition)
 }
 
 function onClickOutside(e) {
   if (!e.target.closest('.gdt-wrap')) open.value = false
 }
 
+function onScroll() {
+  if (open.value) updatePanelPosition()
+}
+
 watch(open, (v) => {
   if (v) document.addEventListener('click', onClickOutside, { once: true })
+})
+
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, true)
+  window.addEventListener('resize', onScroll)
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll, true)
+  window.removeEventListener('resize', onScroll)
 })
 </script>
 
 <template>
-  <div class="gdt-wrap">
-    <button class="gdt-trigger" :class="{ open, placeholder: !displayValue }" @click.stop="toggle" type="button">
+  <div class="gdt-wrap" ref="wrapRef">
+    <button ref="triggerRef" class="gdt-trigger" :class="{ open, placeholder: !displayValue }" @click.stop="toggle" type="button">
       <span>{{ displayValue || placeholder }}</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
     </button>
 
-    <Transition name="gdt-drop">
-      <div v-if="open" class="gdt-panel" @click.stop>
-        <div class="gdt-header">
-          <button class="gdt-nav" @click="prevMonth" type="button">‹</button>
-          <span class="gdt-title">{{ viewYear }}年 {{ MONTHS[viewMonth] }}</span>
-          <button class="gdt-nav" @click="nextMonth" type="button">›</button>
-        </div>
+    <Teleport to="body">
+      <Transition name="gdt-drop">
+        <div v-if="open" class="gdt-panel" :style="panelStyle" @click.stop>
+          <div class="gdt-header">
+            <button class="gdt-nav" @click="prevMonth" type="button">‹</button>
+            <span class="gdt-title">{{ viewYear }}年 {{ MONTHS[viewMonth] }}</span>
+            <button class="gdt-nav" @click="nextMonth" type="button">›</button>
+          </div>
 
-        <div class="gdt-weekdays">
-          <span v-for="w in WEEKDAYS" :key="w">{{ w }}</span>
-        </div>
+          <div class="gdt-weekdays">
+            <span v-for="w in WEEKDAYS" :key="w">{{ w }}</span>
+          </div>
 
-        <div class="gdt-grid">
-          <button
-            v-for="(d, i) in calendarDays" :key="i"
-            class="gdt-day"
-            :class="{ other: !d.current, selected: d.date === selectedDay, today: d.date === new Date().toISOString().slice(0, 10) }"
-            @click="pickDay(d.date)"
-            :disabled="!d.current"
-            type="button"
-          >{{ d.day }}</button>
-        </div>
+          <div class="gdt-grid">
+            <button
+              v-for="(d, i) in calendarDays" :key="i"
+              class="gdt-day"
+              :class="{ other: !d.current, selected: d.date === selectedDay, today: d.date === new Date().toISOString().slice(0, 10) }"
+              @click="pickDay(d.date)"
+              :disabled="!d.current"
+              type="button"
+            >{{ d.day }}</button>
+          </div>
 
-        <div v-if="!dateOnly" class="gdt-time">
-          <div class="gdt-time-label">时间</div>
-          <div class="gdt-time-cols">
-            <div class="gdt-time-col">
-              <button v-for="h in hours" :key="h" class="gdt-time-btn" :class="{ active: h === hour }" @click="hour = h" type="button">{{ h }}</button>
-            </div>
-            <span class="gdt-time-sep">:</span>
-            <div class="gdt-time-col">
-              <button v-for="m in minutes" :key="m" class="gdt-time-btn" :class="{ active: m === minute }" @click="minute = m" type="button">{{ m }}</button>
+          <div v-if="!dateOnly" class="gdt-time">
+            <div class="gdt-time-label">时间</div>
+            <div class="gdt-time-cols">
+              <div class="gdt-time-col">
+                <button v-for="h in hours" :key="h" class="gdt-time-btn" :class="{ active: h === hour }" @click="hour = h" type="button">{{ h }}</button>
+              </div>
+              <span class="gdt-time-sep">:</span>
+              <div class="gdt-time-col">
+                <button v-for="m in minutes" :key="m" class="gdt-time-btn" :class="{ active: m === minute }" @click="minute = m" type="button">{{ m }}</button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="gdt-actions">
-          <button class="gdt-btn" @click="clear" type="button">清除</button>
-          <button v-if="!dateOnly" class="gdt-btn primary" @click="confirmTime" type="button">确定</button>
-          <button v-else class="gdt-btn primary" @click="open = false" type="button">确定</button>
+          <div class="gdt-actions">
+            <button class="gdt-btn" @click="clear" type="button">清除</button>
+            <button v-if="!dateOnly" class="gdt-btn primary" @click="confirmTime" type="button">确定</button>
+            <button v-else class="gdt-btn primary" @click="open = false" type="button">确定</button>
+          </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -192,13 +230,10 @@ watch(open, (v) => {
   box-shadow: 0 0 0 3px rgba(179, 136, 255, 0.15), 0 0 20px rgba(179, 136, 255, 0.08);
 }
 .gdt-trigger svg { color: var(--text-muted); flex-shrink: 0; }
+</style>
 
+<style>
 .gdt-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 9000;
-  width: min(320px, calc(100vw - 2rem));
   background: rgba(20, 12, 40, 0.97);
   backdrop-filter: blur(28px) saturate(200%);
   -webkit-backdrop-filter: blur(28px) saturate(200%);
@@ -357,7 +392,7 @@ watch(open, (v) => {
   color: white;
 }
 
-.gdt-drop-enter-active { transition: opacity 0.25s var(--ease-out), transform 0.25s var(--ease-out); }
+.gdt-drop-enter-active { transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 .gdt-drop-leave-active { transition: opacity 0.15s ease-in, transform 0.15s ease-in; }
 .gdt-drop-enter-from, .gdt-drop-leave-to {
   opacity: 0;

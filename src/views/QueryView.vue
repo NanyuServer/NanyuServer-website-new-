@@ -207,6 +207,8 @@ onMounted(async () => {
   margin: 0 auto;
   padding: 2.5rem 2rem 1rem;
   overflow: visible;
+  position: relative;
+  z-index: 10;
 }
 .filter-bar {
   padding: 1.6rem 2rem;
@@ -234,6 +236,8 @@ onMounted(async () => {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 2rem 5rem;
+  position: relative;
+  z-index: 1;
 }
 .results-meta {
   display: flex;
