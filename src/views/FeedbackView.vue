@@ -212,7 +212,11 @@ onMounted(loadFeedback)
 }
 .submission-card {
   padding: 1.6rem 1.8rem;
-  transition: border-color 0.3s, transform 0.3s var(--ease-out), box-shadow 0.3s;
+  transition: border-color var(--transition-fast, 0.2s), transform var(--transition-normal, 0.35s), box-shadow var(--transition-fast, 0.2s);
+}
+.submission-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 .card-header {
   display: flex;
@@ -226,10 +230,10 @@ onMounted(loadFeedback)
   display: inline-flex;
   font-family: var(--font-ui);
   font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  padding: 0.3rem 0.8rem;
-  border-radius: 100px;
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-pill, 100px);
+  border: 1px solid rgba(251, 191, 36, 0.3);
   color: #fbbf24;
   background: rgba(251, 191, 36, 0.08);
 }
@@ -257,8 +261,8 @@ onMounted(loadFeedback)
   gap: 0.3rem;
   font-family: var(--font-ui);
   font-size: 0.7rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 100px;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-pill, 100px);
   border: 1px solid;
 }
 .status-approved { color: #34d399; border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.08); }
@@ -280,7 +284,7 @@ onMounted(loadFeedback)
 .state-box {
   text-align: center;
   padding: 3rem 2rem;
-  border: 1px dashed rgba(123, 85, 212, 0.2);
+  border: 1px dashed rgba(123, 85, 212, 0.15);
 }
 .state-title { font-family: var(--font-title); font-size: 1rem; color: var(--accent-light); margin-bottom: 0.5rem; }
 .state-sub { font-family: var(--font-body); font-size: 0.85rem; color: #7b55d4; }
@@ -292,7 +296,9 @@ onMounted(loadFeedback)
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(1, 2, 6, 0.7);
+  background: rgba(1, 2, 6, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 20000;
 }
 .success-card {

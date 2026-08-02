@@ -148,11 +148,11 @@ onUnmounted(() => {
   max-width: 100%;
   padding: 1.25em;
   border-radius: 20px;
-  border: 1px solid #2F293A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: #120F17;
   font-weight: 300;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all var(--transition-fast, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
   --glow-x: 50%;
   --glow-y: 50%;
   --glow-intensity: 0;
@@ -160,8 +160,11 @@ onUnmounted(() => {
 }
 
 .magic-bento-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    0 16px 48px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .magic-bento-card__header,

@@ -243,15 +243,15 @@ onUnmounted(() => {
   display: block;
   height: 60px;
   padding: 0;
-  background: rgba(18, 10, 32, 0.65);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 0.5px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.75rem;
+  background: rgba(18, 10, 32, 0.7);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
   box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.1),
-    0 8px 24px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
   overflow: hidden;
   will-change: height;
@@ -323,22 +323,26 @@ onUnmounted(() => {
 }
 
 .card-nav-cta-button {
-  background: rgba(123, 85, 212, 0.35);
+  background: rgba(75, 47, 163, 0.5);
   color: white;
   border: 1px solid rgba(179, 136, 255, 0.2);
-  border-radius: calc(0.75rem - 0.35rem);
-  padding: 0 1rem;
-  height: 100%;
+  border-radius: var(--radius-pill, 100px);
+  padding: 0 1.1rem;
+  height: 38px;
   font-weight: 500;
   font-size: 0.82rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all var(--transition-fast, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
   display: flex;
   align-items: center;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(75, 47, 163, 0.25);
 }
 .card-nav-cta-button:hover {
-  background: rgba(123, 85, 212, 0.55);
+  background: rgba(75, 47, 163, 0.7);
+  border-color: rgba(179, 136, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(75, 47, 163, 0.35);
+  transform: translateY(-1px);
 }
 
 .card-nav-content {
@@ -364,18 +368,22 @@ onUnmounted(() => {
 .nav-card {
   flex: 1 1 0;
   min-width: 0;
-  border-radius: calc(0.75rem - 0.2rem);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: calc(1rem - 0.2rem);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 12px 16px;
+  padding: 14px 18px;
   gap: 8px;
   user-select: none;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   opacity: 0;
   transform: translateY(50px);
+  transition: border-color var(--transition-fast, 0.2s), background var(--transition-fast, 0.2s);
+}
+.nav-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .nav-card-label {

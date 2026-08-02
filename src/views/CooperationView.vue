@@ -74,9 +74,9 @@ const iconPaths = {
   width: 64px; height: 64px;
   margin: 0 auto 1.5rem;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #4c2fa3, #e86fa3);
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(75, 47, 163, 0.4);
+  background: linear-gradient(135deg, rgba(75, 47, 163, 0.6), rgba(232, 111, 163, 0.5));
+  border-radius: var(--radius-md, 16px);
+  box-shadow: 0 6px 20px rgba(75, 47, 163, 0.35);
 }
 .cooperation-icon svg {
   width: 32px; height: 32px;

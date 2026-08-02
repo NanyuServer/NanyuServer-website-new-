@@ -257,17 +257,17 @@ onMounted(async () => {
 .sort-btn {
   font-family: var(--font-ui);
   font-size: 0.75rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 100px;
-  border: 1px solid rgba(123, 85, 212, 0.25);
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill, 100px);
+  border: 1px solid rgba(123, 85, 212, 0.2);
   background: transparent;
   color: var(--accent-light);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all var(--transition-fast, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
 }
 .sort-btn.active, .sort-btn:hover {
-  background: rgba(123, 85, 212, 0.2);
-  border-color: #7b55d4;
+  background: rgba(75, 47, 163, 0.25);
+  border-color: rgba(179, 136, 255, 0.35);
   color: var(--text-secondary);
 }
 
@@ -277,14 +277,19 @@ onMounted(async () => {
 }
 .submission-card {
   padding: 1.6rem 1.8rem;
-  background: rgba(30, 10, 50, 0.35);
+  background: rgba(26, 16, 48, 0.55);
   backdrop-filter: blur(20px) saturate(200%);
   -webkit-backdrop-filter: blur(20px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg, 24px);
   animation: cardIn 0.5s var(--ease-out) forwards;
   opacity: 0;
   transform: translateY(16px);
+  transition: border-color var(--transition-fast, 0.2s), box-shadow var(--transition-fast, 0.2s);
+}
+.submission-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 @keyframes cardIn {
   to { opacity: 1; transform: none; }
@@ -302,9 +307,9 @@ onMounted(async () => {
   gap: 0.35rem;
   font-family: var(--font-ui);
   font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  padding: 0.3rem 0.8rem;
-  border-radius: 100px;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-pill, 100px);
   border: 1px solid;
   white-space: nowrap;
 }
@@ -334,8 +339,8 @@ onMounted(async () => {
 .state-box {
   text-align: center;
   padding: 5rem 2rem;
-  border: 1px dashed rgba(123, 85, 212, 0.2);
-  background: rgba(30, 10, 50, 0.25);
+  border: 1px dashed rgba(123, 85, 212, 0.15);
+  background: rgba(26, 16, 48, 0.3);
   border-radius: var(--radius-lg, 24px);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -346,8 +351,8 @@ onMounted(async () => {
 
 .spinner {
   width: 40px; height: 40px;
-  border: 3px solid rgba(123, 85, 212, 0.15);
-  border-top-color: #7b55d4;
+  border: 3px solid rgba(123, 85, 212, 0.12);
+  border-top-color: var(--accent-light, #7b55d4);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1.5rem;
@@ -362,24 +367,25 @@ onMounted(async () => {
 .page-btn {
   font-family: var(--font-ui);
   font-size: 0.8rem;
-  width: 36px; height: 36px;
+  width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 8px;
-  border: 1px solid rgba(123, 85, 212, 0.25);
+  border-radius: var(--radius-pill, 100px);
+  border: 1px solid rgba(123, 85, 212, 0.2);
   background: transparent;
   color: var(--accent-light);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all var(--transition-fast, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
 }
 .page-btn:hover, .page-btn.active {
-  background: rgba(123, 85, 212, 0.2);
-  border-color: #7b55d4;
+  background: rgba(75, 47, 163, 0.25);
+  border-color: rgba(179, 136, 255, 0.35);
   color: var(--text-secondary);
 }
 .page-btn.active {
-  background: linear-gradient(135deg, #4c2fa3, #7b55d4);
+  background: linear-gradient(135deg, rgba(75, 47, 163, 0.7), rgba(100, 60, 180, 0.6));
   border-color: transparent;
   color: white;
+  box-shadow: 0 2px 10px rgba(75, 47, 163, 0.3);
 }
 .page-ellipsis {
   display: flex;

@@ -202,8 +202,8 @@ onMounted(async () => {
 }
 .spinner {
   width: 40px; height: 40px;
-  border: 3px solid rgba(123, 85, 212, 0.15);
-  border-top-color: #7b55d4;
+  border: 3px solid rgba(123, 85, 212, 0.12);
+  border-top-color: var(--accent-light, #7b55d4);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

@@ -111,25 +111,25 @@ onUnmounted(() => {
   background: rgba(15, 10, 26, 0.6);
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(123, 85, 212, 0.3);
+  border: 1px solid rgba(123, 85, 212, 0.2);
   padding: 0.7rem 1rem;
   cursor: pointer;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: border-color var(--transition-fast, 0.2s), box-shadow var(--transition-fast, 0.2s);
   outline: none;
   text-align: left;
   -webkit-appearance: none;
   appearance: none;
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-pill, 100px);
 }
 
 .gs-trigger.placeholder {
   color: var(--text-muted);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .gs-trigger:focus, .gs-trigger.open {
   border-color: var(--accent-light);
-  box-shadow: 0 0 0 3px rgba(179, 136, 255, 0.15), 0 0 20px rgba(179, 136, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(179, 136, 255, 0.1), 0 0 14px rgba(179, 136, 255, 0.06);
 }
 
 .gs-arrow {
@@ -147,10 +147,12 @@ onUnmounted(() => {
 <style>
 .gs-dropdown {
   background: rgba(20, 12, 40, 0.97);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(179, 136, 255, 0.25);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 24px rgba(179, 136, 255, 0.08);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(179, 136, 255, 0.18);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(179, 136, 255, 0.06);
   padding: 0.35rem;
   max-height: 260px;
   overflow-y: auto;
@@ -168,16 +170,16 @@ onUnmounted(() => {
   border: none;
   padding: 0.6rem 0.8rem;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s;
-  border-radius: 12px;
+  transition: color var(--transition-fast, 0.2s), background var(--transition-fast, 0.2s);
+  border-radius: 10px;
 }
 .gs-option:hover {
   color: var(--text-primary);
-  background: rgba(179, 136, 255, 0.12);
+  background: rgba(179, 136, 255, 0.1);
 }
 .gs-option.active {
   color: var(--accent-gold);
-  background: rgba(179, 136, 255, 0.18);
+  background: rgba(179, 136, 255, 0.15);
 }
 
 .gs-drop-enter-active { transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }

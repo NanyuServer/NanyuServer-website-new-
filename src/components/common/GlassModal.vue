@@ -37,7 +37,7 @@ const emit = defineEmits(['close'])
   max-height: 90vh;
   overflow-y: auto;
   padding: 0;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg, 24px);
   position: relative;
 }
 
@@ -48,8 +48,8 @@ const emit = defineEmits(['close'])
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #4c2fa3, #a87fe8, #e86fa3, #e8c97a);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(90deg, rgba(76, 47, 163, 0.8), rgba(168, 127, 232, 0.6), rgba(232, 111, 163, 0.5));
+  border-radius: var(--radius-lg, 24px) var(--radius-lg, 24px) 0 0;
 }
 
 .modal-enter-active {

@@ -139,7 +139,7 @@ onMounted(() => {
   --cursor-angle: 45deg;
   --edge-sensitivity: 30;
   --color-sensitivity: calc(var(--edge-sensitivity) + 20);
-  --border-radius: 28px;
+  --border-radius: 24px;
   --glow-padding: 40px;
   --cone-spread: 25;
 
@@ -148,16 +148,19 @@ onMounted(() => {
   isolation: isolate;
   transform: translate3d(0, 0, 0.01px);
   display: grid;
-  border: 1px solid rgb(255 255 255 / 15%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--card-bg, #120F17);
   overflow: visible;
   box-shadow:
-    rgba(0, 0, 0, 0.1) 0px 1px 2px,
-    rgba(0, 0, 0, 0.1) 0px 2px 4px,
-    rgba(0, 0, 0, 0.1) 0px 4px 8px,
-    rgba(0, 0, 0, 0.1) 0px 8px 16px,
-    rgba(0, 0, 0, 0.1) 0px 16px 32px,
-    rgba(0, 0, 0, 0.1) 0px 32px 64px;
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: box-shadow var(--transition-normal, 0.35s), border-color var(--transition-fast, 0.2s);
+}
+.border-glow-card:hover {
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    0 16px 48px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .border-glow-card::before,
