@@ -12,6 +12,17 @@ const isAdmin = computed(() => route.path === '/admin')
 
 <template>
   <CustomCursor />
+  <!-- 浮动气泡装饰层 -->
+  <div class="bubble-layer">
+    <div class="bubble bubble-1" />
+    <div class="bubble bubble-2" />
+    <div class="bubble bubble-3" />
+    <div class="bubble bubble-4" />
+    <div class="bubble bubble-5" />
+    <div class="bubble bubble-6" />
+  </div>
+  <div class="ring-deco ring-1" />
+  <div class="ring-deco ring-2" />
   <AppNavbar v-if="!isAdmin" />
   <router-view />
   <AppFooter v-if="!isAdmin" />
