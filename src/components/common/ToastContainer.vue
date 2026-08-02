@@ -34,24 +34,25 @@ const { toasts } = useToast()
 
 .toast-item {
   padding: 0.85rem 1.4rem;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 0.85rem;
+  font-weight: 500;
   letter-spacing: 0.04em;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(179, 157, 219, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .toast-success {
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.15));
-  border: 1px solid rgba(52, 211, 153, 0.4);
-  color: var(--color-success);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(102, 187, 106, 0.3);
+  color: #2e7d32;
 }
 
 .toast-error {
-  background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(239, 68, 68, 0.15));
-  border: 1px solid rgba(248, 113, 113, 0.4);
-  color: var(--color-error);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(239, 83, 80, 0.3);
+  color: #c62828;
 }
 
 .toast-enter-active {

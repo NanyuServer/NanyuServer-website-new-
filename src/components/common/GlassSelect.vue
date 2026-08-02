@@ -108,10 +108,10 @@ onUnmounted(() => {
   font-family: var(--font-ui);
   font-size: 0.85rem;
   color: var(--text-primary);
-  background: rgba(15, 10, 26, 0.6);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(123, 85, 212, 0.2);
+  border: 1px solid rgba(179, 157, 219, 0.2);
   padding: 0.7rem 1rem;
   cursor: pointer;
   transition: border-color var(--transition-fast, 0.2s), box-shadow var(--transition-fast, 0.2s);
@@ -124,12 +124,12 @@ onUnmounted(() => {
 
 .gs-trigger.placeholder {
   color: var(--text-muted);
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .gs-trigger:focus, .gs-trigger.open {
-  border-color: var(--accent-light);
-  box-shadow: 0 0 0 3px rgba(179, 136, 255, 0.1), 0 0 14px rgba(179, 136, 255, 0.06);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.12), 0 4px 12px rgba(179, 157, 219, 0.08);
 }
 
 .gs-arrow {
@@ -146,13 +146,13 @@ onUnmounted(() => {
 
 <style>
 .gs-dropdown {
-  background: rgba(20, 12, 40, 0.97);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(179, 136, 255, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.45),
-    0 0 20px rgba(179, 136, 255, 0.06);
+    0 12px 40px rgba(179, 157, 219, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.06);
   padding: 0.35rem;
   max-height: 260px;
   overflow-y: auto;
@@ -175,11 +175,12 @@ onUnmounted(() => {
 }
 .gs-option:hover {
   color: var(--text-primary);
-  background: rgba(179, 136, 255, 0.1);
+  background: rgba(179, 157, 219, 0.08);
 }
 .gs-option.active {
-  color: var(--accent-gold);
-  background: rgba(179, 136, 255, 0.15);
+  color: var(--accent-dark);
+  background: rgba(179, 157, 219, 0.12);
+  font-weight: 600;
 }
 
 .gs-drop-enter-active { transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -191,5 +192,5 @@ onUnmounted(() => {
 
 .gs-dropdown::-webkit-scrollbar { width: 4px; }
 .gs-dropdown::-webkit-scrollbar-track { background: transparent; }
-.gs-dropdown::-webkit-scrollbar-thumb { background: rgba(123, 85, 212, 0.3); border-radius: 100px; }
+.gs-dropdown::-webkit-scrollbar-thumb { background: rgba(179, 157, 219, 0.25); border-radius: 100px; }
 </style>

@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { feedbackApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import GlassSelect from '@/components/common/GlassSelect.vue'
-import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const { show: showToast } = useToast()
 
@@ -67,37 +66,32 @@ onMounted(loadFeedback)
   </div>
 
   <div class="content-section">
-    <!-- Form -->
-    <BorderGlow :border-radius="24">
-      <div class="form-card" style="border:none; box-shadow:none; background:transparent">
-        <div class="form-card-title">📝 提交反馈</div>
-        <form @submit="submitForm">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">反馈类型 *</label>
-              <GlassSelect v-model="category" :options="categoryOptions" placeholder="请选择反馈类型" />
-            </div>
-            <div class="form-group full">
-              <label class="form-label">反馈内容 *</label>
-              <textarea class="glass-textarea" v-model="content" placeholder="请输入您的反馈内容..." required />
-            </div>
+    <div class="form-card">
+      <div class="form-card-title">📝 提交反馈</div>
+      <form @submit="submitForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">反馈类型 *</label>
+            <GlassSelect v-model="category" :options="categoryOptions" placeholder="请选择反馈类型" />
           </div>
-          <div class="form-actions">
-            <button type="submit" class="glass-btn glass-btn-primary" :disabled="submitting">
-              {{ submitting ? '提交中…' : '提交反馈' }}
-            </button>
+          <div class="form-group full">
+            <label class="form-label">反馈内容 *</label>
+            <textarea class="glass-textarea" v-model="content" placeholder="请输入您的反馈内容..." required />
           </div>
-        </form>
-      </div>
-    </BorderGlow>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="glass-btn glass-btn-primary" :disabled="submitting">
+            {{ submitting ? '提交中…' : '提交反馈' }}
+          </button>
+        </div>
+      </form>
+    </div>
 
-    <!-- Feedback list -->
     <div class="feedback-list">
       <h2 class="list-title">📋 已审核内容</h2>
       <div class="cards-grid">
         <template v-if="feedbacks.length">
-          <BorderGlow v-for="f in feedbacks" :key="f.id" :border-radius="24" :glow-radius="36">
-            <div class="submission-card" style="border:none;box-shadow:none;background:transparent">
+          <div v-for="f in feedbacks" :key="f.id" class="submission-card">
             <div class="card-header">
               <span class="card-type-badge">{{ f.type }}</span>
               <span class="card-time">{{ new Date(f.createdAt).toLocaleString('zh-CN') }}</span>
@@ -111,34 +105,28 @@ onMounted(loadFeedback)
               <div class="reply-content">{{ f.reply }}</div>
             </div>
           </div>
-          </BorderGlow>
         </template>
         <template v-else>
-          <BorderGlow :border-radius="24">
-            <div class="state-box" style="border:none;box-shadow:none;background:transparent">
+          <div class="state-box">
             <div class="state-title">暂无已审核内容</div>
             <div class="state-sub">已审核的反馈将显示在此</div>
           </div>
-          </BorderGlow>
         </template>
       </div>
     </div>
   </div>
 
-  <!-- Success modal -->
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="showSuccess" class="success-overlay">
-        <BorderGlow :border-radius="24">
-          <div class="success-card" style="border:none;box-shadow:none;background:transparent">
-            <div class="success-icon">✓</div>
-            <div class="success-title">反馈提交成功！</div>
-            <div class="success-msg">感谢您的建议，我们会认真审核您的反馈，并尽快给予回复。</div>
-            <div class="progress-bar">
-              <div class="progress-fill" />
-            </div>
+        <div class="success-card">
+          <div class="success-icon">✓</div>
+          <div class="success-title">反馈提交成功！</div>
+          <div class="success-msg">感谢您的建议，我们会认真审核您的反馈，并尽快给予回复。</div>
+          <div class="progress-bar">
+            <div class="progress-fill" />
           </div>
-        </BorderGlow>
+        </div>
       </div>
     </Transition>
   </Teleport>
@@ -158,18 +146,23 @@ onMounted(loadFeedback)
   margin-bottom: 3rem;
   position: relative;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  border-radius: var(--radius-lg, 24px);
 }
 .form-card-top {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #4c2fa3, #a87fe8, #e86fa3);
+  background: linear-gradient(90deg, #7E57C2, #B39DDB, #D1C4E9);
 }
 .form-card-title {
   font-family: var(--font-title);
   font-size: 1.1rem;
   font-weight: 700;
-  color: #f0e6ff;
+  color: var(--text-primary);
   margin-bottom: 1.5rem;
 }
 .form-grid {
@@ -189,7 +182,7 @@ onMounted(loadFeedback)
 .form-label {
   font-size: 0.72rem;
   letter-spacing: 0.1em;
-  color: var(--accent-gold);
+  color: var(--accent-dark);
 }
 .form-actions {
   display: flex;
@@ -203,7 +196,7 @@ onMounted(loadFeedback)
   font-family: var(--font-title);
   font-size: 1.1rem;
   font-weight: 700;
-  color: #f0e6ff;
+  color: var(--text-primary);
   margin-bottom: 1.5rem;
 }
 .cards-grid {
@@ -212,11 +205,16 @@ onMounted(loadFeedback)
 }
 .submission-card {
   padding: 1.6rem 1.8rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(179, 157, 219, 0.18);
+  border-radius: var(--radius-lg, 24px);
   transition: border-color var(--transition-fast, 0.2s), transform var(--transition-normal, 0.35s), box-shadow var(--transition-fast, 0.2s);
 }
 .submission-card:hover {
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: rgba(179, 157, 219, 0.35);
+  box-shadow: 0 4px 16px rgba(81, 45, 168, 0.08);
 }
 .card-header {
   display: flex;
@@ -233,21 +231,21 @@ onMounted(loadFeedback)
   letter-spacing: 0.06em;
   padding: 0.3rem 0.75rem;
   border-radius: var(--radius-pill, 100px);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(126, 87, 194, 0.3);
+  color: var(--accent-dark);
+  background: rgba(126, 87, 194, 0.06);
 }
 .card-time {
   font-family: var(--font-ui);
   font-size: 0.72rem;
-  color: #7b55d4;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .card-content {
   font-family: var(--font-body);
   font-size: 0.93rem;
   line-height: 1.8;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin: 0.8rem 0;
 }
 .card-status {
@@ -265,38 +263,39 @@ onMounted(loadFeedback)
   border-radius: var(--radius-pill, 100px);
   border: 1px solid;
 }
-.status-approved { color: #34d399; border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.08); }
-.status-transferred { color: #f59e0b; border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.08); }
-.status-replied { color: #60a5fa; border-color: rgba(96, 165, 250, 0.35); background: rgba(96, 165, 250, 0.08); }
+.status-approved { color: #43a047; border-color: rgba(67, 160, 71, 0.35); background: rgba(67, 160, 71, 0.08); }
+.status-transferred { color: #ef6c00; border-color: rgba(239, 108, 0, 0.35); background: rgba(239, 108, 0, 0.08); }
+.status-replied { color: #1e88e5; border-color: rgba(30, 136, 229, 0.35); background: rgba(30, 136, 229, 0.08); }
 
 .card-reply {
   margin-top: 0.8rem;
   padding: 0.8rem;
-  border-left: 3px solid rgba(96, 165, 250, 0.25);
-  background: rgba(96, 165, 250, 0.03);
+  border-left: 3px solid rgba(30, 136, 229, 0.25);
+  background: rgba(30, 136, 229, 0.04);
   border-radius: 6px;
   font-size: 0.85rem;
   line-height: 1.6;
 }
-.reply-title { font-weight: 600; color: var(--accent-light); margin-bottom: 0.4rem; }
-.reply-content { color: var(--text-secondary); }
+.reply-title { font-weight: 600; color: var(--accent-dark); margin-bottom: 0.4rem; }
+.reply-content { color: var(--text-primary); }
 
 .state-box {
   text-align: center;
   padding: 3rem 2rem;
-  border: 1px dashed rgba(123, 85, 212, 0.15);
+  border: 1px dashed rgba(179, 157, 219, 0.3);
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-lg, 24px);
 }
-.state-title { font-family: var(--font-title); font-size: 1rem; color: var(--accent-light); margin-bottom: 0.5rem; }
-.state-sub { font-family: var(--font-body); font-size: 0.85rem; color: #7b55d4; }
+.state-title { font-family: var(--font-title); font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.state-sub { font-family: var(--font-body); font-size: 0.85rem; color: var(--text-muted); }
 
-/* Success overlay */
 .success-overlay {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(1, 2, 6, 0.75);
+  background: rgba(245, 240, 255, 0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 20000;
@@ -305,6 +304,11 @@ onMounted(loadFeedback)
   padding: 2.5rem;
   width: min(420px, 96%);
   text-align: center;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(179, 157, 219, 0.25);
+  border-radius: var(--radius-lg, 24px);
   animation: successBounce 0.5s var(--ease-out);
 }
 @keyframes successBounce {
@@ -314,32 +318,32 @@ onMounted(loadFeedback)
 .success-icon {
   font-size: 3.5rem;
   margin-bottom: 1rem;
-  color: #34d399;
+  color: #43a047;
 }
 .success-title {
   font-family: var(--font-title);
   font-size: 1.3rem;
   font-weight: 700;
-  color: #34d399;
+  color: #43a047;
   margin-bottom: 0.5rem;
 }
 .success-msg {
   font-family: var(--font-body);
   font-size: 0.9rem;
-  color: var(--accent-light);
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 1.5rem;
 }
 .progress-bar {
   width: 100%;
   height: 3px;
-  background: rgba(52, 211, 153, 0.2);
+  background: rgba(67, 160, 71, 0.2);
   border-radius: 100px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #34d399, #10b981);
+  background: linear-gradient(90deg, #43a047, #66bb6a);
   width: 100%;
   animation: progressShrink 3s linear forwards;
 }

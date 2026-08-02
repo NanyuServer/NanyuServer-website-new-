@@ -25,7 +25,7 @@ const emit = defineEmits(['close'])
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 4, 18, 0.75);
+  background: rgba(245, 240, 255, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   padding: 1rem;
@@ -37,8 +37,11 @@ const emit = defineEmits(['close'])
   max-height: 90vh;
   overflow-y: auto;
   padding: 0;
-  border-radius: var(--radius-lg, 24px);
+  border-radius: var(--radius-xl, 32px);
   position: relative;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16px 48px rgba(179, 157, 219, 0.2), 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .modal-content::before {
@@ -48,8 +51,8 @@ const emit = defineEmits(['close'])
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, rgba(76, 47, 163, 0.8), rgba(168, 127, 232, 0.6), rgba(232, 111, 163, 0.5));
-  border-radius: var(--radius-lg, 24px) var(--radius-lg, 24px) 0 0;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-dark), var(--accent-primary));
+  border-radius: var(--radius-xl, 32px) var(--radius-xl, 32px) 0 0;
 }
 
 .modal-enter-active {

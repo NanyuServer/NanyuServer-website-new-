@@ -1,5 +1,4 @@
 <script setup>
-import BorderGlow from '@/components/common/BorderGlow.vue'
 </script>
 
 <template>
@@ -13,51 +12,43 @@ import BorderGlow from '@/components/common/BorderGlow.vue'
   </div>
 
   <div class="content-section">
-    <BorderGlow :border-radius="24">
-      <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
-        <div class="info-title">🎯 南渝万能墙是什么？</div>
-        <div class="info-text">南渝万能墙是一个学生组织的校园公益平台，致力于为广大同学提供信息交流、资源共享和相互帮助的场所。我们相信，通过集体的力量和相互的支持，我们可以打造一个更加温暖、互助的校园社区。</div>
-      </div>
-    </BorderGlow>
+    <div class="info-card">
+      <div class="info-title">🎯 南渝万能墙是什么？</div>
+      <div class="info-text">南渝万能墙是一个学生组织的校园公益平台，致力于为广大同学提供信息交流、资源共享和相互帮助的场所。我们相信，通过集体的力量和相互的支持，我们可以打造一个更加温暖、互助的校园社区。</div>
+    </div>
 
-    <BorderGlow :border-radius="24">
-      <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
-        <div class="info-title">✨ 我们的使命</div>
-        <div class="info-text">
-          • 为学生打造开放、透明、互信的信息交流平台<br />
-          • 帮助学生表达声音、分享经验、互相支持<br />
-          • 提供多样化的学习资源和成长机会<br />
-          • 建立包容、尊重的校园文化<br />
-          • 促进学生与学校之间的沟通理解
-        </div>
+    <div class="info-card">
+      <div class="info-title">✨ 我们的使命</div>
+      <div class="info-text">
+        • 为学生打造开放、透明、互信的信息交流平台<br />
+        • 帮助学生表达声音、分享经验、互相支持<br />
+        • 提供多样化的学习资源和成长机会<br />
+        • 建立包容、尊重的校园文化<br />
+        • 促进学生与学校之间的沟通理解
       </div>
-    </BorderGlow>
+    </div>
 
-    <BorderGlow :border-radius="24">
-      <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
-        <div class="info-title">🌟 平台功能</div>
-        <div class="info-text">
-          <strong>稿件查询</strong> - 便捷的搜索和筛选功能，帮助你快速找到需要的稿件<br />
-          <strong>公益课程</strong> - 由南渝万能墙制作的免费学习资源<br />
-          <strong>有求必应</strong> - 向南渝万能墙提问校园资讯或问题反馈<br />
-          <strong>合作与共创</strong> - 校园组织、同学通过与南渝万能墙合作获得更多曝光<br />
-          <strong>招贤纳士</strong> - 加入运营团队管理校园墙，锻炼自己
-        </div>
+    <div class="info-card">
+      <div class="info-title">🌟 平台功能</div>
+      <div class="info-text">
+        <strong>稿件查询</strong> - 便捷的搜索和筛选功能，帮助你快速找到需要的稿件<br />
+        <strong>公益课程</strong> - 由南渝万能墙制作的免费学习资源<br />
+        <strong>有求必应</strong> - 向南渝万能墙提问校园资讯或问题反馈<br />
+        <strong>合作与共创</strong> - 校园组织、同学通过与南渝万能墙合作获得更多曝光<br />
+        <strong>招贤纳士</strong> - 加入运营团队管理校园墙，锻炼自己
       </div>
-    </BorderGlow>
+    </div>
 
-    <BorderGlow :border-radius="24">
-      <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
-        <div class="info-title">📞 联系我们</div>
-        <div class="info-text">
-          有建议、问题如何反馈？<br />
-          使用"有求必应"功能提交你的声音，我们会认真倾听并回复。<br /><br />
-          <router-link to="/feedback" class="glass-btn glass-btn-ghost glass-btn-sm">
-            <span>前往有求必应</span>
-          </router-link>
-        </div>
+    <div class="info-card">
+      <div class="info-title">📞 联系我们</div>
+      <div class="info-text">
+        有建议、问题如何反馈？<br />
+        使用"有求必应"功能提交你的声音，我们会认真倾听并回复。<br /><br />
+        <router-link to="/feedback" class="glass-btn glass-btn-ghost glass-btn-sm">
+          <span>前往有求必应</span>
+        </router-link>
       </div>
-    </BorderGlow>
+    </div>
   </div>
 </template>
 
@@ -72,12 +63,20 @@ import BorderGlow from '@/components/common/BorderGlow.vue'
 .info-card {
   padding: 2rem;
   margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 4px 16px rgba(126, 87, 194, 0.06),
+    0 12px 40px rgba(126, 87, 194, 0.04);
 }
 .info-title {
   font-family: var(--font-title);
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--accent-gold);
+  color: var(--accent-dark);
   margin-bottom: 1rem;
 }
 .info-text {
@@ -87,7 +86,7 @@ import BorderGlow from '@/components/common/BorderGlow.vue'
   color: var(--text-secondary);
 }
 .info-text strong {
-  color: #f0e6ff;
+  color: var(--text-primary);
 }
 
 @media (max-width: 768px) {

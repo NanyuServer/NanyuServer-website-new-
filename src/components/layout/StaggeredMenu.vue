@@ -1,27 +1,25 @@
 <script setup>
-import { ref, watch, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const open = ref(false)
 const busy = ref(false)
 const panelRef = ref(null)
-const itemRefs = ref([])
 
 const items = [
   { label: '首页', link: '/' },
   { label: '稿件查询', link: '/query' },
   { label: '有求必应', link: '/feedback' },
   { label: '公益课程', link: '/course' },
-  { label: '合作与共创', link: '/cooperation' },
+  { label: '共创计划', link: '/cooperation' },
   { label: '招贤纳士', link: '/recruit' },
   { label: '关于我们', link: '/about' }
 ]
 
 const socialItems = [
   { label: 'QQ万能墙', link: 'https://qm.qq.com/q/FHAbiDBIQO' },
-  { label: '北关鱼的驿站', link: 'https://www.douyin.com/user/MS4wLjABAAAAVgKoJHBKLxQ4nQk-FQp_9sJZk3NBZ3FD2vN7R8QnWqI' },
-  { label: 'BEIGUANYU驿站', link: 'https://www.douyin.com/user/MS4wLjABAAAAVgKoJHBKLxQ4nQk-FQp_9sJZk3NBZ3FD2vN7R8QnWqI' }
+  { label: '北关鱼的驿站', link: 'https://www.douyin.com/user/MS4wLjABAAAAVgKoJHBKLxQ4nQk-FQp_9sJZk3NBZ3FD2vN7R8QnWqI' }
 ]
 
 function toggleMenu() {
@@ -48,10 +46,6 @@ function closeMenu() {
     document.body.style.overflow = ''
     busy.value = false
   }, 500)
-}
-
-function handleItemClick(link) {
-  closeMenu()
 }
 
 watch(() => route.path, () => {
@@ -99,7 +93,7 @@ onUnmounted(() => {
               :to="item.link"
               class="sm-panel-item"
               :data-index="String(idx + 1).padStart(2, '0')"
-              @click="handleItemClick(item.link)"
+              @click="closeMenu"
             >
               <span class="sm-panel-itemLabel">{{ item.label }}</span>
             </router-link>
@@ -151,21 +145,27 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 100px;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  color: #e9e9ef;
-  font-weight: 500;
-  font-size: 0.82rem;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.78rem;
+  font-family: var(--font-ui);
   line-height: 1;
   overflow: visible;
   pointer-events: auto;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(179, 157, 219, 0.1);
 }
 
 .sm-toggle.open {
-  color: #fff;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--accent-dark);
 }
 
 .sm-toggle-text {
@@ -176,18 +176,11 @@ onUnmounted(() => {
   min-width: 3em;
 }
 
-.sm-toggle-text::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 100%;
-  left: 0;
-}
-
 .sm-icon {
   position: relative;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -237,11 +230,11 @@ onUnmounted(() => {
 }
 
 .sm-prelayer-1 {
-  background: rgba(59, 31, 126, 0.9);
+  background: rgba(237, 231, 246, 0.95);
   transition-delay: 0s;
 }
 .sm-prelayer-2 {
-  background: rgba(45, 27, 107, 0.95);
+  background: rgba(245, 240, 255, 0.98);
   transition-delay: 0.07s;
 }
 
@@ -259,7 +252,7 @@ onUnmounted(() => {
   right: 0;
   width: 100%;
   height: 100%;
-  background: rgba(30, 15, 60, 0.97);
+  background: rgba(245, 240, 255, 0.97);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   display: flex;
@@ -315,18 +308,17 @@ onUnmounted(() => {
 
 .sm-panel-item {
   position: relative;
-  color: #f0e6ff;
+  color: var(--text-primary);
   font-weight: 700;
   font-size: clamp(2rem, 7vw, 3.2rem);
   cursor: pointer;
   line-height: 1.2;
   letter-spacing: -1px;
-  text-transform: none;
   display: inline-block;
   text-decoration: none;
   padding: 0.15em 2em 0.15em 0;
   transition: color 0.25s ease;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-family: var(--font-title);
 }
 
 .sm-panel-item::after {
@@ -336,13 +328,13 @@ onUnmounted(() => {
   right: 0;
   font-size: 0.85rem;
   font-weight: 400;
-  color: rgba(179, 136, 255, 0.4);
+  color: var(--accent-primary);
   letter-spacing: 0;
   pointer-events: none;
 }
 
 .sm-panel-item:hover {
-  color: #b388ff;
+  color: var(--accent-dark);
 }
 
 .sm-socials {
@@ -363,11 +355,11 @@ onUnmounted(() => {
 .sm-socials-title {
   margin: 0;
   font-size: 0.82rem;
-  font-weight: 500;
-  color: #b388ff;
+  font-weight: 600;
+  color: var(--accent-dark);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: var(--font-ui);
 }
 
 .sm-socials-list {
@@ -384,15 +376,15 @@ onUnmounted(() => {
 .sm-socials-link {
   font-size: 0.95rem;
   font-weight: 500;
-  color: rgba(224, 215, 255, 0.7);
+  color: var(--text-secondary);
   text-decoration: none;
   padding: 4px 0;
   display: inline-block;
   transition: color 0.3s ease;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: var(--font-ui);
 }
 
 .sm-socials-link:hover {
-  color: #fff;
+  color: var(--accent-dark);
 }
 </style>

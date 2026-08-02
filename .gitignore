@@ -6,3 +6,4 @@ dist/
 .env.*
 *.csv
 migrate.sql
+Personal Access Token

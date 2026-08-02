@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const pdfUrl = 'https://videotourl.com/documents/1777475377797-4308193f-0dd7-4ebf-a2fc-f5abceadccd4.pdf'
 const pdfLib = ref(null)
@@ -90,8 +89,7 @@ onMounted(async () => {
   </div>
 
   <div class="content-section">
-    <BorderGlow :border-radius="24">
-    <div class="info-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
+    <div class="info-card">
       <h2 class="course-title">《南渝万能墙公益课程—剪辑软件进阶教程》</h2>
       <p class="course-note">南渝万能墙版权所有 未经允许任何人不得转载商用和署名</p>
 
@@ -115,14 +113,13 @@ onMounted(async () => {
           <template v-else-if="error">
             <div class="pdf-error">
               <p>PDF加载失败: {{ error }}</p>
-              <a :href="pdfUrl" target="_blank" style="color: var(--accent-gold);">点击下载查看</a>
+              <a :href="pdfUrl" target="_blank" style="color: var(--accent-dark);">点击下载查看</a>
             </div>
           </template>
           <canvas id="pdf-canvas" style="display: block; max-width: 100%; height: auto;" />
         </div>
       </div>
     </div>
-    </BorderGlow>
   </div>
 </template>
 
@@ -137,16 +134,21 @@ onMounted(async () => {
 .info-card {
   padding: 2rem;
   margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(126, 87, 194, 0.08);
 }
 .course-title {
   font-family: var(--font-title);
   font-size: 1.35rem;
-  color: #f0e6ff;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 .course-note {
   font-size: 0.95rem;
-  color: var(--accent-light);
+  color: var(--text-secondary);
   line-height: 1.75;
   margin-bottom: 1.5rem;
 }
@@ -154,10 +156,10 @@ onMounted(async () => {
   position: relative;
   min-height: 720px;
   height: min(84vh, 920px);
-  border: 1px solid rgba(123, 85, 212, 0.25);
+  border: 1px solid rgba(179, 157, 219, 0.2);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: rgba(10, 7, 22, 0.95);
+  background: rgba(255, 255, 255, 0.8);
   display: flex;
   flex-direction: column;
 }
@@ -166,8 +168,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 0.8rem;
-  background: rgba(45, 27, 107, 0.5);
-  border-bottom: 1px solid rgba(123, 85, 212, 0.15);
+  background: rgba(245, 240, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(179, 157, 219, 0.15);
   flex-shrink: 0;
 }
 .pdf-nav {
@@ -176,7 +179,7 @@ onMounted(async () => {
   gap: 0.5rem;
 }
 .page-info {
-  color: var(--accent-light);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   min-width: 80px;
   text-align: center;
@@ -185,7 +188,7 @@ onMounted(async () => {
   width: 100%;
   flex: 1;
   overflow: auto;
-  background: rgba(10, 7, 22, 0.95);
+  background: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -202,8 +205,8 @@ onMounted(async () => {
 }
 .spinner {
   width: 40px; height: 40px;
-  border: 3px solid rgba(123, 85, 212, 0.12);
-  border-top-color: var(--accent-light, #7b55d4);
+  border: 3px solid rgba(179, 157, 219, 0.15);
+  border-top-color: var(--accent-dark);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

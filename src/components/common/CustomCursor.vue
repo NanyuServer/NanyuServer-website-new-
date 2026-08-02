@@ -52,13 +52,14 @@ onUnmounted(() => {
   position: fixed;
   pointer-events: none;
   z-index: 99999;
-  width: 12px;
-  height: 12px;
-  background: var(--accent-light);
+  width: 10px;
+  height: 10px;
+  background: var(--accent-dark);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: width 0.3s, height 0.3s, background 0.3s;
-  mix-blend-mode: screen;
+  mix-blend-mode: multiply;
+  opacity: 0.6;
 }
 
 .cursor-ring {
@@ -67,7 +68,7 @@ onUnmounted(() => {
   z-index: 99998;
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(168, 127, 232, 0.5);
+  border: 1.5px solid rgba(126, 87, 194, 0.3);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: transform 0.25s var(--ease-out), width 0.4s, height 0.4s, border-color 0.3s;

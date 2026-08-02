@@ -5,10 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>南渝万能墙</title>
   <link rel="icon" href="/websitelogo.ico" />
+  <!-- 字体：Inter + 思源黑体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Tailwind CDN（仅用工具类辅助，核心样式手写） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+          },
+          colors: {
+            lavender: {
+              50: '#F5F0FF',
+              100: '#EDE7F6',
+              200: '#D1C4E9',
+              300: '#B39DDB',
+              400: '#9575CD',
+              500: '#7E57C2',
+              600: '#673AB7',
+              700: '#512DA8',
+            }
+          }
+        }
+      }
+    }
+  </script>
 </head>
 <body>
   <div id="app"></div>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

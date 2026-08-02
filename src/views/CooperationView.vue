@@ -1,6 +1,4 @@
 <script setup>
-import BorderGlow from '@/components/common/BorderGlow.vue'
-
 const cards = [
   {
     icon: 'monitor',
@@ -38,8 +36,8 @@ const iconPaths = {
 
   <div class="content-section">
     <div class="cooperation-grid">
-      <BorderGlow v-for="(card, i) in cards" :key="i" :border-radius="24" :glow-radius="36">
-        <div class="cooperation-card" style="border:none; box-shadow:none; background:transparent; padding:2rem">
+      <div v-for="(card, i) in cards" :key="i" class="cooperation-card-wrapper">
+        <div class="cooperation-card">
           <div class="cooperation-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path v-for="(d, j) in iconPaths[card.icon]" :key="j" :d="d" />
@@ -48,7 +46,7 @@ const iconPaths = {
           <h3 class="cooperation-title">{{ card.title }}</h3>
           <p class="cooperation-desc">{{ card.desc }}</p>
         </div>
-      </BorderGlow>
+      </div>
     </div>
   </div>
 </template>
@@ -66,6 +64,13 @@ const iconPaths = {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
+.cooperation-card-wrapper {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(126, 87, 194, 0.08);
+}
 .cooperation-card {
   padding: 2rem;
   text-align: center;
@@ -74,19 +79,19 @@ const iconPaths = {
   width: 64px; height: 64px;
   margin: 0 auto 1.5rem;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, rgba(75, 47, 163, 0.6), rgba(232, 111, 163, 0.5));
+  background: linear-gradient(135deg, rgba(179, 157, 219, 0.5), rgba(209, 196, 233, 0.6));
   border-radius: var(--radius-md, 16px);
-  box-shadow: 0 6px 20px rgba(75, 47, 163, 0.35);
+  box-shadow: 0 6px 20px rgba(126, 87, 194, 0.15);
 }
 .cooperation-icon svg {
   width: 32px; height: 32px;
-  color: white;
+  color: var(--accent-deep);
 }
 .cooperation-title {
   font-family: var(--font-title);
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--accent-gold);
+  color: var(--accent-dark);
   margin-bottom: 1rem;
 }
 .cooperation-desc {

@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue'
 import { submissionsApi } from '@/services/api'
 import GlassSelect from '@/components/common/GlassSelect.vue'
 import GlassDateTime from '@/components/common/GlassDateTime.vue'
-import BorderGlow from '@/components/common/BorderGlow.vue'
 
 const allData = ref([])
 const filteredData = ref([])
@@ -111,28 +110,26 @@ onMounted(async () => {
   </div>
 
   <div class="filter-section">
-    <BorderGlow :border-radius="24">
-      <div class="filter-bar" style="border:none; box-shadow:none; background:transparent">
-        <div class="filter-group">
-          <div class="filter-label">开始时间</div>
-          <GlassDateTime v-model="dateStart" placeholder="选择开始日期" date-only />
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">结束时间</div>
-          <GlassDateTime v-model="dateEnd" placeholder="选择结束日期" date-only />
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">投稿类型</div>
-          <GlassSelect v-model="typeFilter" :options="typeOptions" placeholder="全部类型" />
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">内容关键词</div>
-          <input type="text" class="glass-input" v-model="keywordFilter" placeholder="输入关键词搜索" />
-        </div>
-        <button class="glass-btn glass-btn-primary glass-btn-sm" @click="applyFilter">搜索</button>
-        <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="resetFilter">重置</button>
+    <div class="filter-bar">
+      <div class="filter-group">
+        <div class="filter-label">开始时间</div>
+        <GlassDateTime v-model="dateStart" placeholder="选择开始日期" date-only />
       </div>
-    </BorderGlow>
+      <div class="filter-group">
+        <div class="filter-label">结束时间</div>
+        <GlassDateTime v-model="dateEnd" placeholder="选择结束日期" date-only />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">投稿类型</div>
+        <GlassSelect v-model="typeFilter" :options="typeOptions" placeholder="全部类型" />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">内容关键词</div>
+        <input type="text" class="glass-input" v-model="keywordFilter" placeholder="输入关键词搜索" />
+      </div>
+      <button class="glass-btn glass-btn-primary glass-btn-sm" @click="applyFilter">搜索</button>
+      <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="resetFilter">重置</button>
+    </div>
   </div>
 
   <div class="results-section">
@@ -217,6 +214,11 @@ onMounted(async () => {
   align-items: flex-end;
   flex-wrap: wrap;
   overflow: visible;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  border-radius: var(--radius-lg, 24px);
 }
 .filter-group {
   display: flex;
@@ -229,7 +231,7 @@ onMounted(async () => {
   font-family: var(--font-ui);
   font-size: 0.7rem;
   letter-spacing: 0.12em;
-  color: var(--accent-gold);
+  color: var(--accent-dark);
 }
 
 .results-section {
@@ -248,7 +250,7 @@ onMounted(async () => {
 .results-count {
   font-family: var(--font-ui);
   font-size: 0.8rem;
-  color: var(--accent-light);
+  color: var(--text-secondary);
 }
 .results-sort {
   display: flex;
@@ -259,16 +261,16 @@ onMounted(async () => {
   font-size: 0.75rem;
   padding: 0.4rem 0.9rem;
   border-radius: var(--radius-pill, 100px);
-  border: 1px solid rgba(123, 85, 212, 0.2);
-  background: transparent;
-  color: var(--accent-light);
+  border: 1px solid rgba(179, 157, 219, 0.3);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
 }
 .sort-btn.active, .sort-btn:hover {
-  background: rgba(75, 47, 163, 0.25);
-  border-color: rgba(179, 136, 255, 0.35);
-  color: var(--text-secondary);
+  background: rgba(179, 157, 219, 0.2);
+  border-color: rgba(126, 87, 194, 0.4);
+  color: var(--accent-dark);
 }
 
 .cards-grid {
@@ -277,10 +279,10 @@ onMounted(async () => {
 }
 .submission-card {
   padding: 1.6rem 1.8rem;
-  background: rgba(26, 16, 48, 0.55);
+  background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(20px) saturate(200%);
   -webkit-backdrop-filter: blur(20px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(179, 157, 219, 0.18);
   border-radius: var(--radius-lg, 24px);
   animation: cardIn 0.5s var(--ease-out) forwards;
   opacity: 0;
@@ -288,8 +290,8 @@ onMounted(async () => {
   transition: border-color var(--transition-fast, 0.2s), box-shadow var(--transition-fast, 0.2s);
 }
 .submission-card:hover {
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: rgba(179, 157, 219, 0.35);
+  box-shadow: 0 4px 16px rgba(81, 45, 168, 0.08);
 }
 @keyframes cardIn {
   to { opacity: 1; transform: none; }
@@ -313,46 +315,46 @@ onMounted(async () => {
   border: 1px solid;
   white-space: nowrap;
 }
-.type-寻物启事 { color: #5de8d0; border-color: rgba(93, 232, 208, 0.35); background: rgba(93, 232, 208, 0.08); }
-.type-表白 { color: #e86fa3; border-color: rgba(232, 111, 163, 0.35); background: rgba(232, 111, 163, 0.08); }
-.type-挂人 { color: #f87171; border-color: rgba(248, 113, 113, 0.35); background: rgba(248, 113, 113, 0.08); }
-.type-扩列 { color: #a87fe8; border-color: rgba(168, 127, 232, 0.35); background: rgba(168, 127, 232, 0.08); }
-.type-吐槽 { color: #e8c97a; border-color: rgba(232, 201, 122, 0.35); background: rgba(232, 201, 122, 0.08); }
-.type-交易 { color: #34d399; border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.08); }
-.type-捞人、物 { color: #60a5fa; border-color: rgba(96, 165, 250, 0.35); background: rgba(96, 165, 250, 0.08); }
-.type-打听资讯 { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.08); }
-.type-寻找搭子 { color: #ec4899; border-color: rgba(236, 72, 153, 0.35); background: rgba(236, 72, 153, 0.08); }
-.type-有啥说啥 { color: #c084fc; border-color: rgba(192, 132, 252, 0.35); background: rgba(192, 132, 252, 0.08); }
+.type-寻物启事 { color: #26a69a; border-color: rgba(38, 166, 154, 0.35); background: rgba(38, 166, 154, 0.08); }
+.type-表白 { color: #d81b60; border-color: rgba(216, 27, 96, 0.25); background: rgba(216, 27, 96, 0.06); }
+.type-挂人 { color: #e53935; border-color: rgba(229, 57, 53, 0.25); background: rgba(229, 57, 53, 0.06); }
+.type-扩列 { color: #7E57C2; border-color: rgba(126, 87, 194, 0.3); background: rgba(126, 87, 194, 0.06); }
+.type-吐槽 { color: #f9a825; border-color: rgba(249, 168, 37, 0.3); background: rgba(249, 168, 37, 0.06); }
+.type-交易 { color: #43a047; border-color: rgba(67, 160, 71, 0.3); background: rgba(67, 160, 71, 0.06); }
+.type-捞人、物 { color: #1e88e5; border-color: rgba(30, 136, 229, 0.3); background: rgba(30, 136, 229, 0.06); }
+.type-打听资讯 { color: #f57f17; border-color: rgba(245, 127, 23, 0.3); background: rgba(245, 127, 23, 0.06); }
+.type-寻找搭子 { color: #c2185b; border-color: rgba(194, 24, 91, 0.25); background: rgba(194, 24, 91, 0.06); }
+.type-有啥说啥 { color: #5C4B8A; border-color: rgba(92, 75, 138, 0.3); background: rgba(92, 75, 138, 0.06); }
 .card-time {
   font-family: var(--font-ui);
   font-size: 0.72rem;
-  color: #7b55d4;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .card-content {
   font-family: var(--font-body);
   font-size: 0.93rem;
   line-height: 2;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .state-box {
   text-align: center;
   padding: 5rem 2rem;
-  border: 1px dashed rgba(123, 85, 212, 0.15);
-  background: rgba(26, 16, 48, 0.3);
+  border: 1px dashed rgba(179, 157, 219, 0.3);
+  background: rgba(255, 255, 255, 0.35);
   border-radius: var(--radius-lg, 24px);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 .state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
-.state-title { font-family: var(--font-title); font-size: 1.1rem; color: var(--accent-light); margin-bottom: 0.5rem; }
-.state-sub { font-family: var(--font-body); font-size: 0.85rem; color: #7b55d4; }
+.state-title { font-family: var(--font-title); font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.state-sub { font-family: var(--font-body); font-size: 0.85rem; color: var(--text-muted); }
 
 .spinner {
   width: 40px; height: 40px;
-  border: 3px solid rgba(123, 85, 212, 0.12);
-  border-top-color: var(--accent-light, #7b55d4);
+  border: 3px solid rgba(179, 157, 219, 0.2);
+  border-top-color: var(--accent-dark, #7E57C2);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1.5rem;
@@ -370,27 +372,27 @@ onMounted(async () => {
   width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;
   border-radius: var(--radius-pill, 100px);
-  border: 1px solid rgba(123, 85, 212, 0.2);
-  background: transparent;
-  color: var(--accent-light);
+  border: 1px solid rgba(179, 157, 219, 0.3);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
 }
 .page-btn:hover, .page-btn.active {
-  background: rgba(75, 47, 163, 0.25);
-  border-color: rgba(179, 136, 255, 0.35);
-  color: var(--text-secondary);
+  background: rgba(179, 157, 219, 0.2);
+  border-color: rgba(126, 87, 194, 0.4);
+  color: var(--accent-dark);
 }
 .page-btn.active {
-  background: linear-gradient(135deg, rgba(75, 47, 163, 0.7), rgba(100, 60, 180, 0.6));
+  background: linear-gradient(135deg, rgba(126, 87, 194, 0.7), rgba(81, 45, 168, 0.6));
   border-color: transparent;
   color: white;
-  box-shadow: 0 2px 10px rgba(75, 47, 163, 0.3);
+  box-shadow: 0 2px 10px rgba(126, 87, 194, 0.3);
 }
 .page-ellipsis {
   display: flex;
   align-items: center;
-  color: #7b55d4;
+  color: var(--text-muted);
 }
 
 @media (max-width: 768px) {

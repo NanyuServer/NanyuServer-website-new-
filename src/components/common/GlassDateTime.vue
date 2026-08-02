@@ -211,10 +211,10 @@ onUnmounted(() => {
   font-family: var(--font-ui);
   font-size: 0.85rem;
   color: var(--text-primary);
-  background: rgba(15, 10, 26, 0.6);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(123, 85, 212, 0.2);
+  border: 1px solid rgba(179, 157, 219, 0.2);
   padding: 0.7rem 1rem;
   cursor: pointer;
   transition: border-color var(--transition-fast, 0.2s), box-shadow var(--transition-fast, 0.2s);
@@ -224,23 +224,23 @@ onUnmounted(() => {
   appearance: none;
   border-radius: var(--radius-pill, 100px);
 }
-.gdt-trigger.placeholder { color: var(--text-muted); opacity: 0.5; }
+.gdt-trigger.placeholder { color: var(--text-muted); opacity: 0.6; }
 .gdt-trigger:focus, .gdt-trigger.open {
-  border-color: var(--accent-light);
-  box-shadow: 0 0 0 3px rgba(179, 136, 255, 0.1), 0 0 14px rgba(179, 136, 255, 0.06);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.12), 0 4px 12px rgba(179, 157, 219, 0.08);
 }
 .gdt-trigger svg { color: var(--text-muted); flex-shrink: 0; }
 </style>
 
 <style>
 .gdt-panel {
-  background: rgba(20, 12, 40, 0.97);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(179, 136, 255, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.45),
-    0 0 24px rgba(179, 136, 255, 0.06);
+    0 16px 48px rgba(179, 157, 219, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.06);
   padding: 1rem;
   border-radius: var(--radius-lg, 24px);
 }
@@ -260,15 +260,15 @@ onUnmounted(() => {
 .gdt-nav {
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
-  border: 1px solid rgba(123, 85, 212, 0.15);
-  background: transparent;
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  background: rgba(255, 255, 255, 0.5);
   color: var(--text-secondary);
   font-size: 1.1rem;
   cursor: pointer;
   transition: all var(--transition-fast, 0.2s);
   border-radius: var(--radius-pill, 100px);
 }
-.gdt-nav:hover { border-color: rgba(179, 136, 255, 0.3); color: var(--text-primary); }
+.gdt-nav:hover { border-color: rgba(179, 157, 219, 0.4); color: var(--text-primary); background: rgba(255, 255, 255, 0.8); }
 
 .gdt-weekdays {
   display: grid;
@@ -301,26 +301,25 @@ onUnmounted(() => {
   border-radius: 50%;
 }
 .gdt-day.other {
-  color: rgba(158, 139, 191, 0.25);
+  color: rgba(149, 117, 205, 0.25);
   background: transparent;
   cursor: default;
-  border-radius: 50%;
 }
-.gdt-day:hover:not(.other) { background: rgba(179, 136, 255, 0.12); color: var(--text-primary); }
+.gdt-day:hover:not(.other) { background: rgba(179, 157, 219, 0.1); color: var(--text-primary); }
 .gdt-day.selected {
-  background: linear-gradient(135deg, rgba(75, 47, 163, 0.65), rgba(168, 127, 232, 0.5));
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent-primary));
   color: white;
   font-weight: 600;
 }
 .gdt-day.today:not(.selected) {
-  border: 1px solid rgba(179, 136, 255, 0.4);
-  color: var(--accent-light);
+  border: 1.5px solid rgba(179, 157, 219, 0.4);
+  color: var(--accent-dark);
 }
 
 .gdt-time {
   margin-top: 0.8rem;
   padding-top: 0.8rem;
-  border-top: 1px solid rgba(123, 85, 212, 0.15);
+  border-top: 1px solid rgba(179, 157, 219, 0.12);
 }
 .gdt-time-label {
   font-size: 0.72rem;
@@ -357,16 +356,16 @@ onUnmounted(() => {
   text-align: center;
   border-radius: 8px;
 }
-.gdt-time-btn:hover { background: rgba(179, 136, 255, 0.1); color: var(--text-primary); }
+.gdt-time-btn:hover { background: rgba(179, 157, 219, 0.08); color: var(--text-primary); }
 .gdt-time-btn.active {
-  background: rgba(75, 47, 163, 0.45);
+  background: var(--accent-dark);
   color: white;
   font-weight: 600;
 }
 
 .gdt-time-col::-webkit-scrollbar { width: 3px; }
 .gdt-time-col::-webkit-scrollbar-track { background: transparent; }
-.gdt-time-col::-webkit-scrollbar-thumb { background: rgba(123, 85, 212, 0.25); border-radius: 100px; }
+.gdt-time-col::-webkit-scrollbar-thumb { background: rgba(179, 157, 219, 0.25); border-radius: 100px; }
 
 .gdt-actions {
   display: flex;
@@ -374,24 +373,27 @@ onUnmounted(() => {
   gap: 0.5rem;
   margin-top: 0.8rem;
   padding-top: 0.8rem;
-  border-top: 1px solid rgba(123, 85, 212, 0.1);
+  border-top: 1px solid rgba(179, 157, 219, 0.1);
 }
 .gdt-btn {
   font-family: var(--font-ui);
   font-size: 0.78rem;
   padding: 0.45rem 1rem;
-  border: 1px solid rgba(123, 85, 212, 0.2);
-  background: transparent;
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  background: rgba(255, 255, 255, 0.5);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast, 0.2s);
   border-radius: var(--radius-pill, 100px);
 }
-.gdt-btn:hover { border-color: rgba(179, 136, 255, 0.3); color: var(--text-primary); }
+.gdt-btn:hover { border-color: rgba(179, 157, 219, 0.4); color: var(--text-primary); background: rgba(255, 255, 255, 0.8); }
 .gdt-btn.primary {
-  background: rgba(75, 47, 163, 0.5);
-  border-color: rgba(179, 136, 255, 0.25);
+  background: var(--accent-dark);
+  border-color: transparent;
   color: white;
+}
+.gdt-btn.primary:hover {
+  background: var(--accent-deep);
 }
 
 .gdt-drop-enter-active { transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
