@@ -1,6 +1,27 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { submissionsApi } from '@/services/api'
+
+/* ── Logo 轮播 ── */
+const logoSlides = [
+  { src: '/logomini.webp', platform: 'QQ', name: '南渝万能墙', desc: '提供校园论坛服务' },
+  { src: '/douyin.webp', platform: '抖音', name: '北关鱼的驿站', desc: '校园宣传阵地' },
+  { src: '/wechat.webp', platform: '微信公众号', name: 'BEIGUANYU驿站', desc: '提供微信投稿服务' }
+]
+const logoIndex = ref(0)
+const logoAnimating = ref(false)
+let logoTimer = null
+
+function nextLogo() {
+  logoAnimating.value = true
+  setTimeout(() => {
+    logoIndex.value = (logoIndex.value + 1) % logoSlides.length
+    setTimeout(() => { logoAnimating.value = false }, 50)
+  }, 400)
+}
+
+onMounted(() => { logoTimer = setInterval(nextLogo, 4000) })
+onBeforeUnmount(() => { if (logoTimer) clearInterval(logoTimer) })
 
 /* ── 投稿随机抽取 ── */
 const allSubmissions = ref([])
@@ -83,23 +104,20 @@ onMounted(async () => {
           HELLO / 你好
         </div>
         <h1 class="hero-title">
-          Hi,<br />这里是南渝万能墙
+          Hi, 这里是南渝万能墙
         </h1>
-        <p class="hero-role">
-          Campus Service Platform / 校园服务平台
-        </p>
         <div class="hero-file-bar">
-          <span class="file-label">OUR FILE /</span>
-          <span class="file-value">南渝万能墙 · 重庆校墙联</span>
+          <span class="file-label">MEMBER OF /</span>
+          <span class="file-value">重庆校墙联</span>
         </div>
         <p class="hero-desc">
-          南渝万能墙隶属于重庆校墙联，以服务好南渝师生为宗旨。于2024年创立。我们致力于为南渝学子提供信息交流、资源共享和相互帮助的校园公益平台。
+          南渝万能墙建立于2024年8月8日。以服务好南渝师生为宗旨，我们致力于为南渝学子提供信息交流、资源共享平台。非校方组织。
         </p>
         <div class="hero-tags">
-          <span class="hero-tag-item">稿件查询</span>
-          <span class="hero-tag-item">有求必应</span>
-          <span class="hero-tag-item">公益课程</span>
-          <span class="hero-tag-item">共创计划</span>
+          <span class="hero-tag-item">互动宣教</span>
+          <span class="hero-tag-item">多元交流</span>
+          <span class="hero-tag-item">允公允能</span>
+          <span class="hero-tag-item">日新月异</span>
         </div>
         <div class="hero-btns">
           <button class="btn-dark" @click="$router.push('/query')">进入万能墙</button>
@@ -110,8 +128,8 @@ onMounted(async () => {
       <!-- 右侧 Logo 装饰 -->
       <div class="hero-right">
         <div class="logo-blob">
-          <div class="logo-circle">
-            <img src="/logomini.webp" alt="南渝万能墙" class="logo-img" />
+          <div class="logo-circle" :class="{ 'is-animating': logoAnimating }">
+            <img :src="logoSlides[logoIndex].src" :alt="logoSlides[logoIndex].name" class="logo-img" />
           </div>
           <!-- 浮动装饰气泡 -->
           <div class="hero-bubble hb-1" />
@@ -119,10 +137,10 @@ onMounted(async () => {
           <div class="hero-bubble hb-3" />
           <div class="hero-bubble hb-4" />
         </div>
-        <div class="hero-status-card">
-          <div class="status-label">NOW</div>
-          <div class="status-title">校园服务</div>
-          <div class="status-desc">正在为南渝师生服务</div>
+        <div class="hero-status-card" :class="{ 'is-animating': logoAnimating }">
+          <div class="status-label">{{ logoSlides[logoIndex].platform }}</div>
+          <div class="status-title">{{ logoSlides[logoIndex].name }}</div>
+          <div class="status-desc">{{ logoSlides[logoIndex].desc }}</div>
         </div>
       </div>
     </div>
@@ -408,20 +426,13 @@ onMounted(async () => {
 
 .hero-title {
   font-family: var(--font-title);
-  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
   font-weight: 900;
-  line-height: 1.05;
+  line-height: 1.15;
   color: var(--text-primary);
-  margin-bottom: 1.2rem;
-  letter-spacing: -0.03em;
-}
-
-.hero-role {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: var(--accent-dark);
   margin-bottom: 1.5rem;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .hero-file-bar {
@@ -551,6 +562,12 @@ onMounted(async () => {
   overflow: hidden;
   border: 3px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 12px 40px rgba(179, 157, 219, 0.2);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logo-circle.is-animating {
+  transform: scale(0.85) rotate(-8deg);
+  opacity: 0;
 }
 
 .logo-img {
@@ -582,6 +599,12 @@ onMounted(async () => {
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 16px;
   box-shadow: 0 8px 28px rgba(179, 157, 219, 0.12);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-status-card.is-animating {
+  transform: translateX(12px);
+  opacity: 0;
 }
 
 .status-label {
@@ -1256,7 +1279,8 @@ onMounted(async () => {
   }
 
   .hero-title {
-    font-size: clamp(2.5rem, 10vw, 4rem);
+    font-size: clamp(2rem, 8vw, 3rem);
+    white-space: normal;
   }
 
   .hero-tags {
@@ -1345,7 +1369,8 @@ onMounted(async () => {
 
 @media (max-width: 480px) {
   .hero-title {
-    font-size: clamp(2rem, 10vw, 3rem);
+    font-size: clamp(1.8rem, 8vw, 2.5rem);
+    white-space: normal;
   }
 
   .hero-btns {
