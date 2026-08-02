@@ -175,68 +175,82 @@ onMounted(async () => {
         <p class="section-sub">每一张都是南渝学子的真实声音</p>
       </div>
 
-      <div class="draw-layout">
-        <!-- 左侧：叠放卡牌 -->
-        <div class="draw-left">
-          <div class="card-stack">
-            <div
-              v-for="(card, i) in stackedCards"
-              :key="card.id || i"
-              class="stack-card"
-              :style="{
-                transform: `translateY(${i * -4}px) rotate(${-2 + i * 1}deg) scale(${1 - i * 0.02})`,
-                zIndex: stackedCards.length - i
-              }"
-            >
-              <div class="stack-card-inner">
-                <div class="stack-card-type">{{ typeEmojiMap[card.type] || '📄' }} {{ card.type }}</div>
-                <div class="stack-card-preview">{{ card.content?.substring(0, 40) }}...</div>
-              </div>
-            </div>
-            <div v-if="stackedCards.length === 0" class="stack-card stack-card-empty">
-              <div class="stack-card-inner">
-                <div class="stack-card-preview">暂无投稿数据</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="draw-btn-wrap">
-            <button
-              class="draw-btn"
-              @click="drawRandom"
-              :disabled="isAnimating || allSubmissions.length === 0"
-            >
-              <span v-if="isAnimating" class="draw-spinner" />
-              <span v-else>随机抽一张 ✦</span>
-            </button>
-            <div class="draw-count">
-              牌库共有 {{ allSubmissions.length }} 条投稿
-            </div>
-          </div>
-        </div>
-
-        <!-- 右侧：放大展示卡片 -->
-        <div class="draw-right">
-          <div class="showcase-card" :class="{ 'has-data': hasDrawn, 'is-flipping': isAnimating }">
-            <template v-if="currentCard && hasDrawn">
-              <div class="showcase-inner">
-                <div class="showcase-label">DRAWN FILE</div>
-                <div class="showcase-type">
-                  {{ typeEmojiMap[currentCard.type] || '📄' }} {{ currentCard.type }}
+      <!-- ZW风格外层大卡 -->
+      <div class="draw-outer-card">
+        <div class="draw-layout">
+          <!-- 左侧：叠放卡牌（卡背设计） -->
+          <div class="draw-left">
+            <div class="card-stack">
+              <div
+                v-for="(card, i) in stackedCards"
+                :key="card.id || i"
+                class="card-back"
+                :style="{
+                  transform: `translateY(${i * -6}px) rotate(${-3 + i * 1.5}deg) scale(${1 - i * 0.025})`,
+                  zIndex: stackedCards.length - i
+                }"
+              >
+                <!-- 卡背装饰：渐变背景 + 品牌标识 -->
+                <div class="card-back-bg" />
+                <div class="card-back-shine" />
+                <div class="card-back-content">
+                  <div class="card-back-icon">
+                    <img src="/logomini.webp" alt="南" class="card-back-logo" />
+                  </div>
+                  <div class="card-back-title">投稿内容</div>
+                  <div class="card-back-sub">SOUTH WALL × SUBMISSION</div>
                 </div>
-                <div class="showcase-time">{{ formatDate(currentCard.created_at) }}</div>
-                <div class="showcase-content">{{ currentCard.content }}</div>
+                <!-- 四角装饰 -->
+                <div class="card-corner cc-tl">✦</div>
+                <div class="card-corner cc-br">✦</div>
               </div>
-            </template>
-            <template v-else>
-              <div class="showcase-placeholder">
-                <div class="placeholder-icon">✨</div>
-                <div class="placeholder-text">点击左侧按钮抽取投稿</div>
+              <div v-if="stackedCards.length === 0" class="card-back card-back-empty">
+                <div class="card-back-content">
+                  <div class="card-back-title">暂无数据</div>
+                </div>
               </div>
-            </template>
+            </div>
+
+            <div class="draw-btn-wrap">
+              <button
+                class="draw-btn"
+                @click="drawRandom"
+                :disabled="isAnimating || allSubmissions.length === 0"
+              >
+                <span v-if="isAnimating" class="draw-spinner" />
+                <span v-else>随机抽一张 ✦</span>
+              </button>
+              <div class="draw-count">牌库共有 {{ allSubmissions.length }} 条投稿</div>
+            </div>
           </div>
-          <div v-if="currentCard && hasDrawn" class="draw-counter">
-            {{ allSubmissions.indexOf(currentCard) + 1 }} — {{ allSubmissions.length }}
+
+          <!-- 右侧：放大展示卡片 -->
+          <div class="draw-right">
+            <div class="showcase-card" :class="{ 'has-data': hasDrawn, 'is-flipping': isAnimating }">
+              <template v-if="currentCard && hasDrawn">
+                <div class="showcase-inner">
+                  <div class="showcase-label">DRAWN FILE</div>
+                  <div class="showcase-type">
+                    {{ typeEmojiMap[currentCard.type] || '📄' }} {{ currentCard.type }}
+                  </div>
+                  <div class="showcase-time">{{ formatDate(currentCard.created_at) }}</div>
+                  <div class="showcase-content">{{ currentCard.content }}</div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="showcase-placeholder">
+                  <div class="placeholder-ring">
+                    <div class="placeholder-ring-inner" />
+                    <div class="placeholder-icon">✨</div>
+                  </div>
+                  <div class="placeholder-text">点击左侧按钮抽取投稿</div>
+                  <div class="placeholder-sub">再翻面认识TA</div>
+                </div>
+              </template>
+            </div>
+            <div v-if="currentCard && hasDrawn" class="draw-counter">
+              {{ allSubmissions.indexOf(currentCard) + 1 }} — {{ allSubmissions.length }}
+            </div>
           </div>
         </div>
       </div>
@@ -744,12 +758,34 @@ onMounted(async () => {
   z-index: 1;
 }
 
+/* ZW 风格外层大卡 */
+.draw-outer-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 28px;
+  box-shadow: 0 8px 32px rgba(179, 157, 219, 0.08);
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.draw-outer-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+  pointer-events: none;
+}
+
 .draw-layout {
   display: flex;
   gap: 3rem;
   align-items: flex-start;
 }
 
+/* ── 左侧：叠放卡牌区 ── */
 .draw-left {
   flex: 0 0 340px;
   display: flex;
@@ -760,53 +796,111 @@ onMounted(async () => {
 
 .card-stack {
   position: relative;
-  width: 300px;
-  height: 220px;
-  perspective: 800px;
+  width: 280px;
+  height: 320px;
+  perspective: 900px;
 }
 
-.stack-card {
+/* ═══ 卡背设计（仿 ZW Portfolio） ═══ */
+.card-back {
   position: absolute;
   inset: 0;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(209, 196, 233, 0.4), rgba(255, 255, 255, 0.6));
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 16px rgba(179, 157, 219, 0.1);
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stack-card-inner {
-  padding: 1.5rem;
-  height: 100%;
+.card-back-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    160deg,
+    #a78bfa 0%,
+    #b495e0 20%,
+    #c4a8e8 40%,
+    #d6b8f0 60%,
+    #e0c4f4 80%,
+    #ecd8fa 100%
+  );
+}
+
+.card-back-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 60%,
+    transparent 100%
+  );
+}
+
+.card-back-content {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  height: 100%;
+  padding: 2rem;
+  gap: 0.8rem;
 }
 
-.stack-card-type {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent-dark);
-  letter-spacing: 0.05em;
+.card-back-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.stack-card-preview {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.card-back-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-.stack-card-empty {
-  background: rgba(255, 255, 255, 0.4);
-  border-style: dashed;
+.card-back-title {
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.1em;
 }
 
+.card-back-sub {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* 四角装饰星 */
+.card-corner {
+  position: absolute;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  z-index: 3;
+}
+.cc-tl { top: 14px; left: 16px; }
+.cc-br { bottom: 14px; right: 16px; }
+
+.card-back-empty {
+  background: rgba(179, 157, 219, 0.15);
+  border: 2px dashed rgba(179, 157, 219, 0.3);
+}
+
+/* ── 按钮区 ── */
 .draw-btn-wrap {
   display: flex;
   flex-direction: column;
@@ -815,7 +909,7 @@ onMounted(async () => {
 }
 
 .draw-btn {
-  padding: 0.8rem 2.5rem;
+  padding: 0.85rem 2.8rem;
   font-family: var(--font-ui);
   font-size: 0.92rem;
   font-weight: 600;
@@ -826,6 +920,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 4px 16px rgba(45, 27, 105, 0.2);
+  letter-spacing: 0.03em;
 }
 
 .draw-btn:hover:not(:disabled) {
@@ -858,17 +953,17 @@ onMounted(async () => {
   color: var(--text-muted);
 }
 
-/* 右侧展示卡 */
+/* ── 右侧展示卡 ── */
 .draw-right {
   flex: 1;
-  min-height: 340px;
+  min-height: 360px;
 }
 
 .showcase-card {
   width: 100%;
-  min-height: 340px;
+  min-height: 360px;
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(209, 196, 233, 0.3), rgba(255, 255, 255, 0.6));
+  background: linear-gradient(135deg, rgba(209, 196, 233, 0.25), rgba(255, 255, 255, 0.55));
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow:
@@ -884,7 +979,7 @@ onMounted(async () => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -917,7 +1012,7 @@ onMounted(async () => {
 }
 
 .showcase-type {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.3rem;
@@ -937,40 +1032,66 @@ onMounted(async () => {
   word-break: break-word;
 }
 
+/* 空占位 */
 .showcase-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 340px;
+  min-height: 360px;
   text-align: center;
   position: relative;
   z-index: 1;
 }
 
-.placeholder-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  animation: float 3s ease-in-out infinite;
+.placeholder-ring {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 1.5rem;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+.placeholder-ring-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(179, 157, 219, 0.15);
+  animation: pulse-ring 3s ease-in-out infinite;
+}
+
+.placeholder-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
 }
 
 .placeholder-text {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.placeholder-sub {
+  font-size: 0.82rem;
   color: var(--text-muted);
 }
 
 .draw-counter {
   text-align: center;
-  margin-top: 1rem;
-  font-size: 0.82rem;
+  margin-top: 1.2rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
+  font-weight: 500;
 }
 
 /* ═══ 功能矩阵 ═══ */
@@ -1315,6 +1436,10 @@ onMounted(async () => {
     gap: 1rem;
   }
 
+  .draw-outer-card {
+    padding: 1.5rem;
+  }
+
   .draw-layout {
     flex-direction: column;
     gap: 2rem;
@@ -1326,9 +1451,13 @@ onMounted(async () => {
   }
 
   .card-stack {
-    width: 260px;
-    height: 185px;
+    width: 240px;
+    height: 280px;
     margin: 0 auto;
+  }
+
+  .card-back-title {
+    font-size: 0.92rem;
   }
 
   .func-grid {
