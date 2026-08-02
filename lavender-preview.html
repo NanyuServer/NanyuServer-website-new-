@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>南渝万能墙 — 薰衣草主题</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════════
+       重置 & 基础
+       ═══════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --lavender: #B39DDB;
+      --lavender-light: #D1C4E9;
+      --lavender-deep: #7E57C2;
+      --lavender-deepest: #512DA8;
+      --mint: #E0F2F1;
+      --mint-dark: #80CBC4;
+      --pink: #F8BBD0;
+      --pink-soft: #FCE4EC;
+      --cream: #FFF8F0;
+      --sky: #E0F7FA;
+      --text-dark: #2D1B69;
+      --text-mid: #5C4B8A;
+      --text-light: #9575CD;
+      --glass-white: rgba(255, 255, 255, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.65);
+      --shadow-color: rgba(179, 157, 219, 0.2);
+      --shadow-deep: rgba(126, 87, 194, 0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      /* 多层渐变背景 — 水彩晕染感 */
+      background:
+        radial-gradient(ellipse 120% 80% at 10% 0%, rgba(179,157,219,0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 70% at 90% 15%, rgba(248,232,255,0.5) 0%, transparent 50%),
+        radial-gradient(ellipse 90% 60% at 50% 50%, rgba(224,247,250,0.3) 0%, transparent 55%),
+        radial-gradient(ellipse 80% 50% at 20% 80%, rgba(252,228,236,0.25) 0%, transparent 45%),
+        radial-gradient(ellipse 70% 40% at 80% 90%, rgba(179,157,219,0.15) 0%, transparent 40%),
+        linear-gradient(160deg, #F5F0FF 0%, #FFF5F8 25%, #F0FAFA 50%, #F5F0FF 75%, #FFF8FC 100%);
+      background-attachment: fixed;
+    }
+
+    /* ═══ 背景装饰圆环 ═══ */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 600px; height: 600px;
+      top: -150px; right: -200px;
+      border: 2px solid rgba(179, 157, 219, 0.12);
+      box-shadow:
+        inset 0 0 80px rgba(179, 157, 219, 0.06),
+        0 0 60px rgba(179, 157, 219, 0.04);
+      animation: float-ring 20s ease-in-out infinite;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      bottom: -100px; left: -100px;
+      border: 1.5px solid rgba(248, 187, 208, 0.12);
+      box-shadow:
+        inset 0 0 60px rgba(248, 187, 208, 0.05),
+        0 0 40px rgba(248, 187, 208, 0.03);
+      animation: float-ring 25s ease-in-out infinite reverse;
+    }
+
+    @keyframes float-ring {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(8deg); }
+    }
+
+    /* 额外装饰圆 */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-orb-1 {
+      width: 350px; height: 350px;
+      top: 30%; left: -80px;
+      background: radial-gradient(circle, rgba(224,242,241,0.3) 0%, transparent 70%);
+      animation: float-ring 18s ease-in-out infinite 3s;
+    }
+    .bg-orb-2 {
+      width: 280px; height: 280px;
+      top: 60%; right: -60px;
+      background: radial-gradient(circle, rgba(248,232,255,0.35) 0%, transparent 70%);
+      animation: float-ring 22s ease-in-out infinite 5s;
+    }
+
+    /* ═══ 排版 ═══ */
+    a { text-decoration: none; color: inherit; }
+    h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.02em; }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══════════════════════════════════════════════
+       模块一：导航栏
+       ═══════════════════════════════════════════════ */
+    .navbar {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 94%;
+      max-width: 960px;
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+      padding: 0 0.6rem 0 1.2rem;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      box-shadow:
+        0 4px 20px var(--shadow-color),
+        0 1px 4px rgba(0,0,0,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .navbar.scrolled {
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow:
+        0 8px 36px var(--shadow-deep),
+        0 2px 8px rgba(0,0,0,0.05),
+        inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-shrink: 0;
+    }
+    .nav-logo-img {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--lavender), var(--lavender-deep));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(126, 87, 194, 0.25);
+    }
+    .nav-logo-text {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--text-dark);
+      letter-spacing: 0.01em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.1rem;
+    }
+    .nav-link {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-mid);
+      padding: 0.4rem 0.65rem;
+      border-radius: 100px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--lavender-deep);
+      background: rgba(179, 157, 219, 0.1);
+    }
+
+    .nav-cta {
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--lavender-deep), var(--lavender-deepest));
+      color: white;
+      border: none;
+      border-radius: 100px;
+      padding: 0 1.15rem;
+      height: 36px;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 3px 12px rgba(81, 45, 168, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .nav-cta::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .nav-cta:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 20px rgba(81, 45, 168, 0.35);
+    }
+
+    /* ═══════════════════════════════════════════════
+       模块二：Hero 主视觉区
+       ═══════════════════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 0 5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4rem;
+      width: 100%;
+    }
+    .hero-left { flex: 1; max-width: 540px; }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--text-dark);
+      margin-bottom: 1.2rem;
+      letter-spacing: -0.03em;
+      animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--lavender-deep);
+      background: rgba(179, 157, 219, 0.12);
+      padding: 0.4rem 1.1rem;
+      border-radius: 100px;
+      border: 1px solid rgba(179, 157, 219, 0.18);
+      margin-bottom: 1.2rem;
+      animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.35s both;
+    }
+
+    .hero-desc {
+      font-size: 1rem;
+      line-height: 1.9;
+      color: var(--text-mid);
+      max-width: 440px;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.55s both;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.75rem 1.8rem;
+      font-family: inherit; font-size: 0.9rem; font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, var(--lavender), var(--lavender-deep));
+      border: none; border-radius: 100px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(126, 87, 194, 0.28);
+      transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+      position: relative; overflow: hidden;
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(126, 87, 194, 0.38);
+    }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.75rem 1.8rem;
+      font-family: inherit; font-size: 0.9rem; font-weight: 600;
+      color: var(--text-mid);
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(179, 157, 219, 0.2);
+      border-radius: 100px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.75);
+      border-color: rgba(179, 157, 219, 0.35);
+      color: var(--lavender-deep);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(179, 157, 219, 0.12);
+    }
+
+    /* 右侧 Logo 徽标 */
+    .hero-right {
+      flex-shrink: 0;
+      animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.4s both;
+    }
+    .logo-emblem {
+      position: relative;
+      width: 280px; height: 280px;
+    }
+    /* 三层光晕 */
+    .logo-glow {
+      position: absolute;
+      border-radius: 50%;
+      animation: pulse-glow 4s ease-in-out infinite;
+    }
+    .logo-glow-1 {
+      inset: -40px;
+      background: radial-gradient(circle, rgba(179,157,219,0.18) 0%, transparent 70%);
+      animation-delay: 0s;
+    }
+    .logo-glow-2 {
+      inset: -25px;
+      background: radial-gradient(circle, rgba(209,196,233,0.2) 0%, transparent 65%);
+      animation-delay: 0.5s;
+    }
+    .logo-glow-3 {
+      inset: -10px;
+      background: radial-gradient(circle, rgba(248,232,255,0.25) 0%, transparent 60%);
+      animation-delay: 1s;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+
+    .logo-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(179,157,219,0.4),
+        rgba(248,187,208,0.25),
+        rgba(224,242,241,0.35),
+        rgba(179,157,219,0.4)
+      );
+      animation: spin-slow 25s linear infinite;
+    }
+    .logo-ring::before {
+      content: '';
+      position: absolute; inset: 3px;
+      border-radius: 50%;
+      background: rgba(245, 240, 255, 0.92);
+    }
+
+    .logo-center {
+      position: absolute;
+      inset: 15px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(237,231,246,0.5));
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      gap: 0.3rem;
+      box-shadow:
+        0 8px 32px rgba(179,157,219,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+    .logo-center-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--lavender), var(--lavender-deep));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      box-shadow: 0 4px 16px rgba(126, 87, 194, 0.3);
+    }
+    .logo-center-text {
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--text-dark);
+      letter-spacing: 0.02em;
+    }
+
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* ═══════════════════════════════════════════════
+       模块三：抽取投稿区
+       ═══════════════════════════════════════════════ */
+    .draw-section {
+      padding: 6rem 0 7rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .section-num {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      color: var(--text-light);
+      margin-bottom: 0.7rem;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .draw-layout {
+      display: flex;
+      gap: 3rem;
+      align-items: flex-start;
+    }
+
+    /* 左侧叠放卡牌 */
+    .draw-left {
+      flex: 0 0 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+    .card-stack {
+      position: relative;
+      width: 300px;
+      height: 210px;
+      perspective: 800px;
+    }
+    .stack-card {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(14px) saturate(170%);
+      -webkit-backdrop-filter: blur(14px) saturate(170%);
+      border: 1px solid rgba(255,255,255,0.65);
+      box-shadow:
+        0 4px 16px var(--shadow-color),
+        0 1px 4px rgba(0,0,0,0.03);
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+      cursor: default;
+    }
+    .stack-card-type {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--lavender-deep);
+      letter-spacing: 0.05em;
+    }
+    .stack-card-preview {
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* 抽取按钮 */
+    .draw-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 170px; height: 50px;
+      padding: 0 2rem;
+      font-family: inherit; font-size: 0.92rem; font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, var(--text-dark), var(--lavender-deepest));
+      border: none; border-radius: 100px;
+      cursor: pointer;
+      box-shadow:
+        0 4px 18px rgba(45, 27, 105, 0.25),
+        0 1px 4px rgba(0,0,0,0.06);
+      transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+      letter-spacing: 0.04em;
+      position: relative; overflow: hidden;
+    }
+    .draw-btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .draw-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 32px rgba(45, 27, 105, 0.35),
+        0 2px 8px rgba(0,0,0,0.08);
+    }
+    .draw-btn:active:not(:disabled) { transform: scale(0.97); }
+    .draw-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .draw-btn .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.5s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 右侧放大展示卡 */
+    .draw-right { flex: 1; min-height: 320px; }
+
+    .showcase-card {
+      width: 100%;
+      min-height: 320px;
+      border-radius: 28px;
+      overflow: hidden;
+      transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+      position: relative;
+      /* 立体斑斓阴影 */
+      background: linear-gradient(145deg, rgba(255,255,255,0.6), rgba(237,231,246,0.3));
+      backdrop-filter: blur(16px) saturate(190%);
+      -webkit-backdrop-filter: blur(16px) saturate(190%);
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow:
+        0 20px 50px rgba(179, 157, 219, 0.18),
+        0 8px 20px rgba(126, 87, 194, 0.08),
+        0 2px 6px rgba(0,0,0,0.03),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+    .showcase-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .showcase-card.flip-in {
+      animation: card-flip 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .showcase-card.flip-out {
+      animation: card-flip-out 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    @keyframes card-flip {
+      0% { transform: perspective(900px) rotateX(20deg) scale(0.95); opacity: 0.3; }
+      100% { transform: perspective(900px) rotateX(0deg) scale(1); opacity: 1; }
+    }
+    @keyframes card-flip-out {
+      0% { transform: perspective(900px) rotateX(0deg) scale(1); opacity: 1; }
+      100% { transform: perspective(900px) rotateX(-15deg) scale(0.96); opacity: 0.4; }
+    }
+
+    .showcase-inner {
+      padding: 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .showcase-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+    .showcase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      background: rgba(179, 157, 219, 0.1);
+      color: var(--lavender-deep);
+      border: 1px solid rgba(179, 157, 219, 0.18);
+    }
+    .showcase-time {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      white-space: nowrap;
+    }
+    .showcase-content {
+      font-size: 1.05rem;
+      line-height: 2;
+      color: var(--text-mid);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* 空占位 */
+    .showcase-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      text-align: center;
+      position: relative; z-index: 1;
+    }
+    .placeholder-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      animation: float-gentle 3s ease-in-out infinite;
+    }
+    .placeholder-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.4rem;
+    }
+    .placeholder-sub {
+      font-size: 0.88rem;
+      color: var(--text-light);
+    }
+    @keyframes float-gentle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* ═══════════════════════════════════════════════
+       模块四：功能矩阵
+       ═══════════════════════════════════════════════ */
+    .func-section {
+      padding: 5rem 0 8rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .func-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .func-card {
+      display: flex;
+      flex-direction: column;
+      padding: 2.2rem;
+      border-radius: 24px;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+      /* 立体斑斓卡片 */
+      background: linear-gradient(145deg, rgba(255,255,255,0.55), rgba(245,240,255,0.35));
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.65);
+      box-shadow:
+        0 8px 28px rgba(179, 157, 219, 0.1),
+        0 2px 8px rgba(0,0,0,0.03),
+        inset 0 1px 0 rgba(255,255,255,0.7);
+      transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .func-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, transparent 55%);
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .func-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: radial-gradient(ellipse at 50% 0%, rgba(179,157,219,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .func-card:hover {
+      transform: translateY(-10px);
+      box-shadow:
+        0 24px 60px rgba(179, 157, 219, 0.2),
+        0 10px 24px rgba(126, 87, 194, 0.1),
+        0 4px 10px rgba(0,0,0,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.9);
+      border-color: rgba(179, 157, 219, 0.3);
+    }
+    .func-card:hover::after { opacity: 1; }
+
+    .func-icon {
+      width: 56px; height: 56px;
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.3rem;
+      position: relative;
+      background: linear-gradient(135deg, rgba(179,157,219,0.15), rgba(126,87,194,0.1));
+      border: 1px solid rgba(179, 157, 219, 0.12);
+      transition: all 0.35s;
+    }
+    .func-card:hover .func-icon {
+      background: linear-gradient(135deg, var(--lavender), var(--lavender-deep));
+      border-color: transparent;
+      box-shadow: 0 4px 14px rgba(126, 87, 194, 0.3);
+    }
+    .func-icon svg {
+      width: 26px; height: 26px;
+      stroke: var(--lavender-deep);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.35s;
+    }
+    .func-card:hover .func-icon svg { stroke: white; }
+
+    .func-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+    .func-desc {
+      font-size: 0.9rem;
+      color: var(--text-mid);
+      line-height: 1.7;
+      flex: 1;
+    }
+    .func-arrow {
+      margin-top: 1.2rem;
+      color: var(--text-light);
+      transition: all 0.3s;
+    }
+    .func-card:hover .func-arrow {
+      color: var(--lavender-deep);
+      transform: translate(4px, -4px);
+    }
+
+    /* ═══════════════════════════════════════════════
+       模块五：页脚
+       ═══════════════════════════════════════════════ */
+    .footer {
+      padding: 2.5rem 0;
+      border-top: 1px solid rgba(179, 157, 219, 0.12);
+      background: linear-gradient(0deg, rgba(237,231,246,0.2) 0%, transparent 100%);
+      position: relative;
+      z-index: 1;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-copy {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      letter-spacing: 0.03em;
+    }
+    .back-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-family: inherit;
+      font-size: 0.78rem;
+      color: var(--text-light);
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(179,157,219,0.15);
+      border-radius: 100px;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .back-top:hover {
+      background: rgba(255,255,255,0.7);
+      border-color: rgba(179,157,219,0.3);
+      color: var(--lavender-deep);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(179,157,219,0.1);
+    }
+
+    /* ═══════════════════════════════════════════════
+       响应式
+       ═══════════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .nav-links .nav-link:nth-child(n+5) { display: none; }
+    }
+    @media (max-width: 768px) {
+      .navbar { width: 94%; padding: 0 0.5rem 0 1rem; }
+      .nav-links { display: none; }
+
+      .hero { padding: 7rem 0 4rem; min-height: auto; }
+      .hero-inner {
+        flex-direction: column-reverse;
+        gap: 2.5rem;
+        text-align: center;
+      }
+      .hero-left { max-width: 100%; }
+      .hero-title { font-size: clamp(2rem, 8vw, 2.8rem); }
+      .hero-desc { max-width: 100%; }
+      .hero-btns { justify-content: center; }
+
+      .logo-emblem { width: 200px; height: 200px; }
+      .logo-center-icon { width: 56px; height: 56px; font-size: 1.5rem; }
+
+      .draw-layout {
+        flex-direction: column;
+        gap: 2rem;
+      }
+      .draw-left { flex: none; width: 100%; }
+      .card-stack { width: 260px; height: 180px; }
+      .draw-right { min-height: 260px; }
+      .showcase-card { min-height: 260px; }
+      .showcase-inner { padding: 1.8rem; }
+
+      .func-grid { grid-template-columns: 1fr; }
+
+      .draw-section, .func-section { padding: 4rem 0; }
+    }
+    @media (max-width: 480px) {
+      .hero-title { font-size: clamp(1.8rem, 8vw, 2.4rem); }
+      .hero-btns { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-ghost { width: 100%; max-width: 280px; }
+      .logo-emblem { width: 170px; height: 170px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 背景装饰 -->
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <!-- ═══ 模块一：导航栏 ═══ -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-img">南</div>
+      <span class="nav-logo-text">南渝万能墙</span>
+    </a>
+    <div class="nav-links">
+      <a href="#draw" class="nav-link">稿件查询</a>
+      <a href="#draw" class="nav-link">有求必应</a>
+      <a href="#functions" class="nav-link">公益课程</a>
+      <a href="#functions" class="nav-link">共创计划</a>
+      <a href="#functions" class="nav-link">招贤纳士</a>
+      <a href="#footer" class="nav-link">关于我们</a>
+    </div>
+    <button class="nav-cta" onclick="alert('欢迎来到南渝万能墙！')">立即进入</button>
+  </nav>
+
+  <!-- ═══ 模块二：Hero ═══ -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner">
+        <div class="hero-left">
+          <h1 class="hero-title">Hi, 这里是<br>南渝万能墙</h1>
+          <div class="hero-badge">Nanyu Server · 2024</div>
+          <p class="hero-desc">南渝万能墙隶属于重庆校墙联，以服务好南渝师生为宗旨。于2024年创立。</p>
+          <div class="hero-btns">
+            <a href="#functions" class="btn-primary">进入万能墙</a>
+            <a href="https://www.douyin.com" target="_blank" class="btn-ghost">北关鱼的驿站</a>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="logo-emblem">
+            <div class="logo-glow logo-glow-1"></div>
+            <div class="logo-glow logo-glow-2"></div>
+            <div class="logo-glow logo-glow-3"></div>
+            <div class="logo-ring"></div>
+            <div class="logo-center">
+              <div class="logo-center-icon">🌸</div>
+              <span class="logo-center-text">南渝万能墙</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 模块三：抽取投稿 ═══ -->
+  <section class="draw-section" id="draw">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-num">01 / PART</div>
+        <h2 class="section-title">试试抽取一份同学投稿</h2>
+      </div>
+
+      <div class="draw-layout">
+        <!-- 左侧：叠放卡牌 -->
+        <div class="draw-left">
+          <div class="card-stack" id="cardStack">
+            <!-- JS 动态生成 -->
+          </div>
+          <button class="draw-btn" id="drawBtn" onclick="drawCard()">
+            随机抽一张
+          </button>
+        </div>
+
+        <!-- 右侧：放大展示 -->
+        <div class="draw-right">
+          <div class="showcase-card" id="showcaseCard">
+            <div class="showcase-placeholder" id="showcasePlaceholder">
+              <div class="placeholder-icon">✨</div>
+              <div class="placeholder-text">点击左侧按钮抽取投稿</div>
+              <div class="placeholder-sub">每一张都是南渝学子的真实声音</div>
+            </div>
+            <div class="showcase-inner" id="showcaseInner" style="display:none;">
+              <div class="showcase-header">
+                <span class="showcase-badge" id="showcaseBadge"></span>
+                <span class="showcase-time" id="showcaseTime"></span>
+              </div>
+              <div class="showcase-content" id="showcaseContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 模块四：功能矩阵 ═══ -->
+  <section class="func-section" id="functions">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-num">02 / FUNCTION</div>
+        <h2 class="section-title">为你的校园保驾护航</h2>
+      </div>
+
+      <div class="func-grid">
+        <!-- 稿件查询 -->
+        <a href="/query" class="func-card">
+          <div class="func-icon">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3 class="func-title">稿件查询</h3>
+          <p class="func-desc">查阅南渝万能墙的稿件</p>
+          <div class="func-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          </div>
+        </a>
+
+        <!-- 有求必应 -->
+        <a href="/feedback" class="func-card">
+          <div class="func-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3 class="func-title">有求必应</h3>
+          <p class="func-desc">提出需求，互帮互助</p>
+          <div class="func-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          </div>
+        </a>
+
+        <!-- 公益课程 -->
+        <a href="/course" class="func-card">
+          <div class="func-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h3 class="func-title">公益课程</h3>
+          <p class="func-desc">免费公开课程资源</p>
+          <div class="func-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          </div>
+        </a>
+
+        <!-- 共创计划 -->
+        <a href="/cooperation" class="func-card">
+          <div class="func-icon">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3 class="func-title">共创计划</h3>
+          <p class="func-desc">在北关鱼的驿站发稿</p>
+          <div class="func-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 模块五：页脚 ═══ -->
+  <footer class="footer" id="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <span class="footer-copy">&copy; 2026 南渝万能墙运营队 · 保留所有权利</span>
+        <button class="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          回到顶部
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ═══════════════════════════════════════════════
+       模拟投稿数据
+       ═══════════════════════════════════════════════ */
+    const submissions = [
+      { type: '💌 表白', content: '高二三班的那个女生，你每天早上在走廊背单词的样子真的很美。虽然不知道你的名字，但希望你知道，有人在默默欣赏你的努力。', time: '2024-12-15 14:30' },
+      { type: '🔍 寻物启事', content: '今天下午在图书馆二楼丢了一本蓝色封面的《五年高考三年模拟》，里面有很重要的笔记！捡到的同学请联系我，非常感谢！', time: '2024-12-14 16:45' },
+      { type: '💬 吐槽', content: '食堂今天的新菜也太辣了吧！吃完嘴巴都麻了，但是说实话还挺好吃的哈哈哈。建议不能吃辣的同学慎选。', time: '2024-12-14 12:20' },
+      { type: '💰 交易', content: '出一台iPad Air 5，256G，紫色，成色99新，带Apple Pencil二代和键盘。因为换了Pro所以出掉，价格私聊，可以当面验货。', time: '2024-12-13 18:00' },
+      { type: '👫 寻找搭子', content: '有没有周末想一起去南山植物园写生的同学？我学美术的，想找个伴一起出去画画放松一下，男女不限，最好是高一高二的～', time: '2024-12-13 09:15' },
+      { type: '🗣️ 有啥说啥', content: '期末考试加油！ everyone！不管结果如何，我们都已经很努力了。南渝的同学们一起冲鸭！寒假见！', time: '2024-12-12 21:30' },
+      { type: '❓ 打听资讯', content: '请问有谁知道下学期的社团招新什么时候开始？想加入摄影社，但是没找到相关信息。有知道的同学麻烦告知一下，谢谢！', time: '2024-12-12 15:00' },
+      { type: '🤝 扩列', content: '高一新生想认识更多朋友！平时喜欢打篮球、听音乐、看电影。如果有兴趣一起玩的同学可以加我QQ，一起交流～', time: '2024-12-11 20:45' }
+    ];
+
+    let isAnimating = false;
+    let currentIndex = 0;
+
+    /* ═══ 初始化叠放卡牌 ═══ */
+    function initStack() {
+      const stack = document.getElementById('cardStack');
+      stack.innerHTML = '';
+      const count = Math.min(5, submissions.length);
+      for (let i = 0; i < count; i++) {
+        const card = document.createElement('div');
+        card.className = 'stack-card';
+        const s = submissions[(currentIndex + i) % submissions.length];
+        card.style.transform = `translateY(${i * -3}px) rotate(${-1.5 + i * 0.8}deg) scale(${1 - i * 0.015})`;
+        card.style.zIndex = count - i;
+        card.innerHTML = `
+          <div class="stack-card-type">${s.type}</div>
+          <div class="stack-card-preview">${s.content.substring(0, 35)}...</div>
+        `;
+        stack.appendChild(card);
+      }
+    }
+
+    /* ═══ 抽取卡片 ═══ */
+    function drawCard() {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      const btn = document.getElementById('drawBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      const showcase = document.getElementById('showcaseCard');
+      const placeholder = document.getElementById('showcasePlaceholder');
+      const inner = document.getElementById('showcaseInner');
+
+      // 退出动画
+      showcase.classList.remove('flip-in');
+      showcase.classList.add('flip-out');
+
+      setTimeout(() => {
+        // 随机选取
+        const idx = Math.floor(Math.random() * submissions.length);
+        const s = submissions[idx];
+
+        // 更新展示
+        placeholder.style.display = 'none';
+        inner.style.display = 'block';
+        document.getElementById('showcaseBadge').textContent = s.type;
+        document.getElementById('showcaseTime').textContent = s.time;
+        document.getElementById('showcaseContent').textContent = s.content;
+
+        // 更新左侧叠放
+        currentIndex = (idx + 1) % submissions.length;
+        initStack();
+
+        // 进入动画
+        showcase.classList.remove('flip-out');
+        showcase.classList.add('flip-in');
+
+        btn.disabled = false;
+        btn.innerHTML = '随机抽一张';
+        isAnimating = false;
+      }, 380);
+    }
+
+    /* ═══ 导航栏滚动效果 ═══ */
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 30);
+    }, { passive: true });
+
+    /* ═══ 初始化 ═══ */
+    initStack();
+  </script>
+</body>
+</html>
