@@ -941,12 +941,11 @@ const stats = [
   }
 }
 
-/* ② 画面中央的飞出卡 */
+/* ② 飞出卡 — 从牌堆位置飞到画面中央再淡出 */
 .fly-center-card {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 150px;
+  left: 65px;
   width: 210px;
   height: 300px;
   border-radius: 24px;
@@ -954,7 +953,7 @@ const stats = [
   z-index: 20;
   box-shadow: 0 20px 60px rgba(179, 157, 219, 0.35);
   pointer-events: none;
-  animation: flyCenterFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: flyCenterFade 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .fly-center-img {
@@ -967,16 +966,20 @@ const stats = [
 
 @keyframes flyCenterFade {
   0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.6) rotateY(0deg);
-  }
-  40% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.05) rotateY(90deg);
+    transform: translate(0, 0) rotateY(0deg) scale(1);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(200px, -50px) rotateY(180deg) scale(1.08);
+  }
+  80% {
+    opacity: 0.5;
+    transform: translate(200px, -50px) rotateY(200deg) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9) rotateY(180deg);
+    transform: translate(200px, -50px) rotateY(210deg) scale(0.9);
   }
 }
 
