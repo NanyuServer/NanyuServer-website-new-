@@ -30,16 +30,16 @@ const isAnimating = ref(false)
 const hasDrawn = ref(false)
 const detailGlow = ref(false)
 const rightPhase = ref('')  /* '' | 'elastic' | 'show' */
-const flyPhase = ref('')    /* '' | 'flying' | 'landing' */
+const flyPhase = ref('')    /* '' | 'flying' */
 
 /* 3张可见卡牌（c0底 c1中 c2顶） */
 const DECK_VISIBLE = 3
 const visibleCards = ref([])
-const flyCardState = ref(null) /* {img, class} or null */
-const newCardEnter = ref(false) /* 底层补卡淡入 */
-const newCardEntered = ref(false) /* 底层补卡已进入终态 */
+const flyCardState = ref(null) /* {img} or null */
+const newCardEnter = ref(false)
+const newCardEntered = ref(false)
 const deckC0Ref = ref(null)
-let lastImgUsed = '' /* ① 记录上次使用的图片，避免连续重复 */
+let lastImgUsed = ''
 
 const cardBackImages = [
   '/card/card (1).webp',
@@ -80,27 +80,14 @@ function formatDate(iso) {
     + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
-/* 初始化3张可见卡牌 */
 function initVisible() {
   visibleCards.value = Array.from({ length: DECK_VISIBLE }, () => randomImg())
   flyCardState.value = null
 }
 
-/* ── 空闲轮播 ── */
-let idleTimer = null
-function startIdle() {
-  stopIdle()
-  let idx = 0
-  function tick() {
-    idx = (idx + 1) % DECK_VISIBLE
-    visibleCards.value[idx] = randomImg()
-    idleTimer = setTimeout(tick, 2200)
-  }
-  idleTimer = setTimeout(tick, 2200)
-}
-function stopIdle() { if (idleTimer) { clearTimeout(idleTimer); idleTimer = null } }
+/* ③ 无空闲轮播 — 卡牌保持静态 */
 
-/* ── 抽卡流程（迁移+增强） ── */
+/* ── 抽卡流程 ── */
 async function drawRandom() {
   if (isAnimating.value || allSubmissions.value.length === 0) return
   isAnimating.value = true
@@ -108,21 +95,18 @@ async function drawRandom() {
   detailGlow.value = false
   rightPhase.value = ''
   flyPhase.value = ''
-  stopIdle()
 
-  /* 1. 顶卡飞出 */
+  /* 1. 顶卡飞出到画面中央 */
   flyCardState.value = { img: visibleCards.value[2] }
   flyPhase.value = 'flying'
   await new Promise(r => setTimeout(r, 100))
 
   /* 2. 底卡→中卡→顶卡递补，新卡从底部淡入 */
-  const oldTop = visibleCards.value[2]
   visibleCards.value = [
     randomImg(),
     visibleCards.value[0],
     visibleCards.value[1]
   ]
-  /* ④ 先设置初始状态，下一帧再触发动画终态 */
   newCardEnter.value = true
   newCardEntered.value = false
   await nextTick()
@@ -132,21 +116,15 @@ async function drawRandom() {
   newCardEnter.value = false
   newCardEntered.value = false
 
-  /* 3. 卡片飞到右侧详情卡上方（landing） */
-  await new Promise(r => setTimeout(r, 500))
-  flyPhase.value = 'landing'
-  await new Promise(r => setTimeout(r, 100))
+  /* 3. 卡片淡出完毕 */
+  await new Promise(r => setTimeout(r, 600))
   flyCardState.value = null
-
-  /* 4. landing 卡淡出 */
-  await new Promise(r => setTimeout(r, 400))
   flyPhase.value = ''
 
-  /* 5. 随机选稿 */
+  /* 4. 右侧文字淡入 + 金光扫边 */
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
   currentCard.value = allSubmissions.value[idx]
 
-  /* 6. 右侧弹性放大 + 内容淡入 + 金光扫边 */
   rightPhase.value = 'elastic'
   await new Promise(r => setTimeout(r, 500))
 
@@ -156,7 +134,6 @@ async function drawRandom() {
   isAnimating.value = false
 
   setTimeout(() => { detailGlow.value = false }, 1500)
-  startIdle()
 }
 
 onMounted(async () => {
@@ -166,9 +143,8 @@ onMounted(async () => {
     allSubmissions.value = shuffleArray(data)
   } catch (e) { console.warn('加载投稿失败:', e) }
   initVisible()
-  startIdle()
 })
-onBeforeUnmount(() => stopIdle())
+onBeforeUnmount(() => {})
 
 /* ── 功能卡片 ── */
 const functionCards = [
@@ -291,8 +267,8 @@ const stats = [
               <div class="deck-card deck-c2">
                 <img :src="visibleCards[2]" alt="卡背" class="deck-card-img" />
               </div>
-              <!-- 飞出卡 -->
-              <div v-if="flyCardState" class="deck-card deck-fly">
+              <!-- 飞出卡（原位淡出） -->
+              <div v-if="flyCardState" class="deck-card deck-c2 deck-fly">
                 <img :src="flyCardState.img" alt="卡背" class="deck-card-img" />
               </div>
             </div>
@@ -310,13 +286,14 @@ const stats = [
             </div>
           </div>
 
+          <!-- ② 飞出卡 — 在 draw-layout 内部绝对定位，飞到画面中央后淡出 -->
+          <div v-if="flyCardState" class="fly-center-card">
+            <img :src="flyCardState.img" alt="卡背" class="fly-center-img" />
+          </div>
+
           <!-- 右侧：详情卡 -->
           <div class="draw-right">
             <div class="detail-card" :class="{ 'detail-glow': detailGlow, 'detail-elastic': rightPhase === 'elastic', 'detail-sweep': rightPhase === 'show' }">
-              <!-- ② 飞出的卡叠在详情卡上方然后淡出 -->
-              <div v-if="flyPhase === 'landing'" class="fly-overlay">
-                <img :src="flyCardState.img" alt="卡背" class="fly-overlay-img" />
-              </div>
               <!-- 有内容时才显示 -->
               <template v-if="currentCard && hasDrawn">
                 <div class="detail-inner" :class="{ 'detail-content-show': rightPhase === 'show' }">
@@ -326,7 +303,7 @@ const stats = [
                 </div>
               </template>
               <!-- 空占位 -->
-              <template v-else-if="!flyPhase">
+              <template v-else>
                 <div class="detail-empty">
                   <div class="detail-empty-icon">✨</div>
                   <div class="detail-empty-text">点击左侧按钮抽取投稿</div>
@@ -948,9 +925,9 @@ const stats = [
   transform: translateY(15px) translateZ(-40px) rotate(-5deg) scale(1);
 }
 
-/* 飞出卡 */
+/* 飞出卡（在牌堆内的原始卡淡出） */
 .deck-fly {
-  animation: cardFly 0.9s cubic-bezier(0.45, 0, 0.15, 1) forwards;
+  animation: cardFly 0.8s cubic-bezier(0.45, 0, 0.15, 1) forwards;
 }
 
 @keyframes cardFly {
@@ -958,13 +935,48 @@ const stats = [
     transform: translateY(-15px) translateZ(50px) rotateY(0deg);
     opacity: 1;
   }
-  50% {
-    transform: translate(160px, -80px) translateZ(250px) rotateY(180deg);
+  100% {
+    transform: translateY(-15px) translateZ(50px) rotateY(0deg);
+    opacity: 0;
+  }
+}
+
+/* ② 画面中央的飞出卡 */
+.fly-center-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 210px;
+  height: 300px;
+  border-radius: 24px;
+  overflow: hidden;
+  z-index: 20;
+  box-shadow: 0 20px 60px rgba(179, 157, 219, 0.35);
+  pointer-events: none;
+  animation: flyCenterFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.fly-center-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 24px;
+}
+
+@keyframes flyCenterFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6) rotateY(0deg);
+  }
+  40% {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05) rotateY(90deg);
   }
   100% {
-    transform: translate(300px, 20px) rotateY(360deg);
     opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9) rotateY(180deg);
   }
 }
 
