@@ -967,19 +967,19 @@ const stats = [
 @keyframes flyCenterFade {
   0% {
     opacity: 1;
-    transform: translate(0, 0) rotateY(0deg) scale(1);
+    transform: translate(0, 0) rotateZ(0deg) scale(1);
   }
   55% {
     opacity: 1;
-    transform: translate(200px, -50px) rotateY(180deg) scale(1.08);
+    transform: translate(200px, -50px) rotateZ(-8deg) scale(1.08);
   }
   80% {
     opacity: 0.5;
-    transform: translate(200px, -50px) rotateY(200deg) scale(1);
+    transform: translate(200px, -50px) rotateZ(-5deg) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(200px, -50px) rotateY(210deg) scale(0.9);
+    transform: translate(200px, -50px) rotateZ(-3deg) scale(0.9);
   }
 }
 
