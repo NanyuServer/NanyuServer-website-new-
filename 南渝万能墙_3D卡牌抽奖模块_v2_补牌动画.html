@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta charset='UTF-8'><title>动态卡牌库</title>
+<style>
+body{height:100vh;margin:0;display:flex;align-items:center;justify-content:center;background:#f5efff;font-family:Microsoft YaHei}
+.app{display:flex;gap:80px}.left{width:300px;text-align:center}.stack{width:230px;height:330px;perspective:900px;position:relative}
+.card{position:absolute;left:10px;top:10px;width:210px;height:300px;border-radius:24px;background:linear-gradient(145deg,#dfd0ff,#b99ae9);box-shadow:0 20px 40px #8060aa55;display:flex;align-items:center;justify-content:center;color:white;font-size:28px;transition:all .8s cubic-bezier(.2,.8,.2,1)}
+.c0{transform:translateY(15px) translateZ(-40px) rotate(-5deg)}.c1{transform:translateZ(0) rotate(3deg)}.c2{transform:translateY(-15px) translateZ(40px) rotate(-3deg)}
+.fly{animation:fly .9s forwards}
+@keyframes fly{0%{transform:translateY(-15px) translateZ(50px) rotateY(0);opacity:1}50%{transform:translate(160px,-80px) translateZ(250px) rotateY(180deg);opacity:1}100%{transform:translate(300px,20px) rotateY(360deg);opacity:0}}
+button{margin-top:30px;padding:15px 35px;border:0;border-radius:30px;background:#18131f;color:white}
+.detail{width:350px;height:300px;background:white;border-radius:25px;padding:35px}.glow{animation:glow 1s}@keyframes glow{50%{box-shadow:0 0 45px #ffe49b}}
+</style></head>
+<body><div class='app'><div class='left'><div id='stack' class='stack'></div><button id='btn'>随机抽一张 +</button></div><div id='detail' class='detail'><h2 id='t'>等待抽取</h2><p id='d'>---</p><p id='c'>点击抽卡</p></div></div>
+<script>
+const data=[['操场晚风','08.01','青春记录'],['校园早餐','07.28','温暖瞬间'],['毕业留言','07.20','未来寄语'],['社团故事','07.15','共同成长'],['夏日记忆','07.10','校园夏天'],['课堂瞬间','07.05','认真学习'],['朋友之间','06.30','友情陪伴'],['校园角落','06.25','隐藏美好'],['运动时刻','06.20','青春汗水'],['音乐分享','06.15','歌曲回忆'],['阅读空间','06.10','安静下午'],['志愿活动','06.05','帮助他人'],['旅行计划','05.30','期待出发'],['考试之后','05.20','努力结果'],['校园传说','05.10','小故事']];
+let stack=[0,1,2],busy=false;
+function render(){stack.forEach((x,i)=>{let e=document.querySelectorAll('.card')[i];if(!e){e=document.createElement('div');e.className='card';document.getElementById('stack').appendChild(e)}e.className='card c'+i;e.innerHTML='投稿';});}
+render();
+btn.onclick=()=>{if(busy)return;busy=true;btn.disabled=true;let cs=document.querySelectorAll('.card');cs[2].classList.add('fly');cs[1].className='card c2';cs[0].className='card c1';setTimeout(()=>{stack=[stack[1],stack[2],Math.floor(Math.random()*data.length)];document.getElementById('stack').innerHTML='';render();let p=data[stack[2]];t.textContent=p[0];d.textContent=p[1];c.textContent=p[2];detail.classList.add('glow');setTimeout(()=>detail.classList.remove('glow'),1000);busy=false;btn.disabled=false},900)}
+</script></body></html>

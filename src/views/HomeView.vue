@@ -23,13 +23,19 @@ function nextLogo() {
 onMounted(() => { logoTimer = setInterval(nextLogo, 4000) })
 onBeforeUnmount(() => { if (logoTimer) clearInterval(logoTimer) })
 
-/* ── 投稿随机抽取 ── */
+/* ── 投稿随机抽取（迁移自3D卡牌模块） ── */
 const allSubmissions = ref([])
 const currentCard = ref(null)
 const isAnimating = ref(false)
 const hasDrawn = ref(false)
-const deckPhase = ref('idle') /* idle | shuffling | revealing | done */
-const topCardImg = ref('')
+const detailGlow = ref(false)
+const rightPhase = ref('')  /* '' | 'elastic' | 'show' */
+
+/* 3张可见卡牌（c0底 c1中 c2顶） */
+const DECK_VISIBLE = 3
+const visibleCards = ref([])
+const flyCardState = ref(null) /* {img, class} or null */
+const newCardEnter = ref(false) /* 底层补卡淡入 */
 
 const cardBackImages = [
   '/card/card (1).webp',
@@ -65,56 +71,67 @@ function formatDate(iso) {
     + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
-/* ── 空闲轮播：每 2.2 秒顶部卡牌淡出淡入 ── */
+/* 初始化3张可见卡牌 */
+function initVisible() {
+  visibleCards.value = Array.from({ length: DECK_VISIBLE }, () => randomImg())
+  flyCardState.value = null
+}
+
+/* ── 空闲轮播 ── */
 let idleTimer = null
 function startIdle() {
   stopIdle()
+  let idx = 0
   function tick() {
-    topCardImg.value = randomImg()
+    idx = (idx + 1) % DECK_VISIBLE
+    visibleCards.value[idx] = randomImg()
     idleTimer = setTimeout(tick, 2200)
   }
-  topCardImg.value = randomImg()
   idleTimer = setTimeout(tick, 2200)
 }
 function stopIdle() { if (idleTimer) { clearTimeout(idleTimer); idleTimer = null } }
 
-/* ── 抽卡流程 ── */
+/* ── 抽卡流程（迁移+增强） ── */
 async function drawRandom() {
   if (isAnimating.value || allSubmissions.value.length === 0) return
   isAnimating.value = true
   hasDrawn.value = false
+  detailGlow.value = false
+  rightPhase.value = ''
   stopIdle()
-  deckPhase.value = 'shuffling'
 
-  /* 快速洗牌：1.2 秒，每 150ms 换一张 */
-  const shuffleStart = Date.now()
-  const shuffleDuration = 1200
-  const shuffleInterval = 150
+  /* 1. 顶卡飞出（rotateY 360° + translate + opacity 0） */
+  flyCardState.value = { img: visibleCards.value[2] }
+  await new Promise(r => setTimeout(r, 100))
 
-  await new Promise(resolve => {
-    function tick() {
-      if (Date.now() - shuffleStart >= shuffleDuration) { resolve(); return }
-      topCardImg.value = randomImg()
-      setTimeout(tick, shuffleInterval)
-    }
-    tick()
-  })
-
-  /* 定格：最后一张卡 */
-  topCardImg.value = randomImg()
-  deckPhase.value = 'revealing'
+  /* 2. 中→顶，底→中，补一张新卡到底层（淡入+上移） */
+  visibleCards.value = [
+    randomImg(),           /* 新卡从底部淡入 */
+    visibleCards.value[0],  /* 原底 → 中 */
+    visibleCards.value[1]   /* 原中 → 顶（fade-in） */
+  ]
+  newCardEnter.value = true
+  await new Promise(r => setTimeout(r, 50))
+  newCardEnter.value = false
 
   await new Promise(r => setTimeout(r, 700))
+  flyCardState.value = null
 
-  /* 随机选稿 + 展示 */
+  /* 3. 随机选稿 */
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
   currentCard.value = allSubmissions.value[idx]
-  deckPhase.value = 'done'
+
+  /* 4. 右侧弹性放大覆盖内容框 */
+  rightPhase.value = 'elastic'
+  await new Promise(r => setTimeout(r, 500))
+
+  /* 5. 内容淡入 + 金光 */
+  rightPhase.value = 'show'
+  detailGlow.value = true
   hasDrawn.value = true
   isAnimating.value = false
 
-  await new Promise(r => setTimeout(r, 200))
-  deckPhase.value = 'idle'
+  setTimeout(() => { detailGlow.value = false }, 1200)
   startIdle()
 }
 
@@ -124,6 +141,7 @@ onMounted(async () => {
     const data = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
     allSubmissions.value = shuffleArray(data)
   } catch (e) { console.warn('加载投稿失败:', e) }
+  initVisible()
   startIdle()
 })
 onBeforeUnmount(() => stopIdle())
@@ -229,25 +247,25 @@ const stats = [
 
       <div class="draw-outer-card">
         <div class="draw-layout">
-          <!-- 左侧：牌堆 -->
+          <!-- 左侧：3D 牌堆 -->
           <div class="draw-left">
             <div class="deck-scene">
-              <!-- 底层装饰卡（4张，模拟厚度） -->
               <div class="deck-shadow" />
-              <div class="deck-base deck-base-4" />
-              <div class="deck-base deck-base-3" />
-              <div class="deck-base deck-base-2" />
-              <div class="deck-base deck-base-1" />
-              <!-- 顶层活动卡 -->
-              <div
-                class="deck-top"
-                :class="{
-                  'deck-shuffling': deckPhase === 'shuffling',
-                  'deck-reveal': deckPhase === 'revealing',
-                  'deck-glow': deckPhase === 'revealing'
-                }"
-              >
-                <img :src="topCardImg" alt="卡背" class="deck-top-img" />
+              <!-- 底层 c0 -->
+              <div class="deck-card deck-c0" :class="{ 'card-enter-new': newCardEnter }">
+                <img :src="visibleCards[0]" alt="卡背" class="deck-card-img" />
+              </div>
+              <!-- 中层 c1 -->
+              <div class="deck-card deck-c1">
+                <img :src="visibleCards[1]" alt="卡背" class="deck-card-img" />
+              </div>
+              <!-- 顶层 c2 -->
+              <div class="deck-card deck-c2">
+                <img :src="visibleCards[2]" alt="卡背" class="deck-card-img" />
+              </div>
+              <!-- 飞出卡 -->
+              <div v-if="flyCardState" class="deck-card deck-fly">
+                <img :src="flyCardState.img" alt="卡背" class="deck-card-img" />
               </div>
             </div>
 
@@ -266,15 +284,10 @@ const stats = [
 
           <!-- 右侧：详情卡 -->
           <div class="draw-right">
-            <div class="detail-card" :class="{ 'detail-card-show': hasDrawn }">
-              <!-- 抽取中 -->
-              <div v-if="deckPhase === 'shuffling'" class="detail-state">
-                <div class="detail-loading-orb" />
-                <div class="detail-loading-text">随机抽取中</div>
-              </div>
-              <!-- 有内容 -->
-              <template v-else-if="currentCard && hasDrawn">
-                <div class="detail-inner">
+            <div class="detail-card" :class="{ 'detail-glow': detailGlow, 'detail-elastic': rightPhase === 'elastic' }">
+              <!-- 有内容时才显示 -->
+              <template v-if="currentCard && hasDrawn">
+                <div class="detail-inner" :class="{ 'detail-content-show': rightPhase === 'show' }">
                   <div class="detail-tag">{{ typeEmojiMap[currentCard.type] || '📄' }} {{ currentCard.type }}</div>
                   <div class="detail-time">{{ formatDate(currentCard.created_at) }}</div>
                   <div class="detail-content">{{ currentCard.content }}</div>
@@ -791,7 +804,7 @@ const stats = [
   color: var(--text-muted);
 }
 
-/* ═══ 随机抽取投稿 ═══ */
+/* ═══ 随机抽取投稿（迁移自3D卡牌模块） ═══ */
 .draw-section {
   padding: 6rem 0;
   position: relative;
@@ -825,7 +838,7 @@ const stats = [
   position: relative;
 }
 
-/* ── 左侧：牌堆区 ── */
+/* ── 左侧牌堆 ── */
 .draw-left {
   flex: 0 0 340px;
   display: flex;
@@ -836,104 +849,94 @@ const stats = [
 
 .deck-scene {
   position: relative;
-  width: 260px;
-  height: 360px;
-  perspective: 1200px;
+  width: 240px;
+  height: 340px;
+  perspective: 900px;
   perspective-origin: 50% 40%;
 }
 
-/* 牌堆底部阴影 */
 .deck-shadow {
   position: absolute;
   bottom: -12px;
-  left: 10%;
-  width: 80%;
+  left: 8%;
+  width: 84%;
   height: 30px;
-  background: radial-gradient(ellipse, rgba(179, 157, 219, 0.18) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(179, 157, 219, 0.2) 0%, transparent 70%);
   border-radius: 50%;
-  filter: blur(8px);
+  filter: blur(10px);
 }
 
-/* 底层装饰卡（模拟厚度） */
-.deck-base {
+/* 3张可见卡牌 */
+.deck-card {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
+  left: 15px;
+  top: 15px;
+  width: 210px;
+  height: 300px;
+  border-radius: 24px;
   overflow: hidden;
-  background: linear-gradient(145deg, #d4c5f0, #e8ddf5);
-  box-shadow: 0 2px 8px rgba(179, 157, 219, 0.12);
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 40px rgba(179, 157, 219, 0.2);
+  transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform, opacity;
 }
 
-.deck-base-4 { transform: translateY(8px) translateZ(-80px) scale(0.94); opacity: 0.4; }
-.deck-base-3 { transform: translateY(5px) translateZ(-60px) scale(0.96); opacity: 0.55; }
-.deck-base-2 { transform: translateY(3px) translateZ(-40px) scale(0.975); opacity: 0.7; }
-.deck-base-1 { transform: translateY(1px) translateZ(-20px) scale(0.99); opacity: 0.85; }
-
-/* 顶层活动卡 */
-.deck-top {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  transform: translateZ(0) translateY(0) scale(1);
-  box-shadow:
-    0 12px 40px rgba(179, 157, 219, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-}
-
-.deck-top-img {
+.deck-card-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
-  border-radius: 16px;
+  border-radius: 24px;
 }
 
-/* 洗牌动画：快速上移+旋转+淡出 */
-.deck-shuffling {
-  animation: deckShuffle 0.15s ease-in-out;
+/* c0 底层 */
+.deck-c0 {
+  transform: translateY(15px) translateZ(-40px) rotate(-5deg);
 }
 
-@keyframes deckShuffle {
-  0% { transform: translateY(0) rotate(0deg) scale(1); }
-  50% { transform: translateY(-30px) rotate(-2deg) scale(1.02); }
-  100% { transform: translateY(0) rotate(0deg) scale(1); }
+/* c1 中层 */
+.deck-c1 {
+  transform: translateZ(0) rotate(3deg);
 }
 
-/* 翻转揭示：弹簧上升 + 金边 */
-.deck-reveal {
-  animation: deckReveal 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+/* c2 顶层 */
+.deck-c2 {
+  transform: translateY(-15px) translateZ(40px) rotate(-3deg);
 }
 
-@keyframes deckReveal {
-  0% { transform: translateY(0) scale(1); }
-  40% { transform: translateY(-18px) scale(1.03); }
-  70% { transform: translateY(-8px) scale(1.01); }
-  100% { transform: translateY(-4px) scale(1.005); }
+/* ③ 补卡淡入+移动动画 */
+.card-enter-new {
+  animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* 金边高光 */
-.deck-glow {
-  box-shadow:
-    0 0 0 3px rgba(255, 193, 7, 0.5),
-    0 0 20px rgba(255, 193, 7, 0.2),
-    0 0 40px rgba(255, 193, 7, 0.08),
-    0 12px 40px rgba(179, 157, 219, 0.2);
-  animation: glowPulse 0.8s ease-in-out 2;
+@keyframes cardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) translateZ(-60px) rotate(-8deg) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(15px) translateZ(-40px) rotate(-5deg) scale(1);
+  }
 }
 
-@keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(255,193,7,0.5), 0 0 20px rgba(255,193,7,0.2), 0 0 40px rgba(255,193,7,0.08), 0 12px 40px rgba(179,157,219,0.2); }
-  50% { box-shadow: 0 0 0 5px rgba(255,193,7,0.35), 0 0 30px rgba(255,193,7,0.15), 0 0 50px rgba(255,193,7,0.05), 0 12px 40px rgba(179,157,219,0.2); }
+/* 飞出卡 */
+.deck-fly {
+  animation: cardFly 0.9s cubic-bezier(0.45, 0, 0.15, 1) forwards;
+}
+
+@keyframes cardFly {
+  0% {
+    transform: translateY(-15px) translateZ(50px) rotateY(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(160px, -80px) translateZ(250px) rotateY(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(300px, 20px) rotateY(360deg);
+    opacity: 0;
+  }
 }
 
 /* ── 按钮区 ── */
@@ -1007,72 +1010,48 @@ const stats = [
 .detail-card {
   width: 100%;
   min-height: 360px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, rgba(209, 196, 233, 0.2), rgba(255, 255, 255, 0.5));
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow:
-    0 8px 32px rgba(179, 157, 219, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 25px;
+  background: white;
+  box-shadow: 0 8px 32px rgba(179, 157, 219, 0.08);
   position: relative;
   overflow: hidden;
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 35px;
 }
 
-.detail-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, transparent 50%);
-  pointer-events: none;
+/* ① 弹性放大覆盖 */
+.detail-elastic {
+  animation: detailElastic 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.detail-card-show {
-  animation: detailIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@keyframes detailElastic {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  60% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes detailIn {
-  0% { transform: perspective(800px) rotateX(8deg) scale(0.97); opacity: 0.3; }
-  100% { transform: none; opacity: 1; }
+/* ② 内容淡入 */
+.detail-content-show {
+  animation: contentFadeIn 0.45s ease 0.1s both;
 }
 
-/* 加载中 */
-.detail-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 360px;
-  gap: 1.2rem;
-}
-
-.detail-loading-orb {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 3px solid rgba(179, 157, 219, 0.15);
-  border-top-color: rgba(255, 193, 7, 0.7);
-  animation: spin 0.7s linear infinite;
-}
-
-.detail-loading-text {
-  font-family: var(--font-ui);
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-}
-
-/* 有内容 */
-.detail-inner {
-  padding: 2.5rem;
-  animation: contentIn 0.4s ease 0.1s both;
-}
-
-@keyframes contentIn {
-  from { opacity: 0; transform: translateY(10px); }
+@keyframes contentFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
+}
+
+/* 金光 */
+.detail-glow {
+  animation: detailGlowPulse 1s ease-in-out;
+}
+
+@keyframes detailGlowPulse {
+  0%, 100% { box-shadow: 0 8px 32px rgba(179, 157, 219, 0.08); }
+  50% { box-shadow: 0 0 45px rgba(255, 228, 155, 0.35), 0 8px 32px rgba(179, 157, 219, 0.12); }
+}
+
+.detail-inner {
+  padding: 0;
 }
 
 .detail-tag {
@@ -1108,7 +1087,7 @@ const stats = [
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 360px;
+  min-height: 290px;
   gap: 0.8rem;
 }
 
@@ -1497,7 +1476,11 @@ const stats = [
   .deck-scene {
     width: 220px;
     height: 300px;
-    margin: 0 auto;
+  }
+
+  .deck-card {
+    width: 190px;
+    height: 270px;
   }
 
   .draw-right {
