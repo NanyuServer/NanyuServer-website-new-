@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { submissionsApi } from '@/services/api'
 
 /* ── Logo 轮播 ── */
@@ -30,12 +30,16 @@ const isAnimating = ref(false)
 const hasDrawn = ref(false)
 const detailGlow = ref(false)
 const rightPhase = ref('')  /* '' | 'elastic' | 'show' */
+const flyPhase = ref('')    /* '' | 'flying' | 'landing' */
 
 /* 3张可见卡牌（c0底 c1中 c2顶） */
 const DECK_VISIBLE = 3
 const visibleCards = ref([])
 const flyCardState = ref(null) /* {img, class} or null */
 const newCardEnter = ref(false) /* 底层补卡淡入 */
+const newCardEntered = ref(false) /* 底层补卡已进入终态 */
+const deckC0Ref = ref(null)
+let lastImgUsed = '' /* ① 记录上次使用的图片，避免连续重复 */
 
 const cardBackImages = [
   '/card/card (1).webp',
@@ -61,7 +65,12 @@ function shuffleArray(arr) {
 }
 
 function randomImg() {
-  return cardBackImages[Math.floor(Math.random() * cardBackImages.length)]
+  let img
+  do {
+    img = cardBackImages[Math.floor(Math.random() * cardBackImages.length)]
+  } while (img === lastImgUsed && cardBackImages.length > 1)
+  lastImgUsed = img
+  return img
 }
 
 function formatDate(iso) {
@@ -98,40 +107,55 @@ async function drawRandom() {
   hasDrawn.value = false
   detailGlow.value = false
   rightPhase.value = ''
+  flyPhase.value = ''
   stopIdle()
 
-  /* 1. 顶卡飞出（rotateY 360° + translate + opacity 0） */
+  /* 1. 顶卡飞出 */
   flyCardState.value = { img: visibleCards.value[2] }
+  flyPhase.value = 'flying'
   await new Promise(r => setTimeout(r, 100))
 
-  /* 2. 中→顶，底→中，补一张新卡到底层（淡入+上移） */
+  /* 2. 底卡→中卡→顶卡递补，新卡从底部淡入 */
+  const oldTop = visibleCards.value[2]
   visibleCards.value = [
-    randomImg(),           /* 新卡从底部淡入 */
-    visibleCards.value[0],  /* 原底 → 中 */
-    visibleCards.value[1]   /* 原中 → 顶（fade-in） */
+    randomImg(),
+    visibleCards.value[0],
+    visibleCards.value[1]
   ]
+  /* ④ 先设置初始状态，下一帧再触发动画终态 */
   newCardEnter.value = true
-  await new Promise(r => setTimeout(r, 50))
-  newCardEnter.value = false
-
+  newCardEntered.value = false
+  await nextTick()
+  await new Promise(r => setTimeout(r, 20))
+  newCardEntered.value = true
   await new Promise(r => setTimeout(r, 700))
+  newCardEnter.value = false
+  newCardEntered.value = false
+
+  /* 3. 卡片飞到右侧详情卡上方（landing） */
+  await new Promise(r => setTimeout(r, 500))
+  flyPhase.value = 'landing'
+  await new Promise(r => setTimeout(r, 100))
   flyCardState.value = null
 
-  /* 3. 随机选稿 */
+  /* 4. landing 卡淡出 */
+  await new Promise(r => setTimeout(r, 400))
+  flyPhase.value = ''
+
+  /* 5. 随机选稿 */
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
   currentCard.value = allSubmissions.value[idx]
 
-  /* 4. 右侧弹性放大覆盖内容框 */
+  /* 6. 右侧弹性放大 + 内容淡入 + 金光扫边 */
   rightPhase.value = 'elastic'
   await new Promise(r => setTimeout(r, 500))
 
-  /* 5. 内容淡入 + 金光 */
   rightPhase.value = 'show'
   detailGlow.value = true
   hasDrawn.value = true
   isAnimating.value = false
 
-  setTimeout(() => { detailGlow.value = false }, 1200)
+  setTimeout(() => { detailGlow.value = false }, 1500)
   startIdle()
 }
 
@@ -251,8 +275,12 @@ const stats = [
           <div class="draw-left">
             <div class="deck-scene">
               <div class="deck-shadow" />
-              <!-- 底层 c0 -->
-              <div class="deck-card deck-c0" :class="{ 'card-enter-new': newCardEnter }">
+              <!-- 底层 c0 — ④ 补卡渐入 -->
+              <div
+                ref="deckC0Ref"
+                class="deck-card deck-c0"
+                :class="{ 'card-enter-new': newCardEnter, 'card-entered': newCardEntered }"
+              >
                 <img :src="visibleCards[0]" alt="卡背" class="deck-card-img" />
               </div>
               <!-- 中层 c1 -->
@@ -284,7 +312,11 @@ const stats = [
 
           <!-- 右侧：详情卡 -->
           <div class="draw-right">
-            <div class="detail-card" :class="{ 'detail-glow': detailGlow, 'detail-elastic': rightPhase === 'elastic' }">
+            <div class="detail-card" :class="{ 'detail-glow': detailGlow, 'detail-elastic': rightPhase === 'elastic', 'detail-sweep': rightPhase === 'show' }">
+              <!-- ② 飞出的卡叠在详情卡上方然后淡出 -->
+              <div v-if="flyPhase === 'landing'" class="fly-overlay">
+                <img :src="flyCardState.img" alt="卡背" class="fly-overlay-img" />
+              </div>
               <!-- 有内容时才显示 -->
               <template v-if="currentCard && hasDrawn">
                 <div class="detail-inner" :class="{ 'detail-content-show': rightPhase === 'show' }">
@@ -294,7 +326,7 @@ const stats = [
                 </div>
               </template>
               <!-- 空占位 -->
-              <template v-else>
+              <template v-else-if="!flyPhase">
                 <div class="detail-empty">
                   <div class="detail-empty-icon">✨</div>
                   <div class="detail-empty-text">点击左侧按钮抽取投稿</div>
@@ -876,7 +908,8 @@ const stats = [
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(179, 157, 219, 0.2);
-  transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* ⑤ 卡牌递补的平滑过渡 */
+  transition: transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
   will-change: transform, opacity;
 }
 
@@ -903,20 +936,16 @@ const stats = [
   transform: translateY(-15px) translateZ(40px) rotate(-3deg);
 }
 
-/* ③ 补卡淡入+移动动画 */
-.card-enter-new {
-  animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ④ 补卡淡入+移动动画 — 使用 transition 而非 keyframe，确保渐入可见 */
+.deck-c0.card-enter-new {
+  opacity: 0;
+  transform: translateY(40px) translateZ(-60px) rotate(-8deg) scale(0.92);
+  transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes cardEnter {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) translateZ(-60px) rotate(-8deg) scale(0.92);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(15px) translateZ(-40px) rotate(-5deg) scale(1);
-  }
+.deck-c0.card-enter-new.card-entered {
+  opacity: 1;
+  transform: translateY(15px) translateZ(-40px) rotate(-5deg) scale(1);
 }
 
 /* 飞出卡 */
@@ -1019,7 +1048,32 @@ const stats = [
   padding: 35px;
 }
 
-/* ① 弹性放大覆盖 */
+/* ② 飞出卡叠在详情卡上方然后淡出 */
+.fly-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  border-radius: 25px;
+  overflow: hidden;
+  animation: flyOverlayFade 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+.fly-overlay-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 25px;
+}
+
+@keyframes flyOverlayFade {
+  0% { opacity: 1; transform: scale(0.9); }
+  40% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* ① 弹性放大 */
 .detail-elastic {
   animation: detailElastic 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
@@ -1028,6 +1082,29 @@ const stats = [
   0% { transform: scale(0.95); opacity: 0.5; }
   60% { transform: scale(1.03); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* ③ 金光扫边动画 */
+.detail-sweep {
+  animation: goldSweep 1.2s ease-in-out;
+}
+
+@keyframes goldSweep {
+  0% {
+    box-shadow:
+      0 8px 32px rgba(179, 157, 219, 0.08),
+      inset 0 0 0 2px transparent;
+  }
+  30% {
+    box-shadow:
+      0 8px 32px rgba(179, 157, 219, 0.08),
+      inset 0 0 0 2px rgba(255, 193, 7, 0.6);
+  }
+  100% {
+    box-shadow:
+      0 0 40px rgba(255, 228, 155, 0.3),
+      inset 0 0 0 2px rgba(255, 193, 7, 0.4);
+  }
 }
 
 /* ② 内容淡入 */
@@ -1040,14 +1117,18 @@ const stats = [
   to { opacity: 1; transform: none; }
 }
 
-/* 金光 */
+/* 金光脉冲 */
 .detail-glow {
-  animation: detailGlowPulse 1s ease-in-out;
+  animation: detailGlowPulse 1.2s ease-in-out;
 }
 
 @keyframes detailGlowPulse {
-  0%, 100% { box-shadow: 0 8px 32px rgba(179, 157, 219, 0.08); }
-  50% { box-shadow: 0 0 45px rgba(255, 228, 155, 0.35), 0 8px 32px rgba(179, 157, 219, 0.12); }
+  0%, 100% {
+    box-shadow: 0 0 40px rgba(255, 228, 155, 0.3), inset 0 0 0 2px rgba(255, 193, 7, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 60px rgba(255, 228, 155, 0.45), inset 0 0 0 3px rgba(255, 193, 7, 0.5);
+  }
 }
 
 .detail-inner {
