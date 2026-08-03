@@ -431,7 +431,7 @@ const stats = [
 
   <!-- ═══ 联系我们（深色区块） ═══ -->
   <section class="contact-section">
-    <div class="contact-container">
+    <div class="section-container">
       <div class="contact-num">04 / LET'S TALK</div>
       <h2 class="contact-title">
         有什么想法，<br />欢迎来聊聊。
@@ -441,8 +441,8 @@ const stats = [
         我们会认真倾听并及时回复。
       </p>
       <div class="contact-btns">
-        <button class="btn-contact" @click="$router.push('/feedback')">写信给我们 ✦</button>
-        <button class="btn-contact-ghost" @click="window.open('https://qm.qq.com/q/FHAbiDBIQO', '_blank')">复制QQ号</button>
+        <button class="btn-contact" @click="$router.push('/feedback')">有求必应</button>
+        <button class="btn-contact-ghost" @click="navigator.clipboard.writeText('3969066287').then(() => alert('已复制 QQ 号：3969066287'))">复制QQ号</button>
         <button class="btn-contact-ghost" @click="$router.push('/recruit')">加入我们</button>
       </div>
     </div>
@@ -1388,12 +1388,17 @@ const stats = [
 
 /* ═══ 联系我们（深色区块） ═══ */
 .contact-section {
-  padding: 6rem 2rem;
+  padding: 6rem 0;
   position: relative;
   z-index: 1;
-  margin: 2rem;
+}
+
+.contact-section > .section-container {
+  max-width: 1100px;
   border-radius: 32px;
   background: linear-gradient(135deg, #2D1B69, #3d2578, #4a2d8a);
+  padding: 4rem 3rem;
+  position: relative;
   overflow: hidden;
 }
 
@@ -1401,7 +1406,7 @@ const stats = [
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  border-radius: 0;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
   pointer-events: none;
 }
