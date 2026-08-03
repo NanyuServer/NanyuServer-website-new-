@@ -1597,6 +1597,26 @@ const stats = [
     display: none;
   }
 
+  /* 手机端飞卡：向右飞出画面淡出（不做中央消失） */
+  .fly-center-card {
+    animation: flyCenterMobile 0.9s cubic-bezier(0.45, 0, 0.15, 1) forwards;
+  }
+
+  @keyframes flyCenterMobile {
+    0% {
+      opacity: 1;
+      transform: translate(0, 0) rotateY(0deg) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(120px, -60px) translateZ(150px) rotateY(180deg) scale(1.05);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(260px, 10px) translateZ(100px) rotateY(360deg) scale(0.85);
+    }
+  }
+
   .func-grid {
     grid-template-columns: 1fr;
   }
