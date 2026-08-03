@@ -24,30 +24,49 @@ const WEEKDAYS = ['一','二','三','四','五','六','日']
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
 
+/* 年份列表：当前年 ±4 */
+const yearList = computed(() => {
+  const y = new Date().getFullYear()
+  return Array.from({ length: 9 }, (_, i) => y - 4 + i)
+})
+
+/* 生成日历天数数组 */
 const calendarDays = computed(() => {
   const firstDay = new Date(viewYear.value, viewMonth.value, 1)
   let start = firstDay.getDay() - 1
   if (start < 0) start = 6
   const days = []
-  const prevMonth = new Date(viewYear.value, viewMonth.value, 0)
+
+  /* 上个月末尾的灰色日期（current: false，date 为空） */
+  const prevMonthDays = new Date(viewYear.value, viewMonth.value, 0).getDate()
   for (let i = start - 1; i >= 0; i--) {
-    days.push({ day: prevMonth.getDate() - i, current: false, date: '' })
+    days.push({ day: prevMonthDays - i, current: false, date: '' })
   }
+
+  /* 当前月份日期 */
   const daysInMonth = new Date(viewYear.value, viewMonth.value + 1, 0).getDate()
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = `${viewYear.value}-${String(viewMonth.value + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     days.push({ day: d, current: true, date: ds })
   }
+
+  /* 下个月开头的灰色日期（current: false，date 为空） */
   const remaining = 42 - days.length
   for (let d = 1; d <= remaining; d++) {
     days.push({ day: d, current: false, date: '' })
   }
+
   return days
 })
 
 const displayValue = computed(() => {
   if (!props.modelValue) return ''
   return props.modelValue
+})
+
+const todayStr = computed(() => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 })
 
 function prevMonth() {
@@ -57,6 +76,14 @@ function prevMonth() {
 function nextMonth() {
   if (viewMonth.value === 11) { viewMonth.value = 0; viewYear.value++ }
   else viewMonth.value++
+}
+
+/* 年月下拉切换 */
+function onYearChange(e) {
+  viewYear.value = parseInt(e.target.value)
+}
+function onMonthChange(e) {
+  viewMonth.value = parseInt(e.target.value)
 }
 
 function pickDay(date) {
@@ -84,7 +111,7 @@ function clear() {
 function updatePanelPosition() {
   if (!triggerRef.value) return
   const rect = triggerRef.value.getBoundingClientRect()
-  const panelHeight = props.dateOnly ? 380 : 520
+  const panelHeight = props.dateOnly ? 420 : 560
   const spaceBelow = window.innerHeight - rect.bottom
   const openUp = spaceBelow < panelHeight + 8 && rect.top > panelHeight
 
@@ -151,6 +178,17 @@ onUnmounted(() => {
     <Teleport to="body">
       <Transition name="gdt-drop">
         <div v-if="open" class="gdt-panel" :style="panelStyle" @click.stop>
+          <!-- ① 年月级联下拉框 -->
+          <div class="gdt-selectors">
+            <select class="gdt-select" :value="viewYear" @change="onYearChange">
+              <option v-for="y in yearList" :key="y" :value="y">{{ y }}年</option>
+            </select>
+            <select class="gdt-select" :value="viewMonth" @change="onMonthChange">
+              <option v-for="(m, i) in MONTHS" :key="i" :value="i">{{ m }}</option>
+            </select>
+          </div>
+
+          <!-- 翻页箭头 -->
           <div class="gdt-header">
             <button class="gdt-nav" @click="prevMonth" type="button">‹</button>
             <span class="gdt-title">{{ viewYear }}年 {{ MONTHS[viewMonth] }}</span>
@@ -161,11 +199,16 @@ onUnmounted(() => {
             <span v-for="w in WEEKDAYS" :key="w">{{ w }}</span>
           </div>
 
+          <!-- ② 日期格子：非本月日期加 other-month 类 -->
           <div class="gdt-grid">
             <button
               v-for="(d, i) in calendarDays" :key="i"
               class="gdt-day"
-              :class="{ other: !d.current, selected: d.date === selectedDay, today: d.date === new Date().toISOString().slice(0, 10) }"
+              :class="{
+                'other-month': !d.current,
+                'selected': d.current && d.date === selectedDay,
+                'today': d.date === todayStr && d.current
+              }"
               @click="pickDay(d.date)"
               :disabled="!d.current"
               type="button"
@@ -217,7 +260,7 @@ onUnmounted(() => {
   border: 1px solid rgba(179, 157, 219, 0.2);
   padding: 0.7rem 1rem;
   cursor: pointer;
-  transition: border-color var(--transition-fast, 0.2s), box-shadow var(--transition-fast, 0.2s);
+  transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
   text-align: left;
   -webkit-appearance: none;
@@ -234,7 +277,7 @@ onUnmounted(() => {
 
 <style>
 .gdt-panel {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.8);
@@ -243,6 +286,30 @@ onUnmounted(() => {
     0 4px 12px rgba(0, 0, 0, 0.06);
   padding: 1rem;
   border-radius: var(--radius-lg, 24px);
+}
+
+/* ① 级联下拉框 */
+.gdt-selectors {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+.gdt-select {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  background: rgba(179, 157, 219, 0.06);
+  border: 1px solid rgba(179, 157, 219, 0.15);
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: auto;
+}
+.gdt-select:focus {
+  border-color: var(--accent-dark);
 }
 
 .gdt-header {
@@ -265,7 +332,7 @@ onUnmounted(() => {
   color: var(--text-secondary);
   font-size: 1.1rem;
   cursor: pointer;
-  transition: all var(--transition-fast, 0.2s);
+  transition: all 0.2s;
   border-radius: var(--radius-pill, 100px);
 }
 .gdt-nav:hover { border-color: rgba(179, 157, 219, 0.4); color: var(--text-primary); background: rgba(255, 255, 255, 0.8); }
@@ -297,21 +364,35 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all var(--transition-fast, 0.2s);
+  transition: all 0.2s;
   border-radius: 50%;
 }
-.gdt-day.other {
-  color: rgba(149, 117, 205, 0.25);
-  background: transparent;
+
+/* ② 非本月日期：灰色、不可点击、无高亮 */
+.gdt-day.other-month {
+  color: rgba(149, 117, 205, 0.25) !important;
+  background: transparent !important;
   cursor: default;
+  pointer-events: none;
 }
-.gdt-day:hover:not(.other) { background: rgba(179, 157, 219, 0.1); color: var(--text-primary); }
-.gdt-day.selected {
+.gdt-day.other-month:hover {
+  background: transparent !important;
+}
+
+.gdt-day:not(.other-month):hover {
+  background: rgba(179, 157, 219, 0.1);
+  color: var(--text-primary);
+}
+
+/* 选中日期（仅限本月） */
+.gdt-day.selected:not(.other-month) {
   background: linear-gradient(135deg, var(--accent-dark), var(--accent-primary));
-  color: white;
+  color: white !important;
   font-weight: 600;
 }
-.gdt-day.today:not(.selected) {
+
+/* 今天 */
+.gdt-day.today:not(.selected):not(.other-month) {
   border: 1.5px solid rgba(179, 157, 219, 0.4);
   color: var(--accent-dark);
 }
@@ -352,7 +433,7 @@ onUnmounted(() => {
   border: none;
   padding: 0.35rem 0.5rem;
   cursor: pointer;
-  transition: all var(--transition-fast, 0.2s);
+  transition: all 0.2s;
   text-align: center;
   border-radius: 8px;
 }
@@ -383,7 +464,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.5);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast, 0.2s);
+  transition: all 0.2s;
   border-radius: var(--radius-pill, 100px);
 }
 .gdt-btn:hover { border-color: rgba(179, 157, 219, 0.4); color: var(--text-primary); background: rgba(255, 255, 255, 0.8); }
