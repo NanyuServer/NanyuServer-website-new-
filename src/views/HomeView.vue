@@ -23,18 +23,19 @@ function nextLogo() {
 onMounted(() => { logoTimer = setInterval(nextLogo, 4000) })
 onBeforeUnmount(() => { if (logoTimer) clearInterval(logoTimer) })
 
-/* ── 投稿随机抽取（3D 堆叠卡牌库） ── */
+/* ── 投稿随机抽取（3D 堆叠卡牌库 + 轮播） ── */
 const allSubmissions = ref([])
 const currentCard = ref(null)
 const isAnimating = ref(false)
 const hasDrawn = ref(false)
+const isRolling = ref(false)
+const goldGlow = ref(false)
 
 /* 卡牌堆叠状态 */
 const DECK_SIZE = 6
 const deckCards = ref([])
-const flyingIndex = ref(-1)
-const promotePhase = ref(false)
-const rightFading = ref(false)
+const topIndex = ref(0)
+let idleTimer = null
 
 const typeEmojiMap = {
   '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
@@ -59,11 +60,12 @@ function shuffleArray(arr) {
   return a
 }
 
+function randomCardImg() {
+  return cardBackImages[Math.floor(Math.random() * cardBackImages.length)]
+}
+
 function initDeck() {
-  deckCards.value = Array.from({ length: DECK_SIZE }, (_, i) => ({
-    id: i,
-    img: cardBackImages[i % cardBackImages.length]
-  }))
+  deckCards.value = Array.from({ length: DECK_SIZE }, () => randomCardImg())
 }
 
 function formatDate(iso) {
@@ -73,36 +75,65 @@ function formatDate(iso) {
     + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
+/* ── 空闲轮播：每1.5秒切换顶层 ── */
+function startIdle() {
+  stopIdle()
+  function tick() {
+    topIndex.value = (topIndex.value + 1) % DECK_SIZE
+    idleTimer = setTimeout(tick, 1500)
+  }
+  idleTimer = setTimeout(tick, 1500)
+}
+
+function stopIdle() {
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null }
+}
+
 /* ── 抽卡动画 ── */
 async function drawRandom() {
   if (isAnimating.value || allSubmissions.value.length === 0) return
   isAnimating.value = true
   hasDrawn.value = false
+  goldGlow.value = false
+  stopIdle()
 
-  // 1. 右侧淡出
-  rightFading.value = true
-  await new Promise(r => setTimeout(r, 300))
+  // 1. 快速轮播：0.2秒/张，持续1秒
+  isRolling.value = true
+  const rollTotal = 1000
+  const rollInterval = 200
+  const rollStart = Date.now()
 
-  // 2. 顶层卡牌飞出（index = DECK_SIZE - 1）
-  flyingIndex.value = DECK_SIZE - 1
+  await new Promise(resolve => {
+    function fastTick() {
+      if (Date.now() - rollStart >= rollTotal) {
+        isRolling.value = false
+        resolve()
+        return
+      }
+      topIndex.value = (topIndex.value + 1) % DECK_SIZE
+      setTimeout(fastTick, rollInterval)
+    }
+    fastTick()
+  })
+
+  // 2. 最后一张卡：随机匹配图片 + 金边高光
+  topIndex.value = (topIndex.value + 1) % DECK_SIZE
+  deckCards.value[topIndex.value] = randomCardImg()
+  goldGlow.value = true
+
   await new Promise(r => setTimeout(r, 600))
 
-  // 3. 剩余卡牌向上递补
-  promotePhase.value = true
-  await new Promise(r => setTimeout(r, 400))
-
-  // 4. 随机选取投稿 + 重置堆叠
+  // 3. 随机选取投稿内容
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
   currentCard.value = allSubmissions.value[idx]
-  flyingIndex.value = -1
-  promotePhase.value = false
-  initDeck()
 
-  // 5. 右侧淡入新内容
   await new Promise(r => setTimeout(r, 50))
   hasDrawn.value = true
-  rightFading.value = false
+  goldGlow.value = false
   isAnimating.value = false
+
+  // 4. 重启空闲轮播
+  startIdle()
 }
 
 onMounted(async () => {
@@ -114,51 +145,41 @@ onMounted(async () => {
     console.warn('加载投稿失败:', e)
   }
   initDeck()
+  startIdle()
 })
 
-/* 根据卡牌在堆叠中的位置计算 3D 变换 */
+onBeforeUnmount(() => { stopIdle() })
+
+/* ── 卡牌3D堆叠样式 ── */
 function cardLayerStyle(i) {
-  if (i === flyingIndex.value) {
-    // 飞出卡：向上+向左前方翻转消失
-    return {
-      transform: 'translateZ(60px) translateY(-80px) translateX(-120px) rotate(-25deg) rotateY(15deg)',
-      opacity: 0,
-      zIndex: 100,
-      transition: 'all 0.55s cubic-bezier(0.45, 0, 0.15, 1)'
-    }
-  }
-  if (promotePhase.value && i > flyingIndex.value) {
-    // 递补卡：向前递补一层
-    const targetLayer = i - 1
-    return {
-      transform: `translateZ(${(targetLayer - (DECK_SIZE - 1)) * 20}px) translateY(${targetLayer * 6 - (DECK_SIZE - 1) * 6}px) rotate(${(targetLayer - (DECK_SIZE - 1) / 2) * 0.8}deg) scale(${1 - targetLayer * 0.008})`,
-      zIndex: DECK_SIZE - targetLayer,
-      transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease',
-      boxShadow: targetLayer === DECK_SIZE - 1
-        ? '0 8px 32px rgba(179,157,219,0.2), 0 2px 8px rgba(0,0,0,0.06)'
-        : '0 4px 16px rgba(179,157,219,0.1), 0 1px 4px rgba(0,0,0,0.04)'
-    }
-  }
-  // 正常堆叠
-  const layer = DECK_SIZE - 1 - i
-  const isTop = i === DECK_SIZE - 1
+  const depth = DECK_SIZE - 1 - i
+  const isActive = i === topIndex.value
+  const baseTz = isActive ? 0 : depth * -18
+  const baseY = isActive ? 0 : depth * 5
+  const rotate = (i - (DECK_SIZE - 1) / 2) * 0.7
+  const scale = isActive ? 1 : 1 - depth * 0.006
+  const z = isActive ? 90 : DECK_SIZE - i
+  const isGoldActive = goldGlow.value && isActive
+
   return {
-    transform: `translateZ(${layer * -20}px) translateY(${layer * 6}px) rotate(${(i - (DECK_SIZE - 1) / 2) * 0.8}deg) scale(${1 - layer * 0.008})`,
-    zIndex: i + 1,
-    transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease',
-    boxShadow: isTop
-      ? '0 8px 32px rgba(179,157,219,0.2), 0 2px 8px rgba(0,0,0,0.06)'
-      : '0 4px 16px rgba(179,157,219,0.1), 0 1px 4px rgba(0,0,0,0.04)'
+    transform: `translateZ(${baseTz}px) translateY(${baseY}px) rotate(${rotate}deg) scale(${scale})`,
+    opacity: isActive ? 1 : 0.6 + (1 - depth / DECK_SIZE) * 0.4,
+    zIndex: z,
+    transition: isRolling.value ? 'none' : 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+    boxShadow: isGoldActive
+      ? '0 0 0 3px rgba(255, 193, 7, 0.6), 0 0 20px rgba(255, 193, 7, 0.25), 0 8px 32px rgba(179,157,219,0.25)'
+      : isActive
+        ? '0 8px 32px rgba(179,157,219,0.2), 0 2px 8px rgba(0,0,0,0.06)'
+        : '0 4px 16px rgba(179,157,219,0.1), 0 1px 4px rgba(0,0,0,0.04)',
+    border: isGoldActive ? '3px solid transparent' : 'none'
   }
 }
 
 function cardLayerClass(i) {
-  const isTop = i === DECK_SIZE - 1
-  const isFlying = i === flyingIndex.value
   return {
     'card-3d-layer': true,
-    'card-3d-top': isTop && !isFlying,
-    'card-3d-flying': isFlying
+    'card-3d-top': i === topIndex.value && !goldGlow.value,
+    'card-3d-glow': goldGlow.value && i === topIndex.value
   }
 }
 
@@ -268,13 +289,13 @@ const stats = [
           <div class="draw-left">
             <div class="card-3d-scene">
               <div
-                v-for="(card, i) in deckCards"
-                :key="card.id"
+                v-for="(img, i) in deckCards"
+                :key="i"
                 class="card-3d-layer"
                 :class="cardLayerClass(i)"
                 :style="cardLayerStyle(i)"
               >
-                <img :src="card.img" alt="卡背" class="card-3d-img" />
+                <img :src="img" alt="卡背" class="card-3d-img" />
               </div>
             </div>
 
@@ -293,8 +314,18 @@ const stats = [
 
           <!-- 右侧：放大展示卡片 -->
           <div class="draw-right">
-            <div class="showcase-card" :class="{ 'has-data': hasDrawn, 'right-fade-out': rightFading }">
-              <template v-if="currentCard && hasDrawn && !rightFading">
+            <div class="showcase-card">
+              <!-- 抽取中状态 -->
+              <div v-if="isRolling" class="showcase-placeholder">
+                <div class="placeholder-ring">
+                  <div class="placeholder-ring-inner placeholder-ring-spin" />
+                  <div class="placeholder-icon">🎰</div>
+                </div>
+                <div class="placeholder-text">随机抽取中</div>
+                <div class="placeholder-sub">正在为你寻找最有趣的声音</div>
+              </div>
+              <!-- 有内容状态 -->
+              <template v-else-if="currentCard && hasDrawn">
                 <div class="showcase-inner">
                   <div class="showcase-label">DRAWN FILE</div>
                   <div class="showcase-type">
@@ -304,6 +335,7 @@ const stats = [
                   <div class="showcase-content">{{ currentCard.content }}</div>
                 </div>
               </template>
+              <!-- 空占位 -->
               <template v-else>
                 <div class="showcase-placeholder">
                   <div class="placeholder-ring">
@@ -315,7 +347,7 @@ const stats = [
                 </div>
               </template>
             </div>
-            <div v-if="currentCard && hasDrawn && !rightFading" class="draw-counter">
+            <div v-if="currentCard && hasDrawn && !isRolling" class="draw-counter">
               {{ allSubmissions.indexOf(currentCard) + 1 }} — {{ allSubmissions.length }}
             </div>
           </div>
@@ -908,9 +940,24 @@ const stats = [
   transition: opacity 0.3s;
 }
 
-/* 飞出卡 */
-.card-3d-flying {
-  pointer-events: none;
+/* 金边高光 */
+.card-3d-glow {
+  border: 3px solid rgba(255, 193, 7, 0.7) !important;
+  box-shadow:
+    0 0 0 4px rgba(255, 193, 7, 0.2),
+    0 0 24px rgba(255, 193, 7, 0.3),
+    0 8px 32px rgba(179, 157, 219, 0.25) !important;
+  animation: goldPulse 0.8s ease-in-out 2;
+}
+
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2), 0 0 24px rgba(255, 193, 7, 0.3), 0 8px 32px rgba(179, 157, 219, 0.25); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 193, 7, 0.1), 0 0 40px rgba(255, 193, 7, 0.25), 0 8px 32px rgba(179, 157, 219, 0.25); }
+}
+
+/* 快速轮播抖动 */
+.card-3d-top:has(~ .card-3d-glow) {
+  transform: translateX(1px);
 }
 
 /* ── 按钮区 ── */
@@ -985,7 +1032,7 @@ const stats = [
     0 8px 32px rgba(179, 157, 219, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.03);
   overflow: hidden;
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
@@ -996,20 +1043,6 @@ const stats = [
   border-radius: inherit;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, transparent 50%);
   pointer-events: none;
-}
-
-.showcase-card.has-data {
-  animation: card-flip-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.showcase-card.right-fade-out {
-  opacity: 0.15;
-  transform: scale(0.98);
-}
-
-@keyframes card-flip-in {
-  0% { transform: perspective(800px) rotateX(12deg) scale(0.96); opacity: 0.3; }
-  100% { transform: none; opacity: 1; }
 }
 
 .showcase-inner {
@@ -1078,6 +1111,12 @@ const stats = [
   border-radius: 50%;
   border: 2px solid rgba(179, 157, 219, 0.15);
   animation: pulse-ring 3s ease-in-out infinite;
+}
+
+.placeholder-ring-spin {
+  border-top-color: rgba(255, 193, 7, 0.6);
+  border-right-color: rgba(179, 157, 219, 0.3);
+  animation: spin 0.8s linear infinite !important;
 }
 
 .placeholder-icon {
