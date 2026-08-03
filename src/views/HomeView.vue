@@ -28,12 +28,22 @@ const allSubmissions = ref([])
 const currentCard = ref(null)
 const isAnimating = ref(false)
 const hasDrawn = ref(false)
+const flyingCard = ref(null)
+const flyPhase = ref('')
 
 const typeEmojiMap = {
   '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
   '吐槽': '💬', '交易': '💰', '捞人、物': '🎣', '打听资讯': '❓',
   '寻找搭子': '👫', '有啥说啥': '🗣️'
 }
+
+const cardBackImages = [
+  '/card/card (1).webp',
+  '/card/card (2).webp',
+  '/card/card (3).webp',
+  '/card/card (4).webp',
+  '/card/card (5).webp'
+]
 
 function shuffleArray(arr) {
   const a = [...arr]
@@ -46,6 +56,10 @@ function shuffleArray(arr) {
 
 const stackedCards = computed(() => allSubmissions.value.slice(0, 5))
 
+function getCardBackImg(i) {
+  return cardBackImages[i % cardBackImages.length]
+}
+
 function formatDate(iso) {
   if (!iso) return ''
   const d = new Date(iso)
@@ -57,13 +71,28 @@ async function drawRandom() {
   if (isAnimating.value || allSubmissions.value.length === 0) return
   isAnimating.value = true
   hasDrawn.value = false
-  await new Promise(r => setTimeout(r, 350))
+
+  // 飞出阶段
+  flyPhase.value = 'takeoff'
+  await new Promise(r => setTimeout(r, 400))
+
+  // 随机选取
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
-  currentCard.value = allSubmissions.value[idx]
-  setTimeout(() => {
-    hasDrawn.value = true
-    isAnimating.value = false
-  }, 80)
+  flyingCard.value = allSubmissions.value[idx]
+
+  // 飞行阶段
+  flyPhase.value = 'flying'
+  await new Promise(r => setTimeout(r, 600))
+
+  // 到达右侧，展示内容
+  flyPhase.value = 'landed'
+  currentCard.value = flyingCard.value
+
+  await new Promise(r => setTimeout(r, 50))
+  hasDrawn.value = true
+  flyPhase.value = ''
+  flyingCard.value = null
+  isAnimating.value = false
 }
 
 /* ── 功能卡片 ── */
@@ -178,31 +207,20 @@ onMounted(async () => {
       <!-- ZW风格外层大卡 -->
       <div class="draw-outer-card">
         <div class="draw-layout">
-          <!-- 左侧：叠放卡牌（卡背设计） -->
+          <!-- 左侧：叠放卡牌（真实卡背图片） -->
           <div class="draw-left">
             <div class="card-stack">
               <div
                 v-for="(card, i) in stackedCards"
                 :key="card.id || i"
                 class="card-back"
+                :class="{ 'card-fly-out': flyPhase === 'takeoff' && i === 0 }"
                 :style="{
                   transform: `translateY(${i * -6}px) rotate(${-3 + i * 1.5}deg) scale(${1 - i * 0.025})`,
                   zIndex: stackedCards.length - i
                 }"
               >
-                <!-- 卡背装饰：渐变背景 + 品牌标识 -->
-                <div class="card-back-bg" />
-                <div class="card-back-shine" />
-                <div class="card-back-content">
-                  <div class="card-back-icon">
-                    <img src="/logomini.webp" alt="南" class="card-back-logo" />
-                  </div>
-                  <div class="card-back-title">投稿内容</div>
-                  <div class="card-back-sub">SOUTH WALL × SUBMISSION</div>
-                </div>
-                <!-- 四角装饰 -->
-                <div class="card-corner cc-tl">✦</div>
-                <div class="card-corner cc-br">✦</div>
+                <img :src="getCardBackImg(i)" alt="卡背" class="card-back-img" />
               </div>
               <div v-if="stackedCards.length === 0" class="card-back card-back-empty">
                 <div class="card-back-content">
@@ -224,9 +242,16 @@ onMounted(async () => {
             </div>
           </div>
 
+          <!-- 飞行中的卡片 -->
+          <div v-if="flyPhase === 'flying' && flyingCard" class="flying-card-wrap">
+            <div class="flying-card">
+              <img :src="getCardBackImg(Math.floor(Math.random() * 5))" alt="飞出卡片" class="flying-card-img" />
+            </div>
+          </div>
+
           <!-- 右侧：放大展示卡片 -->
           <div class="draw-right">
-            <div class="showcase-card" :class="{ 'has-data': hasDrawn, 'is-flipping': isAnimating }">
+            <div class="showcase-card" :class="{ 'has-data': hasDrawn, 'is-flipping': flyPhase === 'landed' }">
               <template v-if="currentCard && hasDrawn">
                 <div class="showcase-inner">
                   <div class="showcase-label">DRAWN FILE</div>
@@ -767,7 +792,7 @@ onMounted(async () => {
   box-shadow: 0 8px 32px rgba(179, 157, 219, 0.08);
   padding: 3rem;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .draw-outer-card::before {
@@ -783,6 +808,7 @@ onMounted(async () => {
   display: flex;
   gap: 3rem;
   align-items: flex-start;
+  position: relative;
 }
 
 /* ── 左侧：叠放卡牌区 ── */
@@ -797,107 +823,113 @@ onMounted(async () => {
 .card-stack {
   position: relative;
   width: 280px;
-  height: 320px;
-  perspective: 900px;
+  height: 380px;
+  perspective: 1000px;
 }
 
-/* ═══ 卡背设计（仿 ZW Portfolio） ═══ */
+/* ═══ 卡背（真实图片） ═══ */
 .card-back {
   position: absolute;
   inset: 0;
-  border-radius: 20px;
+  border-radius: 18px;
   overflow: hidden;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+  box-shadow:
+    0 6px 24px rgba(179, 157, 219, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.card-back-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    160deg,
-    #a78bfa 0%,
-    #b495e0 20%,
-    #c4a8e8 40%,
-    #d6b8f0 60%,
-    #e0c4f4 80%,
-    #ecd8fa 100%
-  );
-}
-
-.card-back-shine {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    transparent 40%,
-    rgba(255, 255, 255, 0.08) 60%,
-    transparent 100%
-  );
-}
-
-.card-back-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.card-back-img {
+  width: 100%;
   height: 100%;
-  padding: 2rem;
-  gap: 0.8rem;
-}
-
-.card-back-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.card-back-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
   object-fit: cover;
+  display: block;
 }
 
-.card-back-title {
-  font-family: var(--font-title);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: white;
-  letter-spacing: 0.1em;
+.card-fly-out {
+  animation: cardFlyOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.card-back-sub {
-  font-family: var(--font-ui);
-  font-size: 0.62rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+@keyframes cardFlyOut {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(-80px) rotate(-15deg) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120px) rotate(-25deg) scale(0.3);
+    opacity: 0;
+  }
 }
-
-/* 四角装饰星 */
-.card-corner {
-  position: absolute;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  z-index: 3;
-}
-.cc-tl { top: 14px; left: 16px; }
-.cc-br { bottom: 14px; right: 16px; }
 
 .card-back-empty {
   background: rgba(179, 157, 219, 0.15);
   border: 2px dashed rgba(179, 157, 219, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-back-content {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.card-back-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ── 飞行中的卡片 ── */
+.flying-card-wrap {
+  position: absolute;
+  top: 0;
+  left: 170px;
+  width: 200px;
+  height: 260px;
+  z-index: 100;
+  animation: cardFlyAcross 0.6s cubic-bezier(0.45, 0, 0.15, 1) forwards;
+  pointer-events: none;
+}
+
+.flying-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 12px 40px rgba(179, 157, 219, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.flying-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes cardFlyAcross {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(60px, -100px) rotate(-20deg) scale(1.15);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(200px, -40px) rotate(10deg) scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(320px, 20px) rotate(5deg) scale(0.85);
+    opacity: 0;
+  }
 }
 
 /* ── 按钮区 ── */
@@ -956,7 +988,9 @@ onMounted(async () => {
 /* ── 右侧展示卡 ── */
 .draw-right {
   flex: 1;
+  min-width: 0;
   min-height: 360px;
+  width: 100%;
 }
 
 .showcase-card {
@@ -1438,6 +1472,7 @@ onMounted(async () => {
 
   .draw-outer-card {
     padding: 1.5rem;
+    overflow: hidden;
   }
 
   .draw-layout {
@@ -1451,13 +1486,26 @@ onMounted(async () => {
   }
 
   .card-stack {
-    width: 240px;
-    height: 280px;
+    width: 220px;
+    height: 310px;
     margin: 0 auto;
   }
 
-  .card-back-title {
-    font-size: 0.92rem;
+  .draw-right {
+    width: 100%;
+    min-height: 280px;
+  }
+
+  .showcase-card {
+    min-height: 280px;
+  }
+
+  .showcase-placeholder {
+    min-height: 280px;
+  }
+
+  .flying-card-wrap {
+    display: none;
   }
 
   .func-grid {

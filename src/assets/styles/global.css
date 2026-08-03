@@ -76,11 +76,17 @@
   padding: 0;
 }
 
+#app {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   -moz-osx-font-smoothing: antialiased;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 body {
@@ -410,7 +416,7 @@ a:hover {
   padding: 7rem 2rem 3rem;
   background: linear-gradient(180deg, rgba(237, 231, 246, 0.5) 0%, transparent 100%);
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   text-align: center;
   isolation: isolate;
 }
