@@ -28,8 +28,14 @@ const allSubmissions = ref([])
 const currentCard = ref(null)
 const isAnimating = ref(false)
 const hasDrawn = ref(false)
-const flyingCard = ref(null)
 const flyPhase = ref('')
+
+/* 轮播相关 */
+const carouselIndex = ref(0)
+const fastRollIndex = ref(0)
+const isFastRolling = ref(false)
+let idleTimer = null
+let fastTimer = null
 
 const typeEmojiMap = {
   '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
@@ -56,10 +62,6 @@ function shuffleArray(arr) {
 
 const stackedCards = computed(() => allSubmissions.value.slice(0, 5))
 
-function getCardBackImg(i) {
-  return cardBackImages[i % cardBackImages.length]
-}
-
 function formatDate(iso) {
   if (!iso) return ''
   const d = new Date(iso)
@@ -67,33 +69,96 @@ function formatDate(iso) {
     + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
+/* ── 空闲轮播：1.2~1.7秒换一张卡背 ── */
+function startIdleCarousel() {
+  stopIdleCarousel()
+  function tick() {
+    carouselIndex.value = (carouselIndex.value + 1) % cardBackImages.length
+    const delay = 1200 + Math.random() * 500
+    idleTimer = setTimeout(tick, delay)
+  }
+  idleTimer = setTimeout(tick, 1200 + Math.random() * 500)
+}
+
+function stopIdleCarousel() {
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null }
+}
+
+/* ── 点击抽取 ── */
 async function drawRandom() {
-  if (isAnimating.value || allSubmissions.value.length === 0) return
+  if (isAnimating.value || allSubmissions.length === 0) return
   isAnimating.value = true
   hasDrawn.value = false
 
-  // 飞出阶段
-  flyPhase.value = 'takeoff'
-  await new Promise(r => setTimeout(r, 400))
+  // 1. 停止空闲轮播
+  stopIdleCarousel()
 
-  // 随机选取
+  // 2. 快速轮播 0.3~0.6秒换一张，总时长不超过1.5秒
+  isFastRolling.value = true
+  const rollStartTime = Date.now()
+  const maxRollTime = 1400
+  let currentDelay = 300
+
+  await new Promise(resolve => {
+    function fastTick() {
+      const elapsed = Date.now() - rollStartTime
+      if (elapsed >= maxRollTime) {
+        isFastRolling.value = false
+        resolve()
+        return
+      }
+      fastRollIndex.value = (fastRollIndex.value + 1) % cardBackImages.length
+      carouselIndex.value = fastRollIndex.value
+      // 逐渐加快：300→350ms
+      currentDelay = 300 + Math.random() * 50
+      fastTimer = setTimeout(fastTick, currentDelay)
+    }
+    fastTimer = setTimeout(fastTick, currentDelay)
+  })
+
+  // 3. 随机选取投稿内容
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
-  flyingCard.value = allSubmissions.value[idx]
+  const selectedSubmission = allSubmissions.value[idx]
 
-  // 飞行阶段
+  // 4. 选一张随机卡背作为飞出卡
+  carouselIndex.value = Math.floor(Math.random() * cardBackImages.length)
+
+  // 5. 飞出动画
+  flyPhase.value = 'takeoff'
+  await new Promise(r => setTimeout(r, 500))
+
+  // 6. 飞行中
   flyPhase.value = 'flying'
-  await new Promise(r => setTimeout(r, 600))
+  await new Promise(r => setTimeout(r, 650))
 
-  // 到达右侧，展示内容
+  // 7. 到达右侧，展示内容
   flyPhase.value = 'landed'
-  currentCard.value = flyingCard.value
+  currentCard.value = selectedSubmission
 
-  await new Promise(r => setTimeout(r, 50))
+  await new Promise(r => setTimeout(r, 60))
   hasDrawn.value = true
   flyPhase.value = ''
-  flyingCard.value = null
   isAnimating.value = false
+
+  // 8. 重启空闲轮播
+  startIdleCarousel()
 }
+
+onMounted(async () => {
+  try {
+    const json = await submissionsApi.getAll()
+    const data = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
+    allSubmissions.value = shuffleArray(data)
+  } catch (e) {
+    console.warn('加载投稿失败:', e)
+  }
+  startIdleCarousel()
+})
+
+onBeforeUnmount(() => {
+  stopIdleCarousel()
+  if (fastTimer) clearTimeout(fastTimer)
+})
 
 /* ── 功能卡片 ── */
 const functionCards = [
@@ -110,16 +175,6 @@ const stats = [
   { num: '6', label: '核心版块' },
   { num: '99.9%', label: '系统可用率' }
 ]
-
-onMounted(async () => {
-  try {
-    const json = await submissionsApi.getAll()
-    const data = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
-    allSubmissions.value = shuffleArray(data)
-  } catch (e) {
-    console.warn('加载投稿失败:', e)
-  }
-})
 </script>
 
 <template>
@@ -207,25 +262,28 @@ onMounted(async () => {
       <!-- ZW风格外层大卡 -->
       <div class="draw-outer-card">
         <div class="draw-layout">
-          <!-- 左侧：叠放卡牌（真实卡背图片） -->
+          <!-- 左侧：叠放卡牌（真实卡背图片，轮播） -->
           <div class="draw-left">
             <div class="card-stack">
+              <!-- 底层叠放的卡背（装饰用） -->
               <div
-                v-for="(card, i) in stackedCards"
-                :key="card.id || i"
-                class="card-back"
-                :class="{ 'card-fly-out': flyPhase === 'takeoff' && i === 0 }"
+                v-for="n in 3"
+                :key="'deco-' + n"
+                class="card-back card-back-deco"
                 :style="{
-                  transform: `translateY(${i * -6}px) rotate(${-3 + i * 1.5}deg) scale(${1 - i * 0.025})`,
-                  zIndex: stackedCards.length - i
+                  transform: `translateY(${n * -5}px) rotate(${-2 + n * 1.2}deg) scale(${1 - n * 0.02})`,
+                  zIndex: 4 - n
                 }"
               >
-                <img :src="getCardBackImg(i)" alt="卡背" class="card-back-img" />
+                <img :src="cardBackImages[(carouselIndex + n) % cardBackImages.length]" alt="卡背" class="card-back-img" />
               </div>
-              <div v-if="stackedCards.length === 0" class="card-back card-back-empty">
-                <div class="card-back-content">
-                  <div class="card-back-title">暂无数据</div>
-                </div>
+              <!-- 顶层卡背（轮播切换） -->
+              <div
+                class="card-back card-back-top"
+                :class="{ 'card-shake': isFastRolling }"
+                :style="{ zIndex: 5 }"
+              >
+                <img :src="cardBackImages[carouselIndex]" alt="卡背" class="card-back-img" />
               </div>
             </div>
 
@@ -243,9 +301,9 @@ onMounted(async () => {
           </div>
 
           <!-- 飞行中的卡片 -->
-          <div v-if="flyPhase === 'flying' && flyingCard" class="flying-card-wrap">
+          <div v-if="flyPhase === 'flying'" class="flying-card-wrap">
             <div class="flying-card">
-              <img :src="getCardBackImg(Math.floor(Math.random() * 5))" alt="飞出卡片" class="flying-card-img" />
+              <img :src="cardBackImages[carouselIndex]" alt="飞出卡片" class="flying-card-img" />
             </div>
           </div>
 
@@ -830,20 +888,45 @@ onMounted(async () => {
 /* ═══ 卡背（真实图片） ═══ */
 .card-back {
   position: absolute;
-  inset: 0;
   border-radius: 18px;
   overflow: hidden;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
   box-shadow:
     0 6px 24px rgba(179, 157, 219, 0.15),
     0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.card-back-deco {
+  left: 10px;
+  right: 10px;
+  top: 0;
+  bottom: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-back-top {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .card-back-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+  border-radius: 18px;
+}
+
+/* 快速轮播时的抖动效果 */
+.card-shake {
+  animation: cardShake 0.12s ease-in-out infinite alternate;
+}
+
+@keyframes cardShake {
+  0% { transform: translateX(-1px) rotate(-0.5deg); }
+  100% { transform: translateX(1px) rotate(0.5deg); }
 }
 
 .card-fly-out {
@@ -851,18 +934,9 @@ onMounted(async () => {
 }
 
 @keyframes cardFlyOut {
-  0% {
-    transform: translateY(0) rotate(0deg) scale(1);
-    opacity: 1;
-  }
-  40% {
-    transform: translateY(-80px) rotate(-15deg) scale(1.08);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-120px) rotate(-25deg) scale(0.3);
-    opacity: 0;
-  }
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  40% { transform: translateY(-80px) rotate(-15deg) scale(1.08); opacity: 1; }
+  100% { transform: translateY(-120px) rotate(-25deg) scale(0.3); opacity: 0; }
 }
 
 .card-back-empty {
@@ -1486,14 +1560,15 @@ onMounted(async () => {
   }
 
   .card-stack {
-    width: 220px;
-    height: 310px;
+    width: 240px;
+    height: 330px;
     margin: 0 auto;
   }
 
   .draw-right {
     width: 100%;
     min-height: 280px;
+    flex: none;
   }
 
   .showcase-card {
