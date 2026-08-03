@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { submissionsApi } from '@/services/api'
 
 /* ── Logo 轮播 ── */
@@ -23,19 +23,18 @@ function nextLogo() {
 onMounted(() => { logoTimer = setInterval(nextLogo, 4000) })
 onBeforeUnmount(() => { if (logoTimer) clearInterval(logoTimer) })
 
-/* ── 投稿随机抽取 ── */
+/* ── 投稿随机抽取（3D 堆叠卡牌库） ── */
 const allSubmissions = ref([])
 const currentCard = ref(null)
 const isAnimating = ref(false)
 const hasDrawn = ref(false)
-const flyPhase = ref('')
 
-/* 轮播相关 */
-const carouselIndex = ref(0)
-const fastRollIndex = ref(0)
-const isFastRolling = ref(false)
-let idleTimer = null
-let fastTimer = null
+/* 卡牌堆叠状态 */
+const DECK_SIZE = 6
+const deckCards = ref([])
+const flyingIndex = ref(-1)
+const promotePhase = ref(false)
+const rightFading = ref(false)
 
 const typeEmojiMap = {
   '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
@@ -60,7 +59,12 @@ function shuffleArray(arr) {
   return a
 }
 
-const stackedCards = computed(() => allSubmissions.value.slice(0, 5))
+function initDeck() {
+  deckCards.value = Array.from({ length: DECK_SIZE }, (_, i) => ({
+    id: i,
+    img: cardBackImages[i % cardBackImages.length]
+  }))
+}
 
 function formatDate(iso) {
   if (!iso) return ''
@@ -69,79 +73,36 @@ function formatDate(iso) {
     + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
-/* ── 空闲轮播：1.2~1.7秒换一张卡背 ── */
-function startIdleCarousel() {
-  stopIdleCarousel()
-  function tick() {
-    carouselIndex.value = (carouselIndex.value + 1) % cardBackImages.length
-    const delay = 1200 + Math.random() * 500
-    idleTimer = setTimeout(tick, delay)
-  }
-  idleTimer = setTimeout(tick, 1200 + Math.random() * 500)
-}
-
-function stopIdleCarousel() {
-  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null }
-}
-
-/* ── 点击抽取 ── */
+/* ── 抽卡动画 ── */
 async function drawRandom() {
-  if (isAnimating.value || allSubmissions.length === 0) return
+  if (isAnimating.value || allSubmissions.value.length === 0) return
   isAnimating.value = true
   hasDrawn.value = false
 
-  // 1. 停止空闲轮播
-  stopIdleCarousel()
+  // 1. 右侧淡出
+  rightFading.value = true
+  await new Promise(r => setTimeout(r, 300))
 
-  // 2. 快速轮播 0.3~0.6秒换一张，总时长不超过1.5秒
-  isFastRolling.value = true
-  const rollStartTime = Date.now()
-  const maxRollTime = 1400
-  let currentDelay = 300
+  // 2. 顶层卡牌飞出（index = DECK_SIZE - 1）
+  flyingIndex.value = DECK_SIZE - 1
+  await new Promise(r => setTimeout(r, 600))
 
-  await new Promise(resolve => {
-    function fastTick() {
-      const elapsed = Date.now() - rollStartTime
-      if (elapsed >= maxRollTime) {
-        isFastRolling.value = false
-        resolve()
-        return
-      }
-      fastRollIndex.value = (fastRollIndex.value + 1) % cardBackImages.length
-      carouselIndex.value = fastRollIndex.value
-      // 逐渐加快：300→350ms
-      currentDelay = 300 + Math.random() * 50
-      fastTimer = setTimeout(fastTick, currentDelay)
-    }
-    fastTimer = setTimeout(fastTick, currentDelay)
-  })
+  // 3. 剩余卡牌向上递补
+  promotePhase.value = true
+  await new Promise(r => setTimeout(r, 400))
 
-  // 3. 随机选取投稿内容
+  // 4. 随机选取投稿 + 重置堆叠
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
-  const selectedSubmission = allSubmissions.value[idx]
+  currentCard.value = allSubmissions.value[idx]
+  flyingIndex.value = -1
+  promotePhase.value = false
+  initDeck()
 
-  // 4. 选一张随机卡背作为飞出卡
-  carouselIndex.value = Math.floor(Math.random() * cardBackImages.length)
-
-  // 5. 飞出动画
-  flyPhase.value = 'takeoff'
-  await new Promise(r => setTimeout(r, 500))
-
-  // 6. 飞行中
-  flyPhase.value = 'flying'
-  await new Promise(r => setTimeout(r, 650))
-
-  // 7. 到达右侧，展示内容
-  flyPhase.value = 'landed'
-  currentCard.value = selectedSubmission
-
-  await new Promise(r => setTimeout(r, 60))
+  // 5. 右侧淡入新内容
+  await new Promise(r => setTimeout(r, 50))
   hasDrawn.value = true
-  flyPhase.value = ''
+  rightFading.value = false
   isAnimating.value = false
-
-  // 8. 重启空闲轮播
-  startIdleCarousel()
 }
 
 onMounted(async () => {
@@ -152,13 +113,54 @@ onMounted(async () => {
   } catch (e) {
     console.warn('加载投稿失败:', e)
   }
-  startIdleCarousel()
+  initDeck()
 })
 
-onBeforeUnmount(() => {
-  stopIdleCarousel()
-  if (fastTimer) clearTimeout(fastTimer)
-})
+/* 根据卡牌在堆叠中的位置计算 3D 变换 */
+function cardLayerStyle(i) {
+  if (i === flyingIndex.value) {
+    // 飞出卡：向上+向左前方翻转消失
+    return {
+      transform: 'translateZ(60px) translateY(-80px) translateX(-120px) rotate(-25deg) rotateY(15deg)',
+      opacity: 0,
+      zIndex: 100,
+      transition: 'all 0.55s cubic-bezier(0.45, 0, 0.15, 1)'
+    }
+  }
+  if (promotePhase.value && i > flyingIndex.value) {
+    // 递补卡：向前递补一层
+    const targetLayer = i - 1
+    return {
+      transform: `translateZ(${(targetLayer - (DECK_SIZE - 1)) * 20}px) translateY(${targetLayer * 6 - (DECK_SIZE - 1) * 6}px) rotate(${(targetLayer - (DECK_SIZE - 1) / 2) * 0.8}deg) scale(${1 - targetLayer * 0.008})`,
+      zIndex: DECK_SIZE - targetLayer,
+      transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease',
+      boxShadow: targetLayer === DECK_SIZE - 1
+        ? '0 8px 32px rgba(179,157,219,0.2), 0 2px 8px rgba(0,0,0,0.06)'
+        : '0 4px 16px rgba(179,157,219,0.1), 0 1px 4px rgba(0,0,0,0.04)'
+    }
+  }
+  // 正常堆叠
+  const layer = DECK_SIZE - 1 - i
+  const isTop = i === DECK_SIZE - 1
+  return {
+    transform: `translateZ(${layer * -20}px) translateY(${layer * 6}px) rotate(${(i - (DECK_SIZE - 1) / 2) * 0.8}deg) scale(${1 - layer * 0.008})`,
+    zIndex: i + 1,
+    transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease',
+    boxShadow: isTop
+      ? '0 8px 32px rgba(179,157,219,0.2), 0 2px 8px rgba(0,0,0,0.06)'
+      : '0 4px 16px rgba(179,157,219,0.1), 0 1px 4px rgba(0,0,0,0.04)'
+  }
+}
+
+function cardLayerClass(i) {
+  const isTop = i === DECK_SIZE - 1
+  const isFlying = i === flyingIndex.value
+  return {
+    'card-3d-layer': true,
+    'card-3d-top': isTop && !isFlying,
+    'card-3d-flying': isFlying
+  }
+}
 
 /* ── 功能卡片 ── */
 const functionCards = [
@@ -262,28 +264,17 @@ const stats = [
       <!-- ZW风格外层大卡 -->
       <div class="draw-outer-card">
         <div class="draw-layout">
-          <!-- 左侧：叠放卡牌（真实卡背图片，轮播） -->
+          <!-- 左侧：3D 堆叠卡牌库 -->
           <div class="draw-left">
-            <div class="card-stack">
-              <!-- 底层叠放的卡背（装饰用） -->
+            <div class="card-3d-scene">
               <div
-                v-for="n in 3"
-                :key="'deco-' + n"
-                class="card-back card-back-deco"
-                :style="{
-                  transform: `translateY(${n * -5}px) rotate(${-2 + n * 1.2}deg) scale(${1 - n * 0.02})`,
-                  zIndex: 4 - n
-                }"
+                v-for="(card, i) in deckCards"
+                :key="card.id"
+                class="card-3d-layer"
+                :class="cardLayerClass(i)"
+                :style="cardLayerStyle(i)"
               >
-                <img :src="cardBackImages[(carouselIndex + n) % cardBackImages.length]" alt="卡背" class="card-back-img" />
-              </div>
-              <!-- 顶层卡背（轮播切换） -->
-              <div
-                class="card-back card-back-top"
-                :class="{ 'card-shake': isFastRolling }"
-                :style="{ zIndex: 5 }"
-              >
-                <img :src="cardBackImages[carouselIndex]" alt="卡背" class="card-back-img" />
+                <img :src="card.img" alt="卡背" class="card-3d-img" />
               </div>
             </div>
 
@@ -300,17 +291,10 @@ const stats = [
             </div>
           </div>
 
-          <!-- 飞行中的卡片 -->
-          <div v-if="flyPhase === 'flying'" class="flying-card-wrap">
-            <div class="flying-card">
-              <img :src="cardBackImages[carouselIndex]" alt="飞出卡片" class="flying-card-img" />
-            </div>
-          </div>
-
           <!-- 右侧：放大展示卡片 -->
           <div class="draw-right">
-            <div class="showcase-card" :class="{ 'has-data': hasDrawn, 'is-flipping': flyPhase === 'landed' }">
-              <template v-if="currentCard && hasDrawn">
+            <div class="showcase-card" :class="{ 'has-data': hasDrawn, 'right-fade-out': rightFading }">
+              <template v-if="currentCard && hasDrawn && !rightFading">
                 <div class="showcase-inner">
                   <div class="showcase-label">DRAWN FILE</div>
                   <div class="showcase-type">
@@ -331,7 +315,7 @@ const stats = [
                 </div>
               </template>
             </div>
-            <div v-if="currentCard && hasDrawn" class="draw-counter">
+            <div v-if="currentCard && hasDrawn && !rightFading" class="draw-counter">
               {{ allSubmissions.indexOf(currentCard) + 1 }} — {{ allSubmissions.length }}
             </div>
           </div>
@@ -834,14 +818,13 @@ const stats = [
   color: var(--text-muted);
 }
 
-/* ═══ 随机抽取投稿 ═══ */
+/* ═══ 随机抽取投稿（3D 堆叠卡牌库） ═══ */
 .draw-section {
   padding: 6rem 0;
   position: relative;
   z-index: 1;
 }
 
-/* ZW 风格外层大卡 */
 .draw-outer-card {
   background: rgba(255, 255, 255, 0.45);
   backdrop-filter: blur(20px);
@@ -869,7 +852,7 @@ const stats = [
   position: relative;
 }
 
-/* ── 左侧：叠放卡牌区 ── */
+/* ── 左侧：3D 卡牌堆叠区 ── */
 .draw-left {
   flex: 0 0 340px;
   display: flex;
@@ -878,40 +861,28 @@ const stats = [
   gap: 2rem;
 }
 
-.card-stack {
+.card-3d-scene {
   position: relative;
   width: 280px;
   height: 380px;
-  perspective: 1000px;
+  perspective: 800px;
+  transform-style: preserve-3d;
 }
 
-/* ═══ 卡背（真实图片） ═══ */
-.card-back {
+/* 3D 堆叠层 */
+.card-3d-layer {
   position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow:
-    0 6px 24px rgba(179, 157, 219, 0.15),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+  transform-origin: center bottom;
+  will-change: transform, opacity;
 }
 
-.card-back-deco {
-  left: 10px;
-  right: 10px;
-  top: 0;
-  bottom: 0;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.card-back-top {
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.card-back-img {
+.card-3d-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -919,91 +890,27 @@ const stats = [
   border-radius: 18px;
 }
 
-/* 快速轮播时的抖动效果 */
-.card-shake {
-  animation: cardShake 0.12s ease-in-out infinite alternate;
-}
-
-@keyframes cardShake {
-  0% { transform: translateX(-1px) rotate(-0.5deg); }
-  100% { transform: translateX(1px) rotate(0.5deg); }
-}
-
-.card-fly-out {
-  animation: cardFlyOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes cardFlyOut {
-  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-  40% { transform: translateY(-80px) rotate(-15deg) scale(1.08); opacity: 1; }
-  100% { transform: translateY(-120px) rotate(-25deg) scale(0.3); opacity: 0; }
-}
-
-.card-back-empty {
-  background: rgba(179, 157, 219, 0.15);
-  border: 2px dashed rgba(179, 157, 219, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-back-content {
-  text-align: center;
-  color: var(--text-muted);
-}
-
-.card-back-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-/* ── 飞行中的卡片 ── */
-.flying-card-wrap {
-  position: absolute;
-  top: 0;
-  left: 170px;
-  width: 200px;
-  height: 260px;
-  z-index: 100;
-  animation: cardFlyAcross 0.6s cubic-bezier(0.45, 0, 0.15, 1) forwards;
-  pointer-events: none;
-}
-
-.flying-card {
-  width: 100%;
-  height: 100%;
-  border-radius: 14px;
-  overflow: hidden;
+/* 顶层高光效果 */
+.card-3d-top {
   box-shadow:
-    0 12px 40px rgba(179, 157, 219, 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.1);
+    0 8px 32px rgba(179, 157, 219, 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.flying-card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.card-3d-top::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+  transition: opacity 0.3s;
 }
 
-@keyframes cardFlyAcross {
-  0% {
-    transform: translate(0, 0) rotate(0deg) scale(1);
-    opacity: 1;
-  }
-  30% {
-    transform: translate(60px, -100px) rotate(-20deg) scale(1.15);
-    opacity: 1;
-  }
-  70% {
-    transform: translate(200px, -40px) rotate(10deg) scale(0.9);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(320px, 20px) rotate(5deg) scale(0.85);
-    opacity: 0;
-  }
+/* 飞出卡 */
+.card-3d-flying {
+  pointer-events: none;
 }
 
 /* ── 按钮区 ── */
@@ -1078,7 +985,7 @@ const stats = [
     0 8px 32px rgba(179, 157, 219, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.03);
   overflow: hidden;
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s ease, transform 0.35s ease;
   position: relative;
 }
 
@@ -1092,16 +999,16 @@ const stats = [
 }
 
 .showcase-card.has-data {
-  animation: card-flip-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: card-flip-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.showcase-card.is-flipping {
-  transform: perspective(800px) rotateX(-10deg) scale(0.97);
-  opacity: 0.5;
+.showcase-card.right-fade-out {
+  opacity: 0.15;
+  transform: scale(0.98);
 }
 
 @keyframes card-flip-in {
-  0% { transform: perspective(800px) rotateX(15deg) scale(0.95); opacity: 0.3; }
+  0% { transform: perspective(800px) rotateX(12deg) scale(0.96); opacity: 0.3; }
   100% { transform: none; opacity: 1; }
 }
 
@@ -1109,6 +1016,12 @@ const stats = [
   padding: 2.5rem;
   position: relative;
   z-index: 1;
+  animation: content-fade-in 0.4s ease 0.15s both;
+}
+
+@keyframes content-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
 
 .showcase-label {
@@ -1559,7 +1472,7 @@ const stats = [
     width: 100%;
   }
 
-  .card-stack {
+  .card-3d-scene {
     width: 240px;
     height: 330px;
     margin: 0 auto;
