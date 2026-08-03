@@ -23,25 +23,13 @@ function nextLogo() {
 onMounted(() => { logoTimer = setInterval(nextLogo, 4000) })
 onBeforeUnmount(() => { if (logoTimer) clearInterval(logoTimer) })
 
-/* ── 投稿随机抽取（3D 堆叠卡牌库 + 轮播） ── */
+/* ── 投稿随机抽取 ── */
 const allSubmissions = ref([])
 const currentCard = ref(null)
 const isAnimating = ref(false)
 const hasDrawn = ref(false)
-const isRolling = ref(false)
-const goldGlow = ref(false)
-
-/* 卡牌堆叠状态 */
-const DECK_SIZE = 6
-const deckCards = ref([])
-const topIndex = ref(0)
-let idleTimer = null
-
-const typeEmojiMap = {
-  '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
-  '吐槽': '💬', '交易': '💰', '捞人、物': '🎣', '打听资讯': '❓',
-  '寻找搭子': '👫', '有啥说啥': '🗣️'
-}
+const deckPhase = ref('idle') /* idle | shuffling | revealing | done */
+const topCardImg = ref('')
 
 const cardBackImages = [
   '/card/card (1).webp',
@@ -50,6 +38,12 @@ const cardBackImages = [
   '/card/card (4).webp',
   '/card/card (5).webp'
 ]
+
+const typeEmojiMap = {
+  '寻物启事': '🔍', '表白': '💌', '挂人': '⚠️', '扩列': '🤝',
+  '吐槽': '💬', '交易': '💰', '捞人、物': '🎣', '打听资讯': '❓',
+  '寻找搭子': '👫', '有啥说啥': '🗣️'
+}
 
 function shuffleArray(arr) {
   const a = [...arr]
@@ -60,12 +54,8 @@ function shuffleArray(arr) {
   return a
 }
 
-function randomCardImg() {
+function randomImg() {
   return cardBackImages[Math.floor(Math.random() * cardBackImages.length)]
-}
-
-function initDeck() {
-  deckCards.value = Array.from({ length: DECK_SIZE }, () => randomCardImg())
 }
 
 function formatDate(iso) {
@@ -75,64 +65,56 @@ function formatDate(iso) {
     + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
-/* ── 空闲轮播：每1.5秒切换顶层 ── */
+/* ── 空闲轮播：每 2.2 秒顶部卡牌淡出淡入 ── */
+let idleTimer = null
 function startIdle() {
   stopIdle()
   function tick() {
-    topIndex.value = (topIndex.value + 1) % DECK_SIZE
-    idleTimer = setTimeout(tick, 1500)
+    topCardImg.value = randomImg()
+    idleTimer = setTimeout(tick, 2200)
   }
-  idleTimer = setTimeout(tick, 1500)
+  topCardImg.value = randomImg()
+  idleTimer = setTimeout(tick, 2200)
 }
+function stopIdle() { if (idleTimer) { clearTimeout(idleTimer); idleTimer = null } }
 
-function stopIdle() {
-  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null }
-}
-
-/* ── 抽卡动画 ── */
+/* ── 抽卡流程 ── */
 async function drawRandom() {
   if (isAnimating.value || allSubmissions.value.length === 0) return
   isAnimating.value = true
   hasDrawn.value = false
-  goldGlow.value = false
   stopIdle()
+  deckPhase.value = 'shuffling'
 
-  // 1. 快速轮播：0.2秒/张，持续1秒
-  isRolling.value = true
-  const rollTotal = 1000
-  const rollInterval = 200
-  const rollStart = Date.now()
+  /* 快速洗牌：1.2 秒，每 150ms 换一张 */
+  const shuffleStart = Date.now()
+  const shuffleDuration = 1200
+  const shuffleInterval = 150
 
   await new Promise(resolve => {
-    function fastTick() {
-      if (Date.now() - rollStart >= rollTotal) {
-        isRolling.value = false
-        resolve()
-        return
-      }
-      topIndex.value = (topIndex.value + 1) % DECK_SIZE
-      setTimeout(fastTick, rollInterval)
+    function tick() {
+      if (Date.now() - shuffleStart >= shuffleDuration) { resolve(); return }
+      topCardImg.value = randomImg()
+      setTimeout(tick, shuffleInterval)
     }
-    fastTick()
+    tick()
   })
 
-  // 2. 最后一张卡：随机匹配图片 + 金边高光
-  topIndex.value = (topIndex.value + 1) % DECK_SIZE
-  deckCards.value[topIndex.value] = randomCardImg()
-  goldGlow.value = true
+  /* 定格：最后一张卡 */
+  topCardImg.value = randomImg()
+  deckPhase.value = 'revealing'
 
-  await new Promise(r => setTimeout(r, 600))
+  await new Promise(r => setTimeout(r, 700))
 
-  // 3. 随机选取投稿内容
+  /* 随机选稿 + 展示 */
   const idx = Math.floor(Math.random() * allSubmissions.value.length)
   currentCard.value = allSubmissions.value[idx]
-
-  await new Promise(r => setTimeout(r, 50))
+  deckPhase.value = 'done'
   hasDrawn.value = true
-  goldGlow.value = false
   isAnimating.value = false
 
-  // 4. 重启空闲轮播
+  await new Promise(r => setTimeout(r, 200))
+  deckPhase.value = 'idle'
   startIdle()
 }
 
@@ -141,47 +123,10 @@ onMounted(async () => {
     const json = await submissionsApi.getAll()
     const data = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
     allSubmissions.value = shuffleArray(data)
-  } catch (e) {
-    console.warn('加载投稿失败:', e)
-  }
-  initDeck()
+  } catch (e) { console.warn('加载投稿失败:', e) }
   startIdle()
 })
-
-onBeforeUnmount(() => { stopIdle() })
-
-/* ── 卡牌3D堆叠样式 ── */
-function cardLayerStyle(i) {
-  const depth = DECK_SIZE - 1 - i
-  const isActive = i === topIndex.value
-  const baseTz = isActive ? 0 : depth * -18
-  const baseY = isActive ? 0 : depth * 5
-  const rotate = (i - (DECK_SIZE - 1) / 2) * 0.7
-  const scale = isActive ? 1 : 1 - depth * 0.006
-  const z = isActive ? 90 : DECK_SIZE - i
-  const isGoldActive = goldGlow.value && isActive
-
-  return {
-    transform: `translateZ(${baseTz}px) translateY(${baseY}px) rotate(${rotate}deg) scale(${scale})`,
-    opacity: isActive ? 1 : 0.6 + (1 - depth / DECK_SIZE) * 0.4,
-    zIndex: z,
-    transition: isRolling.value ? 'none' : 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-    boxShadow: isGoldActive
-      ? '0 0 0 3px rgba(255, 193, 7, 0.6), 0 0 20px rgba(255, 193, 7, 0.25), 0 8px 32px rgba(179,157,219,0.25)'
-      : isActive
-        ? '0 8px 32px rgba(179,157,219,0.2), 0 2px 8px rgba(0,0,0,0.06)'
-        : '0 4px 16px rgba(179,157,219,0.1), 0 1px 4px rgba(0,0,0,0.04)',
-    border: isGoldActive ? '3px solid transparent' : 'none'
-  }
-}
-
-function cardLayerClass(i) {
-  return {
-    'card-3d-layer': true,
-    'card-3d-top': i === topIndex.value && !goldGlow.value,
-    'card-3d-glow': goldGlow.value && i === topIndex.value
-  }
-}
+onBeforeUnmount(() => stopIdle())
 
 /* ── 功能卡片 ── */
 const functionCards = [
@@ -282,20 +227,27 @@ const stats = [
         <p class="section-sub">每一张都是南渝学子的真实声音</p>
       </div>
 
-      <!-- ZW风格外层大卡 -->
       <div class="draw-outer-card">
         <div class="draw-layout">
-          <!-- 左侧：3D 堆叠卡牌库 -->
+          <!-- 左侧：牌堆 -->
           <div class="draw-left">
-            <div class="card-3d-scene">
+            <div class="deck-scene">
+              <!-- 底层装饰卡（4张，模拟厚度） -->
+              <div class="deck-shadow" />
+              <div class="deck-base deck-base-4" />
+              <div class="deck-base deck-base-3" />
+              <div class="deck-base deck-base-2" />
+              <div class="deck-base deck-base-1" />
+              <!-- 顶层活动卡 -->
               <div
-                v-for="(img, i) in deckCards"
-                :key="i"
-                class="card-3d-layer"
-                :class="cardLayerClass(i)"
-                :style="cardLayerStyle(i)"
+                class="deck-top"
+                :class="{
+                  'deck-shuffling': deckPhase === 'shuffling',
+                  'deck-reveal': deckPhase === 'revealing',
+                  'deck-glow': deckPhase === 'revealing'
+                }"
               >
-                <img :src="img" alt="卡背" class="card-3d-img" />
+                <img :src="topCardImg" alt="卡背" class="deck-top-img" />
               </div>
             </div>
 
@@ -305,49 +257,38 @@ const stats = [
                 @click="drawRandom"
                 :disabled="isAnimating || allSubmissions.length === 0"
               >
-                <span v-if="isAnimating" class="draw-spinner" />
+                <span v-if="isAnimating" class="draw-btn-loading" />
                 <span v-else>随机抽一张 ✦</span>
               </button>
               <div class="draw-count">牌库共有 {{ allSubmissions.length }} 条投稿</div>
             </div>
           </div>
 
-          <!-- 右侧：放大展示卡片 -->
+          <!-- 右侧：详情卡 -->
           <div class="draw-right">
-            <div class="showcase-card">
-              <!-- 抽取中状态 -->
-              <div v-if="isRolling" class="showcase-placeholder">
-                <div class="placeholder-ring">
-                  <div class="placeholder-ring-inner placeholder-ring-spin" />
-                  <div class="placeholder-icon">🎰</div>
-                </div>
-                <div class="placeholder-text">随机抽取中</div>
-                <div class="placeholder-sub">正在为你寻找最有趣的声音</div>
+            <div class="detail-card" :class="{ 'detail-card-show': hasDrawn }">
+              <!-- 抽取中 -->
+              <div v-if="deckPhase === 'shuffling'" class="detail-state">
+                <div class="detail-loading-orb" />
+                <div class="detail-loading-text">随机抽取中</div>
               </div>
-              <!-- 有内容状态 -->
+              <!-- 有内容 -->
               <template v-else-if="currentCard && hasDrawn">
-                <div class="showcase-inner">
-                  <div class="showcase-label">DRAWN FILE</div>
-                  <div class="showcase-type">
-                    {{ typeEmojiMap[currentCard.type] || '📄' }} {{ currentCard.type }}
-                  </div>
-                  <div class="showcase-time">{{ formatDate(currentCard.created_at) }}</div>
-                  <div class="showcase-content">{{ currentCard.content }}</div>
+                <div class="detail-inner">
+                  <div class="detail-tag">{{ typeEmojiMap[currentCard.type] || '📄' }} {{ currentCard.type }}</div>
+                  <div class="detail-time">{{ formatDate(currentCard.created_at) }}</div>
+                  <div class="detail-content">{{ currentCard.content }}</div>
                 </div>
               </template>
               <!-- 空占位 -->
               <template v-else>
-                <div class="showcase-placeholder">
-                  <div class="placeholder-ring">
-                    <div class="placeholder-ring-inner" />
-                    <div class="placeholder-icon">✨</div>
-                  </div>
-                  <div class="placeholder-text">点击左侧按钮抽取投稿</div>
-                  <div class="placeholder-sub">再翻面认识TA</div>
+                <div class="detail-empty">
+                  <div class="detail-empty-icon">✨</div>
+                  <div class="detail-empty-text">点击左侧按钮抽取投稿</div>
                 </div>
               </template>
             </div>
-            <div v-if="currentCard && hasDrawn && !isRolling" class="draw-counter">
+            <div v-if="currentCard && hasDrawn" class="draw-counter">
               {{ allSubmissions.indexOf(currentCard) + 1 }} — {{ allSubmissions.length }}
             </div>
           </div>
@@ -850,7 +791,7 @@ const stats = [
   color: var(--text-muted);
 }
 
-/* ═══ 随机抽取投稿（3D 堆叠卡牌库） ═══ */
+/* ═══ 随机抽取投稿 ═══ */
 .draw-section {
   padding: 6rem 0;
   position: relative;
@@ -884,7 +825,7 @@ const stats = [
   position: relative;
 }
 
-/* ── 左侧：3D 卡牌堆叠区 ── */
+/* ── 左侧：牌堆区 ── */
 .draw-left {
   flex: 0 0 340px;
   display: flex;
@@ -893,71 +834,106 @@ const stats = [
   gap: 2rem;
 }
 
-.card-3d-scene {
+.deck-scene {
   position: relative;
-  width: 280px;
-  height: 380px;
-  perspective: 800px;
-  transform-style: preserve-3d;
+  width: 260px;
+  height: 360px;
+  perspective: 1200px;
+  perspective-origin: 50% 40%;
 }
 
-/* 3D 堆叠层 */
-.card-3d-layer {
+/* 牌堆底部阴影 */
+.deck-shadow {
+  position: absolute;
+  bottom: -12px;
+  left: 10%;
+  width: 80%;
+  height: 30px;
+  background: radial-gradient(ellipse, rgba(179, 157, 219, 0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(8px);
+}
+
+/* 底层装饰卡（模拟厚度） */
+.deck-base {
   position: absolute;
   left: 0;
-  top: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  transform-origin: center bottom;
-  will-change: transform, opacity;
+  background: linear-gradient(145deg, #d4c5f0, #e8ddf5);
+  box-shadow: 0 2px 8px rgba(179, 157, 219, 0.12);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.card-3d-img {
+.deck-base-4 { transform: translateY(8px) translateZ(-80px) scale(0.94); opacity: 0.4; }
+.deck-base-3 { transform: translateY(5px) translateZ(-60px) scale(0.96); opacity: 0.55; }
+.deck-base-2 { transform: translateY(3px) translateZ(-40px) scale(0.975); opacity: 0.7; }
+.deck-base-1 { transform: translateY(1px) translateZ(-20px) scale(0.99); opacity: 0.85; }
+
+/* 顶层活动卡 */
+.deck-top {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  transform: translateZ(0) translateY(0) scale(1);
+  box-shadow:
+    0 12px 40px rgba(179, 157, 219, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.deck-top-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
-  border-radius: 18px;
+  border-radius: 16px;
 }
 
-/* 顶层高光效果 */
-.card-3d-top {
-  box-shadow:
-    0 8px 32px rgba(179, 157, 219, 0.25),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+/* 洗牌动画：快速上移+旋转+淡出 */
+.deck-shuffling {
+  animation: deckShuffle 0.15s ease-in-out;
 }
 
-.card-3d-top::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
-  pointer-events: none;
-  transition: opacity 0.3s;
+@keyframes deckShuffle {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-30px) rotate(-2deg) scale(1.02); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+/* 翻转揭示：弹簧上升 + 金边 */
+.deck-reveal {
+  animation: deckReveal 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes deckReveal {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-18px) scale(1.03); }
+  70% { transform: translateY(-8px) scale(1.01); }
+  100% { transform: translateY(-4px) scale(1.005); }
 }
 
 /* 金边高光 */
-.card-3d-glow {
-  border: 3px solid rgba(255, 193, 7, 0.7) !important;
+.deck-glow {
   box-shadow:
-    0 0 0 4px rgba(255, 193, 7, 0.2),
-    0 0 24px rgba(255, 193, 7, 0.3),
-    0 8px 32px rgba(179, 157, 219, 0.25) !important;
-  animation: goldPulse 0.8s ease-in-out 2;
+    0 0 0 3px rgba(255, 193, 7, 0.5),
+    0 0 20px rgba(255, 193, 7, 0.2),
+    0 0 40px rgba(255, 193, 7, 0.08),
+    0 12px 40px rgba(179, 157, 219, 0.2);
+  animation: glowPulse 0.8s ease-in-out 2;
 }
 
-@keyframes goldPulse {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2), 0 0 24px rgba(255, 193, 7, 0.3), 0 8px 32px rgba(179, 157, 219, 0.25); }
-  50% { box-shadow: 0 0 0 8px rgba(255, 193, 7, 0.1), 0 0 40px rgba(255, 193, 7, 0.25), 0 8px 32px rgba(179, 157, 219, 0.25); }
-}
-
-/* 快速轮播抖动 */
-.card-3d-top:has(~ .card-3d-glow) {
-  transform: translateX(1px);
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255,193,7,0.5), 0 0 20px rgba(255,193,7,0.2), 0 0 40px rgba(255,193,7,0.08), 0 12px 40px rgba(179,157,219,0.2); }
+  50% { box-shadow: 0 0 0 5px rgba(255,193,7,0.35), 0 0 30px rgba(255,193,7,0.15), 0 0 50px rgba(255,193,7,0.05), 0 12px 40px rgba(179,157,219,0.2); }
 }
 
 /* ── 按钮区 ── */
@@ -981,6 +957,17 @@ const stats = [
   transition: all 0.3s;
   box-shadow: 0 4px 16px rgba(45, 27, 105, 0.2);
   letter-spacing: 0.03em;
+  position: relative;
+  overflow: hidden;
+}
+
+.draw-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .draw-btn:hover:not(:disabled) {
@@ -989,12 +976,10 @@ const stats = [
   box-shadow: 0 8px 28px rgba(45, 27, 105, 0.3);
 }
 
-.draw-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+.draw-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.draw-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.draw-spinner {
+.draw-btn-loading {
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -1004,16 +989,14 @@ const stats = [
   display: inline-block;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .draw-count {
   font-size: 0.78rem;
   color: var(--text-muted);
 }
 
-/* ── 右侧展示卡 ── */
+/* ── 右侧详情卡 ── */
 .draw-right {
   flex: 1;
   min-width: 0;
@@ -1021,22 +1004,22 @@ const stats = [
   width: 100%;
 }
 
-.showcase-card {
+.detail-card {
   width: 100%;
   min-height: 360px;
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(209, 196, 233, 0.25), rgba(255, 255, 255, 0.55));
+  background: linear-gradient(135deg, rgba(209, 196, 233, 0.2), rgba(255, 255, 255, 0.5));
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow:
     0 8px 32px rgba(179, 157, 219, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.03);
+  position: relative;
   overflow: hidden;
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
 }
 
-.showcase-card::before {
+.detail-card::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -1045,40 +1028,73 @@ const stats = [
   pointer-events: none;
 }
 
-.showcase-inner {
-  padding: 2.5rem;
-  position: relative;
-  z-index: 1;
-  animation: content-fade-in 0.4s ease 0.15s both;
+.detail-card-show {
+  animation: detailIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes content-fade-in {
-  from { opacity: 0; transform: translateY(8px); }
+@keyframes detailIn {
+  0% { transform: perspective(800px) rotateX(8deg) scale(0.97); opacity: 0.3; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* 加载中 */
+.detail-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  gap: 1.2rem;
+}
+
+.detail-loading-orb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(179, 157, 219, 0.15);
+  border-top-color: rgba(255, 193, 7, 0.7);
+  animation: spin 0.7s linear infinite;
+}
+
+.detail-loading-text {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+/* 有内容 */
+.detail-inner {
+  padding: 2.5rem;
+  animation: contentIn 0.4s ease 0.1s both;
+}
+
+@keyframes contentIn {
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
 
-.showcase-label {
-  font-size: 0.7rem;
+.detail-tag {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  background: rgba(179, 157, 219, 0.12);
   color: var(--accent-dark);
-  margin-bottom: 0.5rem;
+  border: 1px solid rgba(179, 157, 219, 0.15);
+  margin-bottom: 1rem;
 }
 
-.showcase-type {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.3rem;
-}
-
-.showcase-time {
+.detail-time {
   font-size: 0.78rem;
   color: var(--text-muted);
   margin-bottom: 1.5rem;
 }
 
-.showcase-content {
+.detail-content {
   font-size: 1rem;
   line-height: 2;
   color: var(--text-secondary);
@@ -1086,62 +1102,29 @@ const stats = [
   word-break: break-word;
 }
 
-/* 空占位 */
-.showcase-placeholder {
+/* 空状态 */
+.detail-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 360px;
-  text-align: center;
-  position: relative;
-  z-index: 1;
+  gap: 0.8rem;
 }
 
-.placeholder-ring {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  margin-bottom: 1.5rem;
+.detail-empty-icon {
+  font-size: 3rem;
+  animation: float 3s ease-in-out infinite;
 }
 
-.placeholder-ring-inner {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 2px solid rgba(179, 157, 219, 0.15);
-  animation: pulse-ring 3s ease-in-out infinite;
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
-.placeholder-ring-spin {
-  border-top-color: rgba(255, 193, 7, 0.6);
-  border-right-color: rgba(179, 157, 219, 0.3);
-  animation: spin 0.8s linear infinite !important;
-}
-
-.placeholder-icon {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-}
-
-@keyframes pulse-ring {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.15); opacity: 1; }
-}
-
-.placeholder-text {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.4rem;
-}
-
-.placeholder-sub {
-  font-size: 0.82rem;
+.detail-empty-text {
+  font-size: 0.95rem;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
@@ -1511,9 +1494,9 @@ const stats = [
     width: 100%;
   }
 
-  .card-3d-scene {
-    width: 240px;
-    height: 330px;
+  .deck-scene {
+    width: 220px;
+    height: 300px;
     margin: 0 auto;
   }
 
