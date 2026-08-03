@@ -1500,12 +1500,21 @@ onMounted(() => {
     margin-left: 0;
     padding: 1.25rem;
     padding-bottom: 80px;
+    overflow-x: hidden;
   }
   .form-grid-3 { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .table-toolbar { flex-direction: column; align-items: flex-start; }
   .table-search { flex-wrap: wrap; width: 100%; }
   .table-search-input { width: 100%; }
+
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .data-table {
+    min-width: 600px;
+  }
 
   .mobile-nav {
     position: fixed;

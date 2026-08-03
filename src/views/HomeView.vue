@@ -329,10 +329,10 @@ const stats = [
       </div>
 
       <div class="func-grid">
-        <a
+        <router-link
           v-for="(card, idx) in functionCards"
           :key="card.title"
-          :href="card.link"
+          :to="card.link"
           class="func-card"
         >
           <div class="func-num">{{ String(idx + 1).padStart(2, '0') }}</div>
@@ -359,7 +359,7 @@ const stats = [
               <line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" />
             </svg>
           </div>
-        </a>
+        </router-link>
       </div>
     </div>
   </section>
@@ -584,13 +584,10 @@ const stats = [
   border-radius: 100px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 16px rgba(45, 27, 105, 0.2);
 }
 
 .btn-dark:hover {
   background: var(--accent-deep);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(45, 27, 105, 0.3);
 }
 
 .btn-outline {
@@ -599,19 +596,16 @@ const stats = [
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(179, 157, 219, 0.2);
+  background: rgba(179, 157, 219, 0.1);
+  border: none;
   border-radius: 100px;
   cursor: pointer;
   transition: all 0.3s;
-  backdrop-filter: blur(8px);
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(179, 157, 219, 0.35);
-  color: var(--accent-dark);
-  transform: translateY(-2px);
+  background: rgba(179, 157, 219, 0.18);
+  color: var(--text-primary);
 }
 
 /* 右侧 Logo */
@@ -1002,25 +996,11 @@ const stats = [
   border-radius: 100px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 16px rgba(45, 27, 105, 0.2);
   letter-spacing: 0.03em;
-  position: relative;
-  overflow: hidden;
-}
-
-.draw-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
-  pointer-events: none;
 }
 
 .draw-btn:hover:not(:disabled) {
   background: var(--accent-deep);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(45, 27, 105, 0.3);
 }
 
 .draw-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
@@ -1467,7 +1447,7 @@ const stats = [
   font-family: var(--font-ui);
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: white;
   background: rgba(179, 157, 219, 0.9);
   border: none;
   border-radius: 100px;
@@ -1476,9 +1456,7 @@ const stats = [
 }
 
 .btn-contact:hover {
-  background: rgba(209, 196, 233, 1);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(179, 157, 219, 0.3);
+  background: rgba(126, 87, 194, 0.9);
 }
 
 .btn-contact-ghost {
@@ -1496,7 +1474,6 @@ const stats = [
 
 .btn-contact-ghost:hover {
   background: rgba(209, 196, 233, 0.1);
-  border-color: rgba(209, 196, 233, 0.5);
   color: white;
 }
 

@@ -69,13 +69,12 @@ function scrollToTop() {
   font-family: var(--font-ui);
   font-size: 0.78rem;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(179, 157, 219, 0.15);
+  background: rgba(179, 157, 219, 0.08);
+  border: none;
   border-radius: 100px;
   padding: 0.4rem 1rem;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(8px);
+  transition: all 0.25s;
 }
 
 .back-to-top:hover {

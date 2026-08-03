@@ -163,25 +163,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s;
   letter-spacing: 0.03em;
-  position: relative;
-  overflow: hidden;
-}
-
-.nav-cta::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
-  pointer-events: none;
 }
 
 .nav-cta:hover {
   background: var(--accent-deep);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(81, 45, 168, 0.25);
 }
 
 /* 移动端隐藏桌面导航 */
