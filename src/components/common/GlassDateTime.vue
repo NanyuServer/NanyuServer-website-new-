@@ -244,15 +244,25 @@ onUnmounted(() => {
           </div>
 
           <div v-if="!dateOnly" class="gdt-time">
-            <div class="gdt-time-label">时间</div>
-            <div class="gdt-time-cols">
-              <div class="gdt-time-col">
-                <button v-for="h in hours" :key="h" class="gdt-time-btn" :class="{ active: h === hour }" @click="hour = h" type="button">{{ h }}</button>
-              </div>
+            <div class="gdt-time-label">时间（24小时制）</div>
+            <div class="gdt-time-inputs">
+              <input
+                type="number"
+                class="gdt-time-input"
+                min="0" max="23"
+                :value="parseInt(hour)"
+                @input="hour = String(Math.min(23, Math.max(0, parseInt($event.target.value) || 0))).padStart(2, '0')"
+                placeholder="时"
+              />
               <span class="gdt-time-sep">:</span>
-              <div class="gdt-time-col">
-                <button v-for="m in minutes" :key="m" class="gdt-time-btn" :class="{ active: m === minute }" @click="minute = m" type="button">{{ m }}</button>
-              </div>
+              <input
+                type="number"
+                class="gdt-time-input"
+                min="0" max="59"
+                :value="parseInt(minute)"
+                @input="minute = String(Math.min(59, Math.max(0, parseInt($event.target.value) || 0))).padStart(2, '0')"
+                placeholder="分"
+              />
             </div>
           </div>
 
@@ -429,22 +439,34 @@ onUnmounted(() => {
 
 .gdt-time { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid rgba(179, 157, 219, 0.12); }
 .gdt-time-label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-.gdt-time-cols { display: flex; align-items: flex-start; gap: 0.5rem; }
-.gdt-time-col {
-  flex: 1; max-height: 120px; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 2px;
+.gdt-time-inputs {
+  display: flex; align-items: center; gap: 0.3rem;
 }
-.gdt-time-sep { font-size: 1.2rem; color: var(--text-muted); padding-top: 0.3rem; }
-.gdt-time-btn {
-  font-family: var(--font-ui); font-size: 0.8rem; color: var(--text-secondary);
-  background: transparent; border: none; padding: 0.35rem 0.5rem;
-  cursor: pointer; transition: all 0.2s; text-align: center; border-radius: 8px;
+.gdt-time-input {
+  width: 72px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-primary);
+  background: rgba(179, 157, 219, 0.06);
+  border: 1px solid rgba(179, 157, 219, 0.15);
+  padding: 0.5rem;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -moz-appearance: textfield;
 }
-.gdt-time-btn:hover { background: rgba(179, 157, 219, 0.08); color: var(--text-primary); }
-.gdt-time-btn.active { background: var(--accent-dark); color: white; font-weight: 600; }
-.gdt-time-col::-webkit-scrollbar { width: 3px; }
-.gdt-time-col::-webkit-scrollbar-track { background: transparent; }
-.gdt-time-col::-webkit-scrollbar-thumb { background: rgba(179, 157, 219, 0.25); border-radius: 100px; }
+.gdt-time-input::-webkit-outer-spin-button,
+.gdt-time-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.gdt-time-input:focus {
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.1);
+}
+.gdt-time-sep { font-size: 1.2rem; font-weight: 700; color: var(--text-muted); }
 
 .gdt-actions {
   display: flex; justify-content: flex-end; gap: 0.5rem;
