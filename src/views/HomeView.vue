@@ -30,7 +30,8 @@ const isAnimating = ref(false)
 const hasDrawn = ref(false)
 const detailGlow = ref(false)
 const rightPhase = ref('')  /* '' | 'elastic' | 'show' */
-const flyPhase = ref('')    /* '' | 'flying' */
+const flyPhase = ref('')
+const isDrawing = ref(false)    /* '' | 'flying' */
 
 /* 3张可见卡牌（c0底 c1中 c2顶） */
 const DECK_VISIBLE = 3
@@ -93,6 +94,7 @@ async function drawRandom() {
   if (isAnimating.value || allSubmissions.value.length === 0) return
   isAnimating.value = true
   hasDrawn.value = false
+  isDrawing.value = true
   detailGlow.value = false
   rightPhase.value = ''
   flyPhase.value = ''
@@ -132,6 +134,7 @@ async function drawRandom() {
   rightPhase.value = 'show'
   detailGlow.value = true
   hasDrawn.value = true
+  isDrawing.value = false
   isAnimating.value = false
 
   setTimeout(() => { detailGlow.value = false }, 1500)
@@ -165,7 +168,7 @@ const daysSinceFounded = computed(() => {
 const stats = computed(() => [
   { num: '1900+', label: '服务学子' },
   { num: String(allSubmissions.value.length || '0'), label: '可查询稿件数' },
-  { num: String(daysSinceFounded.value), label: '已成立（天）' }
+  { num: String(daysSinceFounded.value), label: '已成立' }
 ])
 </script>
 
@@ -300,8 +303,15 @@ const stats = computed(() => [
           <!-- 右侧：详情卡 -->
           <div class="draw-right">
             <div class="detail-card" :class="{ 'detail-glow': detailGlow, 'detail-elastic': rightPhase === 'elastic', 'detail-sweep': rightPhase === 'show' }">
+              <!-- 抽取中 -->
+              <template v-if="isDrawing">
+                <div class="detail-empty">
+                  <div class="detail-empty-icon">⏳</div>
+                  <div class="detail-empty-text">正在随机抽取中</div>
+                </div>
+              </template>
               <!-- 有内容时才显示 -->
-              <template v-if="currentCard && hasDrawn">
+              <template v-else-if="currentCard && hasDrawn">
                 <div class="detail-inner" :class="{ 'detail-content-show': rightPhase === 'show' }">
                   <div class="detail-tag">{{ typeEmojiMap[currentCard.type] || '📄' }} {{ currentCard.type }}</div>
                   <div class="detail-time">{{ formatDate(currentCard.created_at) }}</div>
