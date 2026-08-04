@@ -50,8 +50,8 @@ module.exports = async function handler(req, res) {
       }
 
       const body = await parseJsonBody(req);
-      const { content, type } = body || {};
-      if (!content && !type) {
+      const { content, type, created_at } = body || {};
+      if (!content && !type && !created_at) {
         return res.status(400).json({ error: '必须提供要更新的字段' });
       }
       if (type && !VALID_TYPES.includes(type)) {
@@ -67,6 +67,10 @@ module.exports = async function handler(req, res) {
       if (type) {
         params.push(type);
         fields.push(`type = $${params.length}`);
+      }
+      if (created_at) {
+        params.push(created_at.trim());
+        fields.push(`created_at = $${params.length}`);
       }
       params.push(parseInt(id, 10));
 

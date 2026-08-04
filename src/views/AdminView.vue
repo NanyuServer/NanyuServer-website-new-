@@ -51,10 +51,10 @@ const replyModalVisible = ref(false)
 const replyContent = ref('')
 const currentReplyId = ref(null)
 
-/* ① 高级视图（可编辑表格） */
+/* ① 高级视图（全表可编辑） */
 const advancedView = ref(false)
-const editingRows = ref({}) /* { id: { created_at, type, content } } */
-const savingRowId = ref(null)
+const editingRows = ref({})
+const savingAll = ref(false)
 
 const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥']
 
@@ -218,45 +218,65 @@ function filterTable() {
   tablePage.value = 1
 }
 
-/* ① 高级视图：行内编辑 */
-function startEditRow(r) {
-  editingRows.value[r.id] = {
-    created_at: r.created_at ? r.created_at.replace('T', ' ').slice(0, 16) : '',
-    type: r.type,
-    content: r.content
-  }
+/* ① 高级视图：进入时自动填充所有行为可编辑态 */
+function enterAdvancedView() {
+  advancedView.value = true
+  const rows = {}
+  DB.value.forEach(r => {
+    rows[r.id] = {
+      created_at: r.created_at ? r.created_at.replace('T', ' ').slice(0, 16) : '',
+      type: r.type,
+      content: r.content
+    }
+  })
+  editingRows.value = rows
 }
-function cancelEditRow(id) {
-  delete editingRows.value[id]
+function exitAdvancedView() {
+  advancedView.value = false
+  editingRows.value = {}
 }
-async function saveEditRow(id) {
-  const row = editingRows.value[id]
-  if (!row) return
-  savingRowId.value = id
-  try {
-    const res = await fetch(`/api/submissions/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-secret': ADMIN_SECRET.value
-      },
-      body: JSON.stringify({
-        created_at: parseTime(row.created_at),
-        type: row.type,
-        content: row.content
+
+/* ① 批量保存整个表格 */
+async function saveAllRows() {
+  savingAll.value = true
+  let successCount = 0
+  let failCount = 0
+  const ids = Object.keys(editingRows.value)
+
+  for (const id of ids) {
+    const row = editingRows.value[id]
+    if (!row) continue
+    try {
+      const res = await fetch(`/api/submissions/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-secret': ADMIN_SECRET.value
+        },
+        body: JSON.stringify({
+          created_at: parseTime(row.created_at),
+          type: row.type,
+          content: row.content
+        })
       })
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const updated = await res.json()
-    const idx = DB.value.findIndex(r => r.id === id)
-    if (idx !== -1) DB.value[idx] = updated.data || { ...DB.value[idx], ...row }
-    filterTable()
-    delete editingRows.value[id]
-    showToast('保存成功', 'success')
-  } catch (e) {
-    showToast('保存失败: ' + e.message, 'error')
-  } finally {
-    savingRowId.value = null
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const updated = await res.json()
+      const idx = DB.value.findIndex(r => r.id === parseInt(id))
+      if (idx !== -1 && updated.data) {
+        DB.value[idx] = { ...DB.value[idx], ...updated.data }
+      }
+      successCount++
+    } catch (e) {
+      failCount++
+    }
+  }
+
+  filterTable()
+  savingAll.value = false
+  if (failCount === 0) {
+    showToast(`全部 ${successCount} 条保存成功`, 'success')
+  } else {
+    showToast(`${successCount} 条成功，${failCount} 条失败`, 'error')
   }
 }
 
@@ -806,9 +826,13 @@ onMounted(() => {
           <div class="table-toolbar">
             <div class="table-toolbar-title">
               稿件数据列表
-              <button class="adv-toggle" :class="{ active: advancedView }" @click="advancedView = !advancedView" type="button">
-                {{ advancedView ? '退出高级视图' : '高级视图' }}
-              </button>
+              <button v-if="!advancedView" class="adv-toggle" @click="enterAdvancedView" type="button">高级视图</button>
+              <template v-else>
+                <button class="adv-toggle active" @click="exitAdvancedView" type="button">退出高级视图</button>
+                <button class="adv-toggle adv-save" @click="saveAllRows" :disabled="savingAll" type="button">
+                  {{ savingAll ? '保存中…' : '保存全部' }}
+                </button>
+              </template>
             </div>
             <div class="table-search">
               <input type="text" class="glass-input table-search-input" v-model="tableSearch" @input="filterTable" placeholder="搜索稿件内容…" />
@@ -817,7 +841,7 @@ onMounted(() => {
               </div>
             </div>
           </div>
-          <div style="overflow-x: auto;">
+          <div style="overflow-x: auto; max-height: 70vh; overflow-y: auto;">
             <!-- 普通视图 -->
             <table v-if="!advancedView" class="data-table">
               <thead>
@@ -848,54 +872,32 @@ onMounted(() => {
               </tbody>
             </table>
 
-            <!-- 高级视图：可编辑表格 -->
-            <table v-else class="data-table">
+            <!-- 高级视图：全部可编辑，无分页 -->
+            <table v-else class="data-table data-table-adv">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>投稿时间（YYMMDD）</th>
-                  <th>投稿类型</th>
+                  <th style="width: 60px;">ID</th>
+                  <th style="width: 180px;">投稿时间（YYMMDD）</th>
+                  <th style="width: 150px;">投稿类型</th>
                   <th>稿件内容</th>
-                  <th>操作</th>
+                  <th style="width: 70px;">删除</th>
                 </tr>
               </thead>
               <tbody>
-                <template v-if="pageData.length">
-                  <tr v-for="r in pageData" :key="r.id">
+                <template v-if="DB.length">
+                  <tr v-for="r in DB" :key="r.id">
                     <td style="color: var(--accent-dark); font-size: 0.75rem">#{{ r.id }}</td>
                     <td>
-                      <template v-if="editingRows[r.id]">
-                        <input type="text" class="edit-input" v-model="editingRows[r.id].created_at" placeholder="YYMMDD" />
-                      </template>
-                      <template v-else>
-                        <span style="white-space: nowrap; font-size: 0.78rem;">{{ formatDT(r.created_at) }}</span>
-                      </template>
+                      <input v-if="editingRows[r.id]" type="text" class="edit-input" v-model="editingRows[r.id].created_at" />
                     </td>
                     <td>
-                      <template v-if="editingRows[r.id]">
-                        <GlassSelect v-model="editingRows[r.id].type" :options="types.map(t => ({ value: t, label: typeEmojiMap[t] + ' ' + t }))" placeholder="选择类型" />
-                      </template>
-                      <template v-else>
-                        <span class="type-badge" :class="'type-' + r.type">{{ typeEmojiMap[r.type] }} {{ r.type }}</span>
-                      </template>
+                      <GlassSelect v-if="editingRows[r.id]" v-model="editingRows[r.id].type" :options="types.map(t => ({ value: t, label: typeEmojiMap[t] + ' ' + t }))" placeholder="类型" />
                     </td>
                     <td>
-                      <template v-if="editingRows[r.id]">
-                        <input type="text" class="edit-input edit-wide" v-model="editingRows[r.id].content" />
-                      </template>
-                      <template v-else>
-                        <span class="content-cell" :title="r.content">{{ r.content }}</span>
-                      </template>
+                      <input v-if="editingRows[r.id]" type="text" class="edit-input edit-wide" v-model="editingRows[r.id].content" />
                     </td>
-                    <td style="white-space: nowrap;">
-                      <template v-if="editingRows[r.id]">
-                        <button class="action-btn action-save" @click="saveEditRow(r.id)" :disabled="savingRowId === r.id">{{ savingRowId === r.id ? '保存中…' : '保存' }}</button>
-                        <button class="action-btn action-delete" @click="cancelEditRow(r.id)">取消</button>
-                      </template>
-                      <template v-else>
-                        <button class="action-btn action-edit" @click="startEditRow(r)">编辑</button>
-                        <button class="action-btn action-delete" @click="deleteEntry(r.id)">删除</button>
-                      </template>
+                    <td>
+                      <button class="action-btn action-delete" @click="deleteEntry(r.id)">删除</button>
                     </td>
                   </tr>
                 </template>
@@ -905,13 +907,18 @@ onMounted(() => {
               </tbody>
             </table>
           </div>
-          <div class="table-footer">
+          <!-- 普通视图才显示分页 -->
+          <div v-if="!advancedView" class="table-footer">
             <div class="table-count">共 {{ tableFiltered.length }} 条</div>
             <div class="table-pagination">
               <button v-if="tablePage > 1" class="tpage-btn" @click="tGoPage(tablePage - 1)">‹</button>
               <button v-for="i in totalPages" :key="i" class="tpage-btn" :class="{ active: i === tablePage }" @click="tGoPage(i)">{{ i }}</button>
               <button v-if="tablePage < totalPages" class="tpage-btn" @click="tGoPage(tablePage + 1)">›</button>
             </div>
+          </div>
+          <!-- 高级视图底部统计 -->
+          <div v-else class="table-footer">
+            <div class="table-count">共 {{ DB.length }} 条（全部可编辑）</div>
           </div>
         </div>
       </div>
@@ -1599,33 +1606,48 @@ onMounted(() => {
   color: white;
   border-color: transparent;
 }
+.adv-save {
+  background: #2e7d32;
+  color: white;
+  border-color: transparent;
+}
+.adv-save:hover {
+  background: #1b5e20;
+}
+.adv-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
-/* 高级视图编辑输入框 */
-.edit-input {
-  width: 140px;
+/* 高级视图可编辑表格 */
+.data-table-adv {
+  min-width: auto;
+}
+.data-table-adv td {
+  padding: 0.5rem 0.8rem;
+}
+.data-table-adv .edit-input {
+  width: 100%;
   font-family: var(--font-ui);
   font-size: 0.8rem;
-  padding: 0.4rem 0.6rem;
+  padding: 0.4rem 0.5rem;
   border: 1px solid rgba(179, 157, 219, 0.2);
   background: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--text-primary);
   outline: none;
   transition: border-color 0.2s;
 }
-.edit-input:focus {
+.data-table-adv .edit-input:focus {
   border-color: var(--accent-dark);
   box-shadow: 0 0 0 2px rgba(179, 157, 219, 0.1);
 }
-.edit-wide {
-  width: 280px;
+.data-table-adv .edit-wide {
+  min-width: 200px;
 }
-.action-save {
-  color: var(--accent-dark);
-  border-color: rgba(179, 157, 219, 0.3);
-}
-.action-save:hover {
-  background: rgba(179, 157, 219, 0.1);
+.data-table-adv .action-delete {
+  font-size: 0.68rem;
+  padding: 0.25rem 0.5rem;
 }
 
 /* ═══ Feedback Status ═══ */
