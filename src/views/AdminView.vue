@@ -55,6 +55,8 @@ const currentReplyId = ref(null)
 const advancedView = ref(false)
 const editingRows = ref({})
 const savingAll = ref(false)
+const advTableRef = ref(null)
+const colWidths = ref([60, 180, 150, 0, 70])
 
 const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥']
 
@@ -234,6 +236,33 @@ function enterAdvancedView() {
 function exitAdvancedView() {
   advancedView.value = false
   editingRows.value = {}
+}
+
+/* ① 列宽拖拽 */
+function startResize(colIndex, e) {
+  e.preventDefault()
+  const table = advTableRef.value
+  if (!table) return
+  const th = table.querySelectorAll('thead th')[colIndex]
+  if (!th) return
+  const startX = e.clientX
+  const startW = th.offsetWidth
+
+  function onMove(ev) {
+    const delta = ev.clientX - startX
+    const newW = Math.max(50, startW + delta)
+    colWidths.value[colIndex] = newW
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove)
+    document.removeEventListener('mouseup', onUp)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+  }
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  document.addEventListener('mousemove', onMove)
+  document.addEventListener('mouseup', onUp)
 }
 
 /* ① 批量保存整个表格 */
@@ -803,9 +832,10 @@ onMounted(() => {
                     <td><span class="type-badge" :class="'type-' + row.type">{{ typeEmojiMap[row.type] }} {{ row.type }}</span></td>
                     <td class="content-cell" :title="row.content">{{ row.content }}</td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
+              </tbody>
+            </table>
+            </div><!-- adv-resize-wrap -->
+          </div>
             <div class="bulk-actions" style="margin-top: 1rem;">
               <button class="glass-btn glass-btn-primary glass-btn-sm" @click="submitBulkImport" :disabled="bulkImporting">
                 {{ bulkImporting ? '导入中…' : '确认导入 ' + bulkPreview.length + ' 条' }}
@@ -841,7 +871,7 @@ onMounted(() => {
               </div>
             </div>
           </div>
-          <div style="overflow-x: auto; max-height: 70vh; overflow-y: auto;">
+          <div style="overflow-x: auto;">
             <!-- 普通视图 -->
             <table v-if="!advancedView" class="data-table">
               <thead>
@@ -872,15 +902,22 @@ onMounted(() => {
               </tbody>
             </table>
 
-            <!-- 高级视图：全部可编辑，无分页 -->
-            <table v-else class="data-table data-table-adv">
+            <!-- 高级视图：可拖拽调整大小 -->
+            <div v-else class="adv-resize-wrap">
+              <table ref="advTableRef" class="data-table data-table-adv">
+              <colgroup>
+                <col :style="{ width: colWidths[0] + 'px' }" />
+                <col :style="{ width: colWidths[1] + 'px' }" />
+                <col :style="{ width: colWidths[2] + 'px' }" />
+                <col />
+                <col :style="{ width: colWidths[4] + 'px' }" />
+              </colgroup>
               <thead>
                 <tr>
-                  <th style="width: 60px;">ID</th>
-                  <th style="width: 180px;">投稿时间（YYMMDD）</th>
-                  <th style="width: 150px;">投稿类型</th>
-                  <th>稿件内容</th>
-                  <th style="width: 70px;">删除</th>
+                  <th class="resizable-th" v-for="(label, ci) in ['ID', '投稿时间（YYMMDD）', '投稿类型', '稿件内容', '删除']" :key="ci">
+                    {{ label }}
+                    <span class="resize-handle" @mousedown="startResize(ci, $event)"></span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1622,6 +1659,7 @@ onMounted(() => {
 /* 高级视图可编辑表格 */
 .data-table-adv {
   min-width: auto;
+  table-layout: fixed;
 }
 .data-table-adv td {
   padding: 0.5rem 0.8rem;
@@ -1643,11 +1681,56 @@ onMounted(() => {
   box-shadow: 0 0 0 2px rgba(179, 157, 219, 0.1);
 }
 .data-table-adv .edit-wide {
-  min-width: 200px;
+  min-width: 100%;
 }
 .data-table-adv .action-delete {
   font-size: 0.68rem;
   padding: 0.25rem 0.5rem;
+}
+
+/* ② 外层容器可拖拽调整大小 */
+.adv-resize-wrap {
+  overflow: auto;
+  resize: both;
+  min-width: 600px;
+  min-height: 200px;
+  max-width: 100%;
+  max-height: 70vh;
+  border: 2px dashed rgba(179, 157, 219, 0.2);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.adv-resize-wrap:hover {
+  border-color: rgba(179, 157, 219, 0.4);
+}
+.adv-resize-wrap::after {
+  content: '↘';
+  position: sticky;
+  right: 4px;
+  bottom: 4px;
+  float: right;
+  font-size: 0.75rem;
+  color: rgba(179, 157, 219, 0.35);
+  pointer-events: none;
+}
+
+/* ③ 表头列拖拽手柄 */
+.resizable-th {
+  position: relative;
+  user-select: none;
+}
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.2s;
+}
+.resize-handle:hover {
+  background: rgba(179, 157, 219, 0.25);
 }
 
 /* ═══ Feedback Status ═══ */
