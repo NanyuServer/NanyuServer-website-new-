@@ -224,22 +224,29 @@ function filterTable() {
   tablePage.value = 1
 }
 
-/* ① 高级视图：进入时自动填充所有行为可编辑态 */
+/* ① 高级视图：进入时自动填充所有行为可编辑态 + 保存原始数据快照 */
+const originalDataSnapshot = ref({})
+
 function enterAdvancedView() {
   advancedView.value = true
   const rows = {}
+  const snapshot = {}
   DB.value.forEach(r => {
-    rows[r.id] = {
+    const row = {
       created_at: r.created_at ? r.created_at.replace('T', ' ').slice(0, 16) : '',
       type: r.type,
       content: r.content
     }
+    rows[r.id] = { ...row }
+    snapshot[r.id] = { ...row }
   })
   editingRows.value = rows
+  originalDataSnapshot.value = snapshot
 }
 function exitAdvancedView() {
   advancedView.value = false
   editingRows.value = {}
+  originalDataSnapshot.value = {}
 }
 
 /* ① 列宽拖拽 */
@@ -269,16 +276,35 @@ function startResize(colIndex, e) {
   document.addEventListener('mouseup', onUp)
 }
 
-/* ① 批量保存整个表格 */
+/* ① 批量保存：只保存被修改过的行 */
 async function saveAllRows() {
   savingAll.value = true
   let successCount = 0
   let failCount = 0
+  let skipCount = 0
+
   const ids = Object.keys(editingRows.value)
 
   for (const id of ids) {
     const row = editingRows.value[id]
-    if (!row) continue
+    const original = originalDataSnapshot.value[id]
+    if (!row || !original) continue
+
+    /* 比对原始数据，找出变更的字段 */
+    const patched = {}
+    const parsedTime = parseTime(row.created_at)
+    if (parsedTime !== original.created_at && row.created_at !== original.created_at) {
+      patched.created_at = parsedTime
+    }
+    if (row.type !== original.type) patched.type = row.type
+    if (row.content !== original.content) patched.content = row.content
+
+    /* 没有变更则跳过 */
+    if (Object.keys(patched).length === 0) {
+      skipCount++
+      continue
+    }
+
     try {
       const res = await fetch(`/api/submissions/${id}`, {
         method: 'PATCH',
@@ -286,11 +312,7 @@ async function saveAllRows() {
           'Content-Type': 'application/json',
           'x-admin-secret': ADMIN_SECRET.value
         },
-        body: JSON.stringify({
-          created_at: parseTime(row.created_at),
-          type: row.type,
-          content: row.content
-        })
+        body: JSON.stringify(patched)
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const updated = await res.json()
@@ -307,9 +329,9 @@ async function saveAllRows() {
   filterTable()
   savingAll.value = false
   if (failCount === 0) {
-    showToast(`全部 ${successCount} 条保存成功`, 'success')
+    showToast(`保存成功 ${successCount} 条` + (skipCount > 0 ? `，${skipCount} 条无变更已跳过` : ''), 'success')
   } else {
-    showToast(`${successCount} 条成功，${failCount} 条失败`, 'error')
+    showToast(`${successCount} 条成功，${failCount} 条失败` + (skipCount > 0 ? `，${skipCount} 条跳过` : ''), 'error')
   }
 }
 
@@ -746,26 +768,6 @@ onMounted(() => {
         <div class="admin-badge">● 系统运行正常</div>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-row">
-        <div class="stat-card glass-card">
-          <div class="stat-num">{{ statTotal }}</div>
-          <div class="stat-label">总稿件数</div>
-        </div>
-        <div class="stat-card glass-card">
-          <div class="stat-num">{{ statToday }}</div>
-          <div class="stat-label">今日新增</div>
-        </div>
-        <div class="stat-card glass-card">
-          <div class="stat-num">9</div>
-          <div class="stat-label">稿件类型</div>
-        </div>
-        <div class="stat-card glass-card">
-          <div class="stat-num">100%</div>
-          <div class="stat-label">系统可用率</div>
-        </div>
-      </div>
-
       <!-- Add Submission Tab -->
       <div v-show="currentTab === 'add'">
         <div class="form-card glass-card">
@@ -880,11 +882,11 @@ onMounted(() => {
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>投稿时间</th>
-                  <th>投稿类型</th>
+                  <th style="width: 60px;">ID</th>
+                  <th style="width: 150px;">投稿时间</th>
+                  <th style="width: 120px;">投稿类型</th>
                   <th>稿件内容</th>
-                  <th>操作</th>
+                  <th style="width: 100px;">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -1515,12 +1517,13 @@ onMounted(() => {
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 .data-table th {
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   color: var(--accent-dark);
-  padding: 0.8rem 1.2rem;
+  padding: 0.8rem 1rem;
   text-align: left;
   border-bottom: 1px solid rgba(179, 157, 219, 0.15);
   background: rgba(179, 157, 219, 0.06);
@@ -1528,15 +1531,15 @@ onMounted(() => {
 }
 .data-table td {
   font-size: 0.83rem;
-  padding: 0.9rem 1.2rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid rgba(179, 157, 219, 0.08);
   color: var(--text-secondary);
   vertical-align: middle;
+  word-break: break-word;
 }
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: rgba(179, 157, 219, 0.05); }
 .content-cell {
-  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

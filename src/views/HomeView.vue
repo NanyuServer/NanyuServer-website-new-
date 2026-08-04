@@ -155,13 +155,18 @@ const functionCards = [
   { icon: 'star', title: '共创计划', desc: '在北关鱼的驿站发稿', link: '/cooperation' }
 ]
 
-/* ── 平台数据 ── */
-const stats = [
+/* ── 平台数据（动态计算） ── */
+const foundedDate = new Date('2024-08-08')
+const daysSinceFounded = computed(() => {
+  const now = new Date()
+  const diff = now.getTime() - foundedDate.getTime()
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
+})
+const stats = computed(() => [
   { num: '1900+', label: '服务学子' },
-  { num: '1200+', label: '累计稿件' },
-  { num: '6', label: '核心版块' },
-  { num: '99.9%', label: '系统可用率' }
-]
+  { num: String(allSubmissions.value.length || '0'), label: '可查询稿件数' },
+  { num: String(daysSinceFounded.value), label: '已成立（天）' }
+])
 </script>
 
 <template>
@@ -748,7 +753,7 @@ const stats = [
   max-width: 1000px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
 }
 
