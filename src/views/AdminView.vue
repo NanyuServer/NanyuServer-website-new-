@@ -86,8 +86,12 @@ const feedbackFiltered = computed(() => {
 })
 
 function formatDT(iso) {
-  const d = new Date(iso)
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  if (!iso) return ''
+  /* 直接从字符串解析，避免 new Date() 的 UTC 偏移 */
+  const s = String(iso).replace('T', ' ')
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})/)
+  if (m) return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`
+  return s.slice(0, 16)
 }
 
 /* ① 解析 YYMMDD / YYYY-MM-DD HH:MM 等多种格式 */
@@ -462,7 +466,7 @@ async function submitEntry() {
       showToast('✓ 稿件已成功更新', 'success')
     } else {
       const json = await submissionsApi.create({
-        created_at: new Date(fieldTime.value).toISOString(),
+        created_at: fieldTime.value,
         content: fieldContent.value.trim(),
         type: fieldType.value
       })
@@ -480,9 +484,9 @@ function enterEditMode(id) {
   const r = DB.value.find(r => r.id === id)
   if (!r) return showToast('未找到该稿件', 'error')
   fieldEditId.value = r.id
-  const d = new Date(r.created_at)
-  const pad = n => String(n).padStart(2, '0')
-  fieldTime.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  /* 直接从字符串截取，避免 UTC 偏移 */
+  const s = String(r.created_at || '').replace('T', ' ').slice(0, 16)
+  fieldTime.value = s
   fieldType.value = r.type
   fieldContent.value = r.content
   showTab('add')
@@ -856,10 +860,10 @@ onMounted(() => {
           <div class="table-toolbar">
             <div class="table-toolbar-title">
               稿件数据列表
-              <button v-if="!advancedView" class="adv-toggle" @click="enterAdvancedView" type="button">高级视图</button>
+              <button v-if="!advancedView" class="adv-toggle adv-only-desktop" @click="enterAdvancedView" type="button">高级视图</button>
               <template v-else>
-                <button class="adv-toggle active" @click="exitAdvancedView" type="button">退出高级视图</button>
-                <button class="adv-toggle adv-save" @click="saveAllRows" :disabled="savingAll" type="button">
+                <button class="adv-toggle adv-only-desktop active" @click="exitAdvancedView" type="button">退出高级视图</button>
+                <button class="adv-toggle adv-only-desktop adv-save" @click="saveAllRows" :disabled="savingAll" type="button">
                   {{ savingAll ? '保存中…' : '保存全部' }}
                 </button>
               </template>
@@ -871,9 +875,9 @@ onMounted(() => {
               </div>
             </div>
           </div>
-          <div style="overflow-x: auto;">
-            <!-- 普通视图 -->
-            <table v-if="!advancedView" class="data-table">
+          <!-- 普通视图 -->
+          <div v-if="!advancedView" style="overflow-x: auto;">
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -901,10 +905,10 @@ onMounted(() => {
                 </template>
               </tbody>
             </table>
-
-            <!-- 高级视图：可拖拽调整大小 -->
-            <div v-else class="adv-resize-wrap">
-              <table ref="advTableRef" class="data-table data-table-adv">
+          </div>
+          <!-- 高级视图：全宽可编辑 -->
+          <div v-else class="adv-wrap">
+            <table ref="advTableRef" class="data-table data-table-adv">
               <colgroup>
                 <col :style="{ width: colWidths[0] + 'px' }" />
                 <col :style="{ width: colWidths[1] + 'px' }" />
@@ -1119,7 +1123,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 手机端底部导航栏 -->
+    <!-- 手机端底部导航栏（仅移动端显示） -->
     <nav class="mobile-nav">
       <button class="mobile-nav-item" :class="{ active: currentTab === 'add' }" @click="showTab('add')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
@@ -1142,7 +1146,7 @@ onMounted(() => {
         <span>账户</span>
       </button>
     </nav>
-  </div>
+
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="replyModalVisible" class="reply-overlay" @click.self="replyModalVisible = false">
@@ -1330,6 +1334,11 @@ onMounted(() => {
 }
 .sidebar-logout:hover {
   color: var(--color-error);
+}
+
+/* Mobile nav default: hidden on desktop */
+.mobile-nav {
+  display: none;
 }
 
 /* ═══ Main Content ═══ */
@@ -1655,10 +1664,21 @@ onMounted(() => {
   opacity: 0.6;
   cursor: not-allowed;
 }
+/* 仅电脑端显示高级视图按钮 */
+.adv-only-desktop {
+  display: inline-flex;
+}
+
+/* 高级视图全宽容器 */
+.adv-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* 高级视图可编辑表格 */
 .data-table-adv {
-  min-width: auto;
+  min-width: 800px;
+  width: 100%;
   table-layout: fixed;
 }
 .data-table-adv td {
@@ -1686,32 +1706,6 @@ onMounted(() => {
 .data-table-adv .action-delete {
   font-size: 0.68rem;
   padding: 0.25rem 0.5rem;
-}
-
-/* ② 外层容器可拖拽调整大小 */
-.adv-resize-wrap {
-  overflow: auto;
-  resize: both;
-  min-width: 600px;
-  min-height: 200px;
-  max-width: 100%;
-  max-height: 70vh;
-  border: 2px dashed rgba(179, 157, 219, 0.2);
-  border-radius: 8px;
-  transition: border-color 0.2s;
-}
-.adv-resize-wrap:hover {
-  border-color: rgba(179, 157, 219, 0.4);
-}
-.adv-resize-wrap::after {
-  content: '↘';
-  position: sticky;
-  right: 4px;
-  bottom: 4px;
-  float: right;
-  font-size: 0.75rem;
-  color: rgba(179, 157, 219, 0.35);
-  pointer-events: none;
 }
 
 /* ③ 表头列拖拽手柄 */
@@ -1809,6 +1803,11 @@ onMounted(() => {
   }
   .data-table {
     min-width: 600px;
+  }
+
+  /* 手机端隐藏高级视图按钮 */
+  .adv-only-desktop {
+    display: none !important;
   }
 
   .mobile-nav {

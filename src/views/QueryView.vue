@@ -36,9 +36,11 @@ const resultsText = computed(() => {
 })
 
 function formatDate(iso) {
-  const d = new Date(iso)
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
-    + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  if (!iso) return ''
+  const s = String(iso).replace('T', ' ')
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})/)
+  if (m) return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`
+  return s.slice(0, 16)
 }
 
 function sortData() {

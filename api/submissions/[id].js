@@ -29,7 +29,7 @@ function parseJsonBody(req) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'DELETE, PATCH, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-secret');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
     const sql = neon(process.env.DATABASE_URL);
     const VALID_TYPES = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥'];
 
-    if (req.method === 'PATCH') {
+    if (req.method === 'PATCH' || req.method === 'PUT') {
       const adminSecret = req.headers['x-admin-secret'];
       if (!(await validateAdminSecret(adminSecret))) {
         return res.status(401).json({ error: '未授权，请检查管理员密钥' });
