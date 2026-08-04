@@ -51,6 +51,11 @@ const replyModalVisible = ref(false)
 const replyContent = ref('')
 const currentReplyId = ref(null)
 
+/* ① 高级视图（可编辑表格） */
+const advancedView = ref(false)
+const editingRows = ref({}) /* { id: { created_at, type, content } } */
+const savingRowId = ref(null)
+
 const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥']
 
 const typeEmojiMap = {
@@ -80,7 +85,33 @@ const feedbackFiltered = computed(() => {
 
 function formatDT(iso) {
   const d = new Date(iso)
-  return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+}
+
+/* ① 解析 YYMMDD / YYYY-MM-DD HH:MM 等多种格式 */
+function parseTime(raw) {
+  if (!raw || !String(raw).trim()) return ''
+  const s = String(raw).trim()
+
+  /* YYMMDD 六位纯数字 */
+  if (/^\d{6}$/.test(s)) {
+    const yy = parseInt(s.slice(0, 2))
+    const mm = parseInt(s.slice(2, 4))
+    const dd = parseInt(s.slice(4, 6))
+    const y = yy < 50 ? 2000 + yy : 1900 + yy
+    if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return s
+    return `${y}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')} 12:00`
+  }
+
+  /* 已经是 YYYY-MM-DD HH:MM 格式 */
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s
+
+  /* YYYYMMDD 八位纯数字 */
+  if (/^\d{8}$/.test(s)) {
+    return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)} 12:00`
+  }
+
+  return s
 }
 
 function parseApplicantGrade(note) {
@@ -187,6 +218,48 @@ function filterTable() {
   tablePage.value = 1
 }
 
+/* ① 高级视图：行内编辑 */
+function startEditRow(r) {
+  editingRows.value[r.id] = {
+    created_at: r.created_at ? r.created_at.replace('T', ' ').slice(0, 16) : '',
+    type: r.type,
+    content: r.content
+  }
+}
+function cancelEditRow(id) {
+  delete editingRows.value[id]
+}
+async function saveEditRow(id) {
+  const row = editingRows.value[id]
+  if (!row) return
+  savingRowId.value = id
+  try {
+    const res = await fetch(`/api/submissions/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': ADMIN_SECRET.value
+      },
+      body: JSON.stringify({
+        created_at: parseTime(row.created_at),
+        type: row.type,
+        content: row.content
+      })
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const updated = await res.json()
+    const idx = DB.value.findIndex(r => r.id === id)
+    if (idx !== -1) DB.value[idx] = updated.data || { ...DB.value[idx], ...row }
+    filterTable()
+    delete editingRows.value[id]
+    showToast('保存成功', 'success')
+  } catch (e) {
+    showToast('保存失败: ' + e.message, 'error')
+  } finally {
+    savingRowId.value = null
+  }
+}
+
 function clearForm() {
   fieldContent.value = ''
   fieldType.value = ''
@@ -196,8 +269,8 @@ function clearForm() {
 
 function downloadTemplate() {
   const header = '投稿时间,投稿类型,稿件内容\n'
-  const example = '2026-06-20 12:00:00,扩列,这是一条示例稿件内容\n'
-  const typesNote = '# 可用类型: 寻物启事, 表白, 挂人, 扩列, 吐槽, 交易, 捞人、物, 打听资讯, 寻找搭子, 有啥说啥\n'
+  const example = '260620,扩列,这是一条示例稿件内容\n'
+  const typesNote = '# 投稿时间支持格式: 260620 (YYMMDD) 或 2026-06-20 12:00:00\n'
   const bom = '\uFEFF'
   const blob = new Blob([bom + header + example + typesNote], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
@@ -224,14 +297,14 @@ async function parseBulkFile(e) {
     const typeIdx = header.findIndex(h => h.includes('类型'))
     const timeIdx = header.findIndex(h => h.includes('时间'))
 
-    const rows = []
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseCSVLine(lines[i])
-      rows.push({
-        created_at: timeIdx >= 0 ? cols[timeIdx] : '',
-        type: typeIdx >= 0 ? cols[typeIdx] : '',
-        content: contentIdx >= 0 ? cols[contentIdx] : cols.join(',')
-      })
+      const rows = []
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i])
+        rows.push({
+          created_at: timeIdx >= 0 ? parseTime(cols[timeIdx]) : '',
+          type: typeIdx >= 0 ? cols[typeIdx] : '',
+          content: contentIdx >= 0 ? cols[contentIdx] : cols.join(',')
+        })
     }
     bulkPreview.value = rows
   } else if (ext === 'xlsx' || ext === 'xls') {
@@ -252,7 +325,7 @@ async function parseBulkFile(e) {
         const row = json[i]
         if (!row || row.every(c => !c)) continue
         rows.push({
-          created_at: timeIdx >= 0 ? String(row[timeIdx] || '') : '',
+          created_at: timeIdx >= 0 ? parseTime(String(row[timeIdx] || '')) : '',
           type: typeIdx >= 0 ? String(row[typeIdx] || '') : '',
           content: contentIdx >= 0 ? String(row[contentIdx] || '') : row.map(c => String(c || '')).join(',')
         })
@@ -731,7 +804,12 @@ onMounted(() => {
       <div v-show="currentTab === 'list'">
         <div class="table-card glass-card">
           <div class="table-toolbar">
-            <div class="table-toolbar-title">稿件数据列表</div>
+            <div class="table-toolbar-title">
+              稿件数据列表
+              <button class="adv-toggle" :class="{ active: advancedView }" @click="advancedView = !advancedView" type="button">
+                {{ advancedView ? '退出高级视图' : '高级视图' }}
+              </button>
+            </div>
             <div class="table-search">
               <input type="text" class="glass-input table-search-input" v-model="tableSearch" @input="filterTable" placeholder="搜索稿件内容…" />
               <div style="min-width: 140px;">
@@ -740,7 +818,8 @@ onMounted(() => {
             </div>
           </div>
           <div style="overflow-x: auto;">
-            <table class="data-table">
+            <!-- 普通视图 -->
+            <table v-if="!advancedView" class="data-table">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -753,13 +832,70 @@ onMounted(() => {
               <tbody>
                 <template v-if="pageData.length">
                   <tr v-for="r in pageData" :key="r.id">
-                    <td style="color: #7b55d4; font-size: 0.75rem">#{{ r.id }}</td>
-                    <td style="white-space: nowrap; color: var(--accent-light); font-size: 0.78rem">{{ formatDT(r.created_at) }}</td>
+                    <td style="color: var(--accent-dark); font-size: 0.75rem">#{{ r.id }}</td>
+                    <td style="white-space: nowrap; font-size: 0.78rem">{{ formatDT(r.created_at) }}</td>
                     <td><span class="type-badge" :class="'type-' + r.type">{{ typeEmojiMap[r.type] }} {{ r.type }}</span></td>
                     <td class="content-cell" :title="r.content">{{ r.content }}</td>
                     <td>
                       <button class="action-btn action-edit" @click="enterEditMode(r.id)">编辑</button>
                       <button class="action-btn action-delete" @click="deleteEntry(r.id)">删除</button>
+                    </td>
+                  </tr>
+                </template>
+                <template v-else>
+                  <tr><td colspan="5" class="empty-table">暂无数据</td></tr>
+                </template>
+              </tbody>
+            </table>
+
+            <!-- 高级视图：可编辑表格 -->
+            <table v-else class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>投稿时间（YYMMDD）</th>
+                  <th>投稿类型</th>
+                  <th>稿件内容</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-if="pageData.length">
+                  <tr v-for="r in pageData" :key="r.id">
+                    <td style="color: var(--accent-dark); font-size: 0.75rem">#{{ r.id }}</td>
+                    <td>
+                      <template v-if="editingRows[r.id]">
+                        <input type="text" class="edit-input" v-model="editingRows[r.id].created_at" placeholder="YYMMDD" />
+                      </template>
+                      <template v-else>
+                        <span style="white-space: nowrap; font-size: 0.78rem;">{{ formatDT(r.created_at) }}</span>
+                      </template>
+                    </td>
+                    <td>
+                      <template v-if="editingRows[r.id]">
+                        <GlassSelect v-model="editingRows[r.id].type" :options="types.map(t => ({ value: t, label: typeEmojiMap[t] + ' ' + t }))" placeholder="选择类型" />
+                      </template>
+                      <template v-else>
+                        <span class="type-badge" :class="'type-' + r.type">{{ typeEmojiMap[r.type] }} {{ r.type }}</span>
+                      </template>
+                    </td>
+                    <td>
+                      <template v-if="editingRows[r.id]">
+                        <input type="text" class="edit-input edit-wide" v-model="editingRows[r.id].content" />
+                      </template>
+                      <template v-else>
+                        <span class="content-cell" :title="r.content">{{ r.content }}</span>
+                      </template>
+                    </td>
+                    <td style="white-space: nowrap;">
+                      <template v-if="editingRows[r.id]">
+                        <button class="action-btn action-save" @click="saveEditRow(r.id)" :disabled="savingRowId === r.id">{{ savingRowId === r.id ? '保存中…' : '保存' }}</button>
+                        <button class="action-btn action-delete" @click="cancelEditRow(r.id)">取消</button>
+                      </template>
+                      <template v-else>
+                        <button class="action-btn action-edit" @click="startEditRow(r)">编辑</button>
+                        <button class="action-btn action-delete" @click="deleteEntry(r.id)">删除</button>
+                      </template>
                     </td>
                   </tr>
                 </template>
@@ -1436,6 +1572,60 @@ onMounted(() => {
   padding: 3rem;
   color: var(--text-muted);
   font-size: 0.85rem;
+}
+
+/* 高级视图按钮 */
+.adv-toggle {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.8rem;
+  padding: 0.3rem 0.8rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 500;
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  background: rgba(179, 157, 219, 0.06);
+  color: var(--text-secondary);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.adv-toggle:hover {
+  background: rgba(179, 157, 219, 0.12);
+  border-color: rgba(179, 157, 219, 0.3);
+}
+.adv-toggle.active {
+  background: var(--accent-dark);
+  color: white;
+  border-color: transparent;
+}
+
+/* 高级视图编辑输入框 */
+.edit-input {
+  width: 140px;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.edit-input:focus {
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 2px rgba(179, 157, 219, 0.1);
+}
+.edit-wide {
+  width: 280px;
+}
+.action-save {
+  color: var(--accent-dark);
+  border-color: rgba(179, 157, 219, 0.3);
+}
+.action-save:hover {
+  background: rgba(179, 157, 219, 0.1);
 }
 
 /* ═══ Feedback Status ═══ */
