@@ -23,14 +23,14 @@ export const submissionsApi = {
     })
   },
   update(id, payload) {
-    return request(`/submissions/${id}`, {
+    return request(`/submissions?id=${id}`, {
       method: 'PATCH',
       headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' },
       body: JSON.stringify(payload)
     })
   },
   remove(id) {
-    return request(`/submissions/${id}`, {
+    return request(`/submissions?id=${id}`, {
       method: 'DELETE',
       headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
     })

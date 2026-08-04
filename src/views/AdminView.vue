@@ -306,7 +306,7 @@ async function saveAllRows() {
     }
 
     try {
-      const res = await fetch(`/api/submissions/${id}`, {
+      const res = await fetch(`/api/submissions?id=${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
