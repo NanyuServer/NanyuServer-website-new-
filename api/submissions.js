@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
 
   // ── GET → 列表 ──
   if (req.method === 'GET') {
-    const { type, start, end, order = 'desc', limit = '200' } = req.query;
+    const { type, start, end, order = 'desc', limit = '9999' } = req.query;
     const conditions = [];
     const params = [];
     if (type) { params.push(type); conditions.push(`type = $${params.length}`); }
@@ -98,7 +98,7 @@ module.exports = async function handler(req, res) {
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const sortDir = order === 'asc' ? 'ASC' : 'DESC';
-    params.push(parseInt(limit, 10) || 200);
+    params.push(parseInt(limit, 10) || 9999);
 
     try {
       const rows = await sql(`SELECT id, created_at, content, type FROM submissions ${where} ORDER BY created_at ${sortDir} LIMIT $${params.length}`, params);
