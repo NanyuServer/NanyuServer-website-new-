@@ -53,7 +53,17 @@ module.exports = async function handler(req, res) {
 
   try {
     let inserted = 0;
+    let skipped = errors.length;
     for (const row of valid) {
+      // 查重：时间、内容、类型均一致则跳过
+      const dupes = await sql(
+        `SELECT id FROM submissions WHERE created_at = $1 AND content = $2 AND type = $3 LIMIT 1`,
+        [row.created_at, row.content, row.type]
+      );
+      if (dupes.length > 0) {
+        skipped++;
+        continue;
+      }
       await sql(
         `INSERT INTO submissions (created_at, content, type) VALUES ($1, $2, $3)`,
         [row.created_at, row.content, row.type]
@@ -64,7 +74,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       success: true,
       imported: inserted,
-      skipped: errors.length,
+      skipped: skipped,
       errors: errors.length > 0 ? errors : undefined
     });
   } catch (err) {

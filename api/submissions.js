@@ -122,6 +122,15 @@ module.exports = async function handler(req, res) {
       if (!VALID_TYPES.includes(type)) return res.status(400).json({ error: `无效类型：${type}` });
       if (content.length < 5 || content.length > 2000) return res.status(400).json({ error: '内容长度须在5~2000字' });
 
+      // 查重：时间、内容、类型均一致则判定为重复
+      const dupes = await sql(
+        `SELECT id FROM submissions WHERE created_at = $1::timestamptz AND content = $2 AND type = $3 LIMIT 1`,
+        [created_at, content.trim(), type]
+      );
+      if (dupes.length > 0) {
+        return res.status(409).json({ error: '重复稿件：已存在相同时间、内容、类型的稿件', duplicate_id: dupes[0].id });
+      }
+
       const rows = await sql(`INSERT INTO submissions (created_at, content, type) VALUES ($1::timestamptz, $2, $3) RETURNING id, created_at, content, type`, [created_at, content.trim(), type]);
       return res.status(201).json({ data: rows[0] });
     } catch (err) {
