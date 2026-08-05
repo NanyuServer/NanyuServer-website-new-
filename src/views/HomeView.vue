@@ -193,10 +193,7 @@ const stats = computed(() => [
           南渝万能墙建立于2024年8月8日。以服务好南渝师生为宗旨，我们致力于为南渝学子提供信息交流、资源共享平台。非校方组织。
         </p>
         <div class="hero-tags">
-          <span class="hero-tag-item">互动宣教</span>
-          <span class="hero-tag-item">多元交流</span>
-          <span class="hero-tag-item">允公允能</span>
-          <span class="hero-tag-item">日新月异</span>
+          <span class="hero-tag-item hero-tag-combo">互动宣教 · 多元交流</span>
         </div>
         <div class="hero-btns">
           <button class="btn-dark" @click="$router.push('/query')">进入万能墙</button>
@@ -249,7 +246,7 @@ const stats = computed(() => [
   <section class="draw-section">
     <div class="section-container">
       <div class="section-header">
-        <div class="section-num">01 / PART</div>
+        <div class="section-num">01 / GAME</div>
         <h2 class="section-title">试试抽取一份同学投稿</h2>
         <p class="section-sub">每一张都是南渝学子的真实声音</p>
       </div>
@@ -428,16 +425,16 @@ const stats = computed(() => [
       <div class="feature-card">
         <div class="feature-num">03</div>
         <div class="feature-body">
-          <div class="feature-tag">二手交易</div>
-          <h3 class="feature-title">打造绿色循环校园</h3>
+          <div class="feature-tag">校园论坛</div>
+          <h3 class="feature-title">南渝学子的专属论坛空间</h3>
           <p class="feature-desc">
-            教辅书籍、文具器材、闲置好物，统统在这里循环利用。打造绿色校园，南渝万能墙先行。
+            你可以在这里进行二手交易、可以提出你的问题、可以尽情吐槽。南渝万能墙为南渝学子打造专属平台。
           </p>
         </div>
         <div class="feature-visual">
           <div class="feature-icon-circle">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
         </div>
@@ -1548,8 +1545,19 @@ const stats = computed(() => [
   }
 
   .stats-container {
-    grid-template-columns: repeat(2, 1fr);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     gap: 1rem;
+    align-items: stretch;
+  }
+
+  .stat-item:first-child,
+  .stat-item:last-child {
+    /* 左右两框等宽 */
+  }
+
+  .stat-item:nth-child(2) {
+    /* 中间框自动撑满 */
   }
 
   .draw-outer-card {
@@ -1634,8 +1642,13 @@ const stats = computed(() => [
     height: 100px;
   }
 
+  /* 手机端联系区块宽度对齐功能区 */
   .contact-section {
-    margin: 1rem;
+    padding: 4rem 0;
+  }
+
+  .contact-section > .section-container {
+    margin: 0;
     padding: 4rem 1.5rem;
   }
 
