@@ -56,9 +56,9 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: '请输入QQ号' });
       }
 
-      // 精确匹配稿件内容
+      // 精确匹配稿件内容（无论是否已隐藏）
       const matches = await sql(
-        `SELECT id, content FROM submissions WHERE content = $1 AND hidden = FALSE ORDER BY created_at DESC`,
+        `SELECT id, content, hidden FROM submissions WHERE content = $1 ORDER BY created_at DESC`,
         [content.trim()]
       );
 
@@ -68,6 +68,17 @@ module.exports = async function handler(req, res) {
 
       // 取第一条匹配的稿件
       const target = matches[0];
+
+      // 检查是否已经撤过稿
+      if (target.hidden) {
+        const existing = await sql(
+          `SELECT id FROM withdrawals WHERE submission_id = $1 LIMIT 1`,
+          [target.id]
+        );
+        if (existing.length > 0) {
+          return res.status(409).json({ error: '该稿件已被撤稿，无需重复操作' });
+        }
+      }
 
       // 记录撤稿
       const inserted = await sql(

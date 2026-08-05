@@ -104,7 +104,7 @@ module.exports = async function handler(req, res) {
       // 先尝试查询含 hidden 字段（新库）
       let rows;
       try {
-        const hiddenCond = hidden !== 'true' ? ' AND hidden = FALSE' : '';
+        const hiddenCond = hidden !== 'true' ? (where ? ' AND hidden = FALSE' : 'WHERE hidden = FALSE') : '';
         rows = await sql(`SELECT id, created_at, content, type, hidden FROM submissions ${where}${hiddenCond} ORDER BY created_at ${sortDir} LIMIT $${params.length}`, params);
       } catch (colErr) {
         // hidden 列不存在（旧库未迁移），回退到无 hidden 查询
