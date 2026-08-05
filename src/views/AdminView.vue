@@ -550,7 +550,8 @@ const feedbackStatusMap = {
 /* ── 撤稿管理 ── */
 async function loadWithdrawals() {
   try {
-    withdrawalRecords.value = await withdrawalsApi.getAll()
+    const json = await withdrawalsApi.getAll()
+    withdrawalRecords.value = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
   } catch (e) {
     showToast('撤稿数据加载失败：' + e.message, 'error')
   }
