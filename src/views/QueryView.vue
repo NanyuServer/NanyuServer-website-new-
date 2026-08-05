@@ -528,6 +528,7 @@ async function submitWithdrawal() {
 .withdrawal-form {
   margin-top: 1rem;
   padding: 2rem;
+  overflow: visible;
   animation: fadeUp 0.35s var(--ease-out, cubic-bezier(0.16,1,0.3,1));
 }
 .withdrawal-form-title {
@@ -539,6 +540,8 @@ async function submitWithdrawal() {
 }
 .form-field {
   margin-bottom: 1rem;
+  position: relative;
+  overflow: visible;
 }
 .form-label {
   display: block;
