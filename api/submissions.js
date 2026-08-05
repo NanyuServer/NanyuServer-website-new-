@@ -89,19 +89,23 @@ module.exports = async function handler(req, res) {
 
   // ── GET → 列表 ──
   if (req.method === 'GET') {
-    const { type, start, end, order = 'desc', limit = '9999' } = req.query;
+    const { type, start, end, order = 'desc', limit = '9999', hidden } = req.query;
     const conditions = [];
     const params = [];
     if (type) { params.push(type); conditions.push(`type = $${params.length}`); }
     if (start) { params.push(start); conditions.push(`created_at >= $${params.length}::timestamptz`); }
     if (end) { params.push(end + ' 23:59:59'); conditions.push(`created_at <= $${params.length}::timestamptz`); }
+    // 默认隐藏已撤稿的稿件，admin 可传 hidden=true 查看全部
+    if (hidden !== 'true') {
+      conditions.push(`hidden = FALSE`);
+    }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const sortDir = order === 'asc' ? 'ASC' : 'DESC';
     params.push(parseInt(limit, 10) || 9999);
 
     try {
-      const rows = await sql(`SELECT id, created_at, content, type FROM submissions ${where} ORDER BY created_at ${sortDir} LIMIT $${params.length}`, params);
+      const rows = await sql(`SELECT id, created_at, content, type, hidden FROM submissions ${where} ORDER BY created_at ${sortDir} LIMIT $${params.length}`, params);
       return res.status(200).json({ data: rows });
     } catch (err) {
       console.error('[GET /api/submissions]', err);

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { submissionsApi, adminFeedbackApi, recruitmentsApi, recruitApplicantsApi, authApi } from '@/services/api'
+import { submissionsApi, adminFeedbackApi, recruitmentsApi, recruitApplicantsApi, authApi, withdrawalsApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import GlassSelect from '@/components/common/GlassSelect.vue'
 import GlassDateTime from '@/components/common/GlassDateTime.vue'
@@ -40,8 +40,9 @@ const recruitApplicants = ref([])
 const recruitTitle = ref('')
 const recruitDesc = ref('')
 const recruitTags = ref('')
-const recruitApply = ref('')
 const recruitEditId = ref('')
+
+const withdrawalRecords = ref([])
 
 const accountOldPass = ref('')
 const accountNewPass = ref('')
@@ -137,6 +138,7 @@ const tabTitles = {
   list: { title: '稿件列表', sub: '查看和管理所有已录入稿件' },
   feedback: { title: '反馈管理', sub: '审核有求必应提交内容并回复用户' },
   recruit: { title: '招贤纳士管理', sub: '管理岗位和报名数据' },
+  withdrawal: { title: '撤稿管理', sub: '查看和撤销当事人撤稿记录' },
   account: { title: '账户设置', sub: '修改密码和管理账户' }
 }
 
@@ -145,6 +147,7 @@ function showTab(tab) {
   if (tab === 'list') loadAllData()
   if (tab === 'feedback') loadFeedbackData()
   if (tab === 'recruit') { loadRecruitData(); loadRecruitApplicants() }
+  if (tab === 'withdrawal') loadWithdrawals()
   if (tab === 'account') { /* no-op */ }
 }
 
@@ -544,6 +547,26 @@ const feedbackStatusMap = {
   replied: { label: '已答复', cls: 'fb-replied' }
 }
 
+/* ── 撤稿管理 ── */
+async function loadWithdrawals() {
+  try {
+    withdrawalRecords.value = await withdrawalsApi.getAll()
+  } catch (e) {
+    showToast('撤稿数据加载失败：' + e.message, 'error')
+  }
+}
+
+async function cancelWithdrawal(id) {
+  if (!confirm('确认撤销该撤稿记录？稿件将恢复正常显示。')) return
+  try {
+    await withdrawalsApi.cancel(id)
+    withdrawalRecords.value = withdrawalRecords.value.filter(w => w.id !== id)
+    showToast('撤稿已撤销，稿件恢复正常显示', 'success')
+  } catch (e) {
+    showToast('撤销失败：' + e.message, 'error')
+  }
+}
+
 async function handleFeedbackAction(id, action) {
   if (action === 'reply') {
     currentReplyId.value = id
@@ -733,8 +756,12 @@ onMounted(() => {
           <span>反馈管理</span>
         </button>
         <button class="sidebar-link" :class="{ active: currentTab === 'recruit' }" @click="showTab('recruit')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18" /><path d="M3 12h18" /></svg>
-          <span>招贤纳士管理</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+          <span>招贤纳士</span>
+        </button>
+        <button class="sidebar-link" :class="{ active: currentTab === 'withdrawal' }" @click="showTab('withdrawal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+          <span>撤稿管理</span>
         </button>
         <button class="sidebar-link" :class="{ active: currentTab === 'account' }" @click="showTab('account')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -1094,6 +1121,49 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Withdrawal Tab -->
+      <div v-show="currentTab === 'withdrawal'">
+        <div class="table-card glass-card">
+          <div class="table-toolbar">
+            <div class="table-toolbar-title">撤稿记录管理</div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table" style="table-layout: auto;">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">ID</th>
+                  <th style="width: 80px;">稿件ID</th>
+                  <th>撤稿稿件内容</th>
+                  <th style="width: 120px;">撤稿人QQ</th>
+                  <th style="width: 180px;">撤稿时间</th>
+                  <th style="width: 80px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-if="withdrawalRecords.length">
+                  <tr v-for="w in withdrawalRecords" :key="w.id">
+                    <td style="color: var(--accent-dark); font-size: 0.75rem;">#{{ w.id }}</td>
+                    <td style="font-size: 0.78rem;">#{{ w.submission_id }}</td>
+                    <td class="content-cell" :title="w.submission_content">{{ w.submission_content }}</td>
+                    <td style="font-size: 0.82rem;">{{ w.qq_number }}</td>
+                    <td style="white-space: nowrap; font-size: 0.78rem;">{{ formatDT(w.created_at) }}</td>
+                    <td>
+                      <button class="action-btn action-edit" @click="cancelWithdrawal(w.id)">撤销</button>
+                    </td>
+                  </tr>
+                </template>
+                <template v-else>
+                  <tr><td colspan="6" class="empty-table">暂无撤稿记录</td></tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <div class="table-count">共 {{ withdrawalRecords.length }} 条撤稿记录</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Account Tab -->
       <div v-show="currentTab === 'account'">
         <div class="form-card glass-card">
@@ -1142,6 +1212,10 @@ onMounted(() => {
       <button class="mobile-nav-item" :class="{ active: currentTab === 'recruit' }" @click="showTab('recruit')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18" /><path d="M3 12h18" /></svg>
         <span>招贤</span>
+      </button>
+      <button class="mobile-nav-item" :class="{ active: currentTab === 'withdrawal' }" @click="showTab('withdrawal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+        <span>撤稿</span>
       </button>
       <button class="mobile-nav-item" :class="{ active: currentTab === 'account' }" @click="showTab('account')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { submissionsApi } from '@/services/api'
+import { submissionsApi, withdrawalsApi } from '@/services/api'
 import GlassSelect from '@/components/common/GlassSelect.vue'
 import GlassDateTime from '@/components/common/GlassDateTime.vue'
 
@@ -99,6 +99,64 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+/* ── 当事人撤稿 ── */
+const showWithdrawalForm = ref(false)
+const withdrawalContent = ref('')
+const withdrawalQQ = ref('')
+const withdrawalLoading = ref(false)
+const withdrawalSuccess = ref(false)
+const withdrawalError = ref('')
+const withdrawalSearchResults = ref([])
+const withdrawalSearching = ref(false)
+let searchTimer = null
+
+async function searchContent(val) {
+  if (!val || val.length < 2) { withdrawalSearchResults.value = []; return }
+  withdrawalSearching.value = true
+  try {
+    const json = await submissionsApi.getAll()
+    const data = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
+    withdrawalSearchResults.value = data
+      .filter(d => d.content.includes(val))
+      .slice(0, 8)
+      .map(d => ({ id: d.id, content: d.content, type: d.type }))
+  } catch (e) { /* ignore */ }
+  withdrawalSearching.value = false
+}
+
+function onWithdrawalContentInput(val) {
+  withdrawalContent.value = val
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => searchContent(val), 300)
+}
+
+function selectSearchResult(item) {
+  withdrawalContent.value = item.content
+  withdrawalSearchResults.value = []
+}
+
+async function submitWithdrawal() {
+  if (!withdrawalContent.value.trim()) { withdrawalError.value = '请输入稿件内容'; return }
+  if (!withdrawalQQ.value.trim()) { withdrawalError.value = '请输入QQ号'; return }
+  withdrawalError.value = ''
+  withdrawalLoading.value = true
+  try {
+    await withdrawalsApi.submit(withdrawalContent.value.trim(), withdrawalQQ.value.trim())
+    withdrawalSuccess.value = true
+    setTimeout(() => {
+      withdrawalSuccess.value = false
+      showWithdrawalForm.value = false
+      withdrawalContent.value = ''
+      withdrawalQQ.value = ''
+      withdrawalSearchResults.value = []
+    }, 1500)
+  } catch (e) {
+    withdrawalError.value = e.message || '提交失败'
+  } finally {
+    withdrawalLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -132,6 +190,53 @@ onMounted(async () => {
       <button class="glass-btn glass-btn-primary glass-btn-sm" @click="applyFilter">搜索</button>
       <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="resetFilter">重置</button>
     </div>
+  </div>
+
+  <!-- 当事人撤稿区 -->
+  <div class="withdrawal-section">
+    <div class="withdrawal-bar">
+      <div class="withdrawal-text">稿件当事人可以删除稿件在本系统中的记录</div>
+      <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="showWithdrawalForm = !showWithdrawalForm">当事人撤稿</button>
+    </div>
+
+    <Transition name="modal">
+      <div v-if="showWithdrawalForm" class="withdrawal-form glass-card">
+        <!-- 成功弹窗 -->
+        <div v-if="withdrawalSuccess" class="withdrawal-success">
+          <div class="success-icon">✓</div>
+          <div class="success-text">你的稿件已被隐藏</div>
+        </div>
+        <!-- 撤稿表单 -->
+        <template v-else>
+          <div class="withdrawal-form-title">当事人撤稿申请</div>
+          <div class="form-field">
+            <label class="form-label">稿件内容（精确匹配）</label>
+            <div style="position: relative;">
+              <input type="text" class="glass-input" :value="withdrawalContent" @input="onWithdrawalContentInput($event.target.value)" placeholder="输入稿件内容关键字进行搜索" />
+              <Transition name="modal">
+                <div v-if="withdrawalSearchResults.length > 0" class="search-dropdown">
+                  <button v-for="item in withdrawalSearchResults" :key="item.id" class="search-option" @click="selectSearchResult(item)">
+                    <span class="search-type">[{{ item.type }}]</span>
+                    <span class="search-content">{{ item.content.substring(0, 60) }}{{ item.content.length > 60 ? '...' : '' }}</span>
+                  </button>
+                </div>
+              </Transition>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-label">QQ号</label>
+            <input type="text" class="glass-input" v-model="withdrawalQQ" placeholder="请输入您的QQ号" />
+          </div>
+          <div v-if="withdrawalError" class="withdrawal-error">{{ withdrawalError }}</div>
+          <div class="withdrawal-actions">
+            <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="showWithdrawalForm = false; withdrawalSearchResults = []; withdrawalError = ''">取消</button>
+            <button class="glass-btn glass-btn-primary glass-btn-sm" @click="submitWithdrawal" :disabled="withdrawalLoading">
+              {{ withdrawalLoading ? '提交中...' : '确认撤稿' }}
+            </button>
+          </div>
+        </template>
+      </div>
+    </Transition>
   </div>
 
   <div class="results-section">
@@ -395,6 +500,136 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   color: var(--text-muted);
+}
+
+/* 当事人撤稿 */
+.withdrawal-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem 2rem;
+  position: relative;
+  z-index: 1;
+}
+.withdrawal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(179, 157, 219, 0.15);
+  border-radius: var(--radius-lg, 20px);
+}
+.withdrawal-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.withdrawal-form {
+  margin-top: 1rem;
+  padding: 2rem;
+  animation: fadeUp 0.35s var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+}
+.withdrawal-form-title {
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.2rem;
+}
+.form-field {
+  margin-bottom: 1rem;
+}
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-dark);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.05em;
+}
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(179, 157, 219, 0.15);
+  border-radius: var(--radius-md, 16px);
+  box-shadow: 0 8px 28px rgba(179, 157, 219, 0.12);
+  padding: 0.35rem;
+  z-index: 100;
+}
+.search-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  transition: background 0.15s;
+}
+.search-option:hover {
+  background: rgba(179, 157, 219, 0.08);
+  color: var(--text-primary);
+}
+.search-type {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-dark);
+}
+.search-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.withdrawal-error {
+  color: var(--color-error);
+  font-size: 0.82rem;
+  margin-bottom: 0.8rem;
+}
+.withdrawal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+.withdrawal-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  gap: 0.8rem;
+  animation: fadeUp 0.3s ease;
+}
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+.success-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 @media (max-width: 768px) {

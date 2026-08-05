@@ -129,3 +129,23 @@ export const authApi = {
     })
   }
 }
+
+export const withdrawalsApi = {
+  submit(content, qq_number) {
+    return request('/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({ content, qq_number })
+    })
+  },
+  getAll() {
+    return request('/withdrawals', {
+      headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
+    })
+  },
+  cancel(id) {
+    return request(`/withdrawals?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
+    })
+  }
+}
