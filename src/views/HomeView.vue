@@ -87,6 +87,14 @@ function initVisible() {
   flyCardState.value = null
 }
 
+function openDouyin() {
+  window.open('https://www.douyin.com/user/MS4wLjABAAAAVgKoJHBKLxQ4nQk-FQp_9sJZk3NBZ3FD2vN7R8QnWqI', '_blank')
+}
+
+function copyQQ() {
+  navigator.clipboard.writeText('3969066287').then(() => alert('已复制 QQ 号：3969066287'))
+}
+
 /* ③ 无空闲轮播 — 卡牌保持静态 */
 
 /* ── 抽卡流程 ── */
@@ -197,7 +205,7 @@ const stats = computed(() => [
         </div>
         <div class="hero-btns">
           <button class="btn-dark" @click="$router.push('/query')">进入万能墙</button>
-          <button class="btn-outline" @click="window.open('https://www.douyin.com/user/MS4wLjABAAAAVgKoJHBKLxQ4nQk-FQp_9sJZk3NBZ3FD2vN7R8QnWqI', '_blank')">北关鱼的驿站</button>
+          <button class="btn-outline" @click="openDouyin">北关鱼的驿站</button>
         </div>
       </div>
 
@@ -455,7 +463,7 @@ const stats = computed(() => [
       </p>
       <div class="contact-btns">
         <button class="btn-contact" @click="$router.push('/feedback')">有求必应</button>
-        <button class="btn-contact-ghost" @click="navigator.clipboard.writeText('3969066287').then(() => alert('已复制 QQ 号：3969066287'))">复制QQ号</button>
+        <button class="btn-contact-ghost" @click="copyQQ">复制QQ号</button>
         <button class="btn-contact-ghost" @click="$router.push('/recruit')">加入我们</button>
       </div>
     </div>

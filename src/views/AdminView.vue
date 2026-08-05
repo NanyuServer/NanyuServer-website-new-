@@ -41,6 +41,7 @@ const recruitTitle = ref('')
 const recruitDesc = ref('')
 const recruitTags = ref('')
 const recruitEditId = ref('')
+const recruitApply = ref('')
 
 const withdrawalRecords = ref([])
 
