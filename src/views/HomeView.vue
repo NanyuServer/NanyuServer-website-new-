@@ -1525,6 +1525,12 @@ const stats = computed(() => [
     white-space: normal;
   }
 
+  .hero-file-bar {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+  }
+
   .hero-tags {
     justify-content: center;
   }
@@ -1554,18 +1560,18 @@ const stats = computed(() => [
 
   .stats-container {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1rem;
-    align-items: stretch;
+    justify-items: center;
   }
 
-  .stat-item:first-child,
+  .stat-item {
+    text-align: center;
+  }
+
   .stat-item:last-child {
-    /* 左右两框等宽 */
-  }
-
-  .stat-item:nth-child(2) {
-    /* 中间框自动撑满 */
+    grid-column: 1 / -1;
+    width: 50%;
   }
 
   .draw-outer-card {
@@ -1656,8 +1662,8 @@ const stats = computed(() => [
   }
 
   .contact-section > .section-container {
-    margin: 0;
-    padding: 4rem 1.5rem;
+    margin: 0 1.5rem;
+    padding: 3rem 1.5rem;
   }
 
   .contact-btns {
