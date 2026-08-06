@@ -45,6 +45,12 @@ const recruitApply = ref('')
 
 const withdrawalRecords = ref([])
 const cocreationRecords = ref([])
+const cocreationEditVisible = ref(false)
+const cocreationEditId = ref(null)
+const cocreationEditPeople = ref(1)
+const cocreationEditMedia = ref('')
+const cocreationEditRoles = ref('')
+const cocreationEditAccounts = ref('')
 
 const accountOldPass = ref('')
 const accountNewPass = ref('')
@@ -578,6 +584,55 @@ async function loadCocreations() {
     cocreationRecords.value = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
   } catch (e) {
     showToast('共创数据加载失败：' + e.message, 'error')
+  }
+}
+
+function openCocreationEdit(r) {
+  cocreationEditVisible.value = true
+  cocreationEditId.value = r.id
+  cocreationEditPeople.value = r.people_count
+  cocreationEditMedia.value = r.media_type
+  cocreationEditRoles.value = JSON.stringify(r.roles, null, 2)
+  cocreationEditAccounts.value = JSON.stringify(r.accounts, null, 2)
+}
+
+async function saveCocreationEdit() {
+  try {
+    let roles, accounts
+    try { roles = JSON.parse(cocreationEditRoles.value) } catch (e) { showToast('角色数据不是有效的 JSON', 'error'); return }
+    try { accounts = JSON.parse(cocreationEditAccounts.value) } catch (e) { showToast('抖音号数据不是有效的 JSON', 'error'); return }
+    await cocreationApi.update(cocreationEditId.value, {
+      people_count: parseInt(cocreationEditPeople.value),
+      media_type: cocreationEditMedia.value,
+      roles,
+      accounts
+    })
+    showToast('共创申请已更新', 'success')
+    cocreationEditVisible.value = false
+    loadCocreations()
+  } catch (e) {
+    showToast('更新失败：' + e.message, 'error')
+  }
+}
+
+async function deleteCocreation(id) {
+  if (!confirm('确认删除该共创申请？')) return
+  try {
+    await cocreationApi.remove(id)
+    cocreationRecords.value = cocreationRecords.value.filter(r => r.id !== id)
+    showToast('共创申请已删除', 'success')
+  } catch (e) {
+    showToast('删除失败：' + e.message, 'error')
+  }
+}
+
+async function toggleCocreationPublished(r) {
+  try {
+    await cocreationApi.update(r.id, { published: !r.published })
+    r.published = !r.published
+    showToast(r.published ? '已标记为已发布' : '已取消发布标记', 'success')
+  } catch (e) {
+    showToast('操作失败：' + e.message, 'error')
   }
 }
 
@@ -1198,7 +1253,9 @@ onMounted(() => {
                   <th>角色分配</th>
                   <th>抖音号</th>
                   <th style="width: 90px;">验证码</th>
+                  <th style="width: 90px;">状态</th>
                   <th style="width: 160px;">提交时间</th>
+                  <th style="width: 220px;">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -1223,17 +1280,55 @@ onMounted(() => {
                     <td>
                       <span class="type-badge type-扩列" style="font-weight: 700; font-size: 0.85rem; letter-spacing: 0.1em;">{{ r.verification_code }}</span>
                     </td>
+                    <td>
+                      <span class="type-badge" :class="r.published ? 'type-扩列' : 'fb-pending'">{{ r.published ? '已发布' : '待发布' }}</span>
+                    </td>
                     <td style="white-space: nowrap; font-size: 0.78rem;">{{ formatDT(r.created_at) }}</td>
+                    <td style="white-space: nowrap;">
+                      <button class="action-btn action-edit" @click="openCocreationEdit(r)">编辑</button>
+                      <button class="action-btn action-transfer" @click="toggleCocreationPublished(r)">{{ r.published ? '取消发布' : '标记发布' }}</button>
+                      <button class="action-btn action-delete" @click="deleteCocreation(r.id)">删除</button>
+                    </td>
                   </tr>
                 </template>
                 <template v-else>
-                  <tr><td colspan="7" class="empty-table">暂无共创申请</td></tr>
+                  <tr><td colspan="9" class="empty-table">暂无共创申请</td></tr>
                 </template>
               </tbody>
             </table>
           </div>
           <div class="table-footer">
             <div class="table-count">共 {{ cocreationRecords.length }} 条共创申请</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cocreation Edit Modal -->
+      <div v-if="cocreationEditVisible" class="reply-overlay" @click.self="cocreationEditVisible = false">
+        <div class="reply-card glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-weight: 700; color: var(--text-primary);">编辑共创申请 #{{ cocreationEditId }}</div>
+            <button class="close-btn" @click="cocreationEditVisible = false">✕</button>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">共创人数</label>
+            <input type="number" class="glass-input" v-model.number="cocreationEditPeople" min="1" max="5" />
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">媒体类型</label>
+            <GlassSelect v-model="cocreationEditMedia" :options="[{value:'视频',label:'视频'},{value:'全为静图',label:'全为静图'},{value:'动图+静图',label:'动图+静图'},{value:'全为动图',label:'全为动图'}]" placeholder="选择类型" />
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">角色分配 (JSON)</label>
+            <textarea class="glass-textarea" v-model="cocreationEditRoles" style="min-height: 100px; font-family: monospace; font-size: 0.75rem;"></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">抖音号 (JSON)</label>
+            <textarea class="glass-textarea" v-model="cocreationEditAccounts" style="min-height: 100px; font-family: monospace; font-size: 0.75rem;"></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="cocreationEditVisible = false">取消</button>
+            <button class="glass-btn glass-btn-primary glass-btn-sm" @click="saveCocreationEdit">保存</button>
           </div>
         </div>
       </div>

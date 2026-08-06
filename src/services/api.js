@@ -141,6 +141,19 @@ export const cocreationApi = {
     return request('/cocreation', {
       headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
     })
+  },
+  update(id, payload) {
+    return request(`/cocreation?id=${id}`, {
+      method: 'PATCH',
+      headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' },
+      body: JSON.stringify(payload)
+    })
+  },
+  remove(id) {
+    return request(`/cocreation?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
+    })
   }
 }
 

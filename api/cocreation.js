@@ -1,6 +1,8 @@
 // api/cocreation.js
-// POST   /api/cocreation    → 提交共创申请（生成6位验证码）
-// GET    /api/cocreation    → 管理端查看所有共创申请（需admin secret）
+// POST   /api/cocreation          → 提交共创申请（生成6位验证码）
+// GET    /api/cocreation          → 管理端查看所有共创申请（需admin secret）
+// PATCH  /api/cocreation?id=123   → 管理端编辑共创申请
+// DELETE /api/cocreation?id=123   → 管理端删除共创申请
 
 const { neon } = require('@neondatabase/serverless');
 const { validateAdminSecret } = require('./adminAuth');
@@ -21,7 +23,7 @@ function generateCode() {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-secret');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -40,6 +42,57 @@ module.exports = async function handler(req, res) {
     } catch (err) {
       console.error('[GET /api/cocreation]', err);
       return res.status(500).json({ error: '查询失败', detail: err.message });
+    }
+  }
+
+  // ── PATCH → 管理端编辑（含标记已发布） ──
+  if (req.method === 'PATCH') {
+    try {
+      const adminSecret = req.headers['x-admin-secret'];
+      if (!(await validateAdminSecret(adminSecret))) {
+        return res.status(401).json({ error: '未授权' });
+      }
+      const id = parseInt(req.query.id, 10);
+      if (!id) return res.status(400).json({ error: '缺少共创申请 ID' });
+
+      const body = await parseJsonBody(req);
+      const { people_count, media_type, roles, accounts, published } = body || {};
+
+      const fields = [];
+      const params = [];
+      if (people_count !== undefined) { params.push(people_count); fields.push(`people_count = $${params.length}`); }
+      if (media_type !== undefined && media_type !== null) { params.push(media_type); fields.push(`media_type = $${params.length}`); }
+      if (roles !== undefined && roles !== null) { params.push(JSON.stringify(roles)); fields.push(`roles = $${params.length}::jsonb`); }
+      if (accounts !== undefined && accounts !== null) { params.push(JSON.stringify(accounts)); fields.push(`accounts = $${params.length}::jsonb`); }
+      if (published !== undefined) { params.push(published ? true : false); fields.push(`published = $${params.length}`); }
+      if (fields.length === 0) return res.status(400).json({ error: '没有要更新的字段' });
+
+      params.push(id);
+      const rows = await sql(`UPDATE cocreation SET ${fields.join(', ')} WHERE id = $${params.length} RETURNING *`, params);
+      if (!rows.length) return res.status(404).json({ error: '共创申请不存在' });
+      return res.status(200).json({ data: rows[0] });
+    } catch (err) {
+      console.error('[PATCH /api/cocreation]', err);
+      return res.status(500).json({ error: '更新失败', detail: err.message });
+    }
+  }
+
+  // ── DELETE → 管理端删除 ──
+  if (req.method === 'DELETE') {
+    try {
+      const adminSecret = req.headers['x-admin-secret'];
+      if (!(await validateAdminSecret(adminSecret))) {
+        return res.status(401).json({ error: '未授权' });
+      }
+      const id = parseInt(req.query.id, 10);
+      if (!id) return res.status(400).json({ error: '缺少共创申请 ID' });
+
+      const rows = await sql(`DELETE FROM cocreation WHERE id = $1 RETURNING id`, [id]);
+      if (!rows.length) return res.status(404).json({ error: '共创申请不存在' });
+      return res.status(200).json({ deleted: true, id: rows[0].id });
+    } catch (err) {
+      console.error('[DELETE /api/cocreation]', err);
+      return res.status(500).json({ error: '删除失败', detail: err.message });
     }
   }
 
@@ -68,9 +121,9 @@ module.exports = async function handler(req, res) {
       const code = generateCode();
 
       const rows = await sql(
-        `INSERT INTO cocreation (people_count, media_type, roles, accounts, confirmed, verification_code)
-         VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6)
-         RETURNING id, people_count, media_type, roles, accounts, verification_code, created_at`,
+        `INSERT INTO cocreation (people_count, media_type, roles, accounts, confirmed, verification_code, published)
+         VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6, FALSE)
+         RETURNING id, people_count, media_type, roles, accounts, verification_code, published, created_at`,
         [people_count, media_type, JSON.stringify(roles), JSON.stringify(accounts), true, code]
       );
 

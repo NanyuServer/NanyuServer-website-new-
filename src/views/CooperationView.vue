@@ -101,7 +101,7 @@ function validateRoles() {
     const val = roles.value[role]
     const max = limit[role] || Infinity
     if (val > max) {
-      newErrors[role] = '该身份人数超过限制'
+      newErrors[role] = `${role}身份人数超过限制`
     }
   }
   errors.value = newErrors
@@ -124,6 +124,16 @@ function validate() {
   if (roleErrors()) { errors._general = '部分身份人数超过限制'; return false }
   const sum = totalCount()
   if (sum !== peopleCount.value) { errors._general = `您选择的身份总人数(${sum})和共创人数(${peopleCount.value})不符`; return false }
+  // Q4：每个抖音号必须填写
+  for (const role of currentRoles.value) {
+    const accs = accounts.value[role] || []
+    for (let i = 0; i < accs.length; i++) {
+      if (!accs[i] || !accs[i].trim()) {
+        errors._general = `请填写${role}${accs.length > 1 ? (i + 1) : ''}的抖音号`
+        return false
+      }
+    }
+  }
   if (!confirmed.value) { errors._general = '请先确认共创须知'; return false }
   return true
 }
@@ -229,12 +239,14 @@ function resetForm() {
         <div class="cq-block" v-if="currentRoles.length > 0 && totalCount() > 0">
           <div class="cq-num">Q5</div>
           <div class="cq-title">共创须知确认</div>
-          <label class="cq-checkbox-wrap">
-            <input type="checkbox" class="cq-checkbox" v-model="confirmed" />
+          <div class="cq-checkbox-wrap" :class="{ checked: confirmed }" @click="confirmed = !confirmed">
+            <span class="cq-checkbox-custom">
+              <svg v-if="confirmed" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12" /></svg>
+            </span>
             <span class="cq-check-text">
               我已知晓南渝万能墙每月共有4次共创机会，本次共创会进行排期。共创代表在填写报名表后会将素材私信发至北关鱼的驿站（抖音号:cqnyzxwnq）。
             </span>
-          </label>
+          </div>
         </div>
 
         <!-- 提交 -->
@@ -396,17 +408,29 @@ function resetForm() {
   align-items: flex-start;
   cursor: pointer;
 }
-.cq-checkbox {
-  width: 20px;
-  height: 20px;
+.cq-checkbox-custom {
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   margin-top: 2px;
-  accent-color: var(--accent-dark);
+  border-radius: 8px;
+  border: 2px solid rgba(179, 157, 219, 0.3);
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s;
+}
+.cq-checkbox-wrap.checked .cq-checkbox-custom {
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent-primary));
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(126, 87, 194, 0.25);
 }
 .cq-check-text {
   font-size: 0.88rem;
   line-height: 1.7;
   color: var(--text-secondary);
+  user-select: none;
 }
 .cq-submit-wrap {
   text-align: center;
