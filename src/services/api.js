@@ -130,6 +130,20 @@ export const authApi = {
   }
 }
 
+export const cocreationApi = {
+  submit(payload) {
+    return request('/cocreation', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  },
+  getAll() {
+    return request('/cocreation', {
+      headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
+    })
+  }
+}
+
 export const withdrawalsApi = {
   submit(content, qq_number) {
     return request('/withdrawals', {

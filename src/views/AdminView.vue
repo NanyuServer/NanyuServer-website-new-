@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { submissionsApi, adminFeedbackApi, recruitmentsApi, recruitApplicantsApi, authApi, withdrawalsApi } from '@/services/api'
+import { submissionsApi, adminFeedbackApi, recruitmentsApi, recruitApplicantsApi, authApi, withdrawalsApi, cocreationApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import GlassSelect from '@/components/common/GlassSelect.vue'
 import GlassDateTime from '@/components/common/GlassDateTime.vue'
@@ -44,6 +44,7 @@ const recruitEditId = ref('')
 const recruitApply = ref('')
 
 const withdrawalRecords = ref([])
+const cocreationRecords = ref([])
 
 const accountOldPass = ref('')
 const accountNewPass = ref('')
@@ -140,6 +141,7 @@ const tabTitles = {
   feedback: { title: '反馈管理', sub: '审核有求必应提交内容并回复用户' },
   recruit: { title: '招贤纳士管理', sub: '管理岗位和报名数据' },
   withdrawal: { title: '撤稿管理', sub: '查看和撤销当事人撤稿记录' },
+  cocreation: { title: '共创审核', sub: '查看和管理共创计划申请' },
   account: { title: '账户设置', sub: '修改密码和管理账户' }
 }
 
@@ -149,6 +151,7 @@ function showTab(tab) {
   if (tab === 'feedback') loadFeedbackData()
   if (tab === 'recruit') { loadRecruitData(); loadRecruitApplicants() }
   if (tab === 'withdrawal') loadWithdrawals()
+  if (tab === 'cocreation') loadCocreations()
   if (tab === 'account') { /* no-op */ }
 }
 
@@ -569,6 +572,15 @@ async function cancelWithdrawal(id) {
   }
 }
 
+async function loadCocreations() {
+  try {
+    const json = await cocreationApi.getAll()
+    cocreationRecords.value = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
+  } catch (e) {
+    showToast('共创数据加载失败：' + e.message, 'error')
+  }
+}
+
 async function handleFeedbackAction(id, action) {
   if (action === 'reply') {
     currentReplyId.value = id
@@ -764,6 +776,10 @@ onMounted(() => {
         <button class="sidebar-link" :class="{ active: currentTab === 'withdrawal' }" @click="showTab('withdrawal')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
           <span>撤稿管理</span>
+        </button>
+        <button class="sidebar-link" :class="{ active: currentTab === 'cocreation' }" @click="showTab('cocreation')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>共创审核</span>
         </button>
         <button class="sidebar-link" :class="{ active: currentTab === 'account' }" @click="showTab('account')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -1166,6 +1182,62 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Cocreation Tab -->
+      <div v-show="currentTab === 'cocreation'">
+        <div class="table-card glass-card">
+          <div class="table-toolbar">
+            <div class="table-toolbar-title">共创审核</div>
+          </div>
+          <div style="overflow-x: auto; max-height: 70vh; overflow-y: auto;">
+            <table class="data-table" style="table-layout: auto;">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">ID</th>
+                  <th style="width: 70px;">人数</th>
+                  <th style="width: 90px;">媒体类型</th>
+                  <th>角色分配</th>
+                  <th>抖音号</th>
+                  <th style="width: 90px;">验证码</th>
+                  <th style="width: 160px;">提交时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-if="cocreationRecords.length">
+                  <tr v-for="r in cocreationRecords" :key="r.id">
+                    <td style="color: var(--accent-dark); font-size: 0.75rem;">#{{ r.id }}</td>
+                    <td style="font-size: 0.82rem;">{{ r.people_count }}人</td>
+                    <td style="font-size: 0.82rem;">{{ r.media_type }}</td>
+                    <td style="font-size: 0.82rem;">
+                      <template v-if="r.roles">
+                        <span v-for="(v, k) in r.roles" :key="k" v-show="v > 0" class="type-badge" style="margin-right: 4px;">{{ k }}×{{ v }}</span>
+                      </template>
+                    </td>
+                    <td style="font-size: 0.82rem;">
+                      <template v-if="r.accounts">
+                        <div v-for="(accs, k) in r.accounts" :key="k" v-show="accs && accs.length > 0">
+                          <span style="color: var(--text-muted); font-size: 0.72rem;">{{ k }}:</span>
+                          <span v-for="(a, i) in accs" :key="i">{{ a }}{{ i < accs.length - 1 ? ', ' : '' }}</span>
+                        </div>
+                      </template>
+                    </td>
+                    <td>
+                      <span class="type-badge type-扩列" style="font-weight: 700; font-size: 0.85rem; letter-spacing: 0.1em;">{{ r.verification_code }}</span>
+                    </td>
+                    <td style="white-space: nowrap; font-size: 0.78rem;">{{ formatDT(r.created_at) }}</td>
+                  </tr>
+                </template>
+                <template v-else>
+                  <tr><td colspan="7" class="empty-table">暂无共创申请</td></tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <div class="table-count">共 {{ cocreationRecords.length }} 条共创申请</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Account Tab -->
       <div v-show="currentTab === 'account'">
         <div class="form-card glass-card">
@@ -1218,6 +1290,10 @@ onMounted(() => {
       <button class="mobile-nav-item" :class="{ active: currentTab === 'withdrawal' }" @click="showTab('withdrawal')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
         <span>撤稿</span>
+      </button>
+      <button class="mobile-nav-item" :class="{ active: currentTab === 'cocreation' }" @click="showTab('cocreation')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>共创</span>
       </button>
       <button class="mobile-nav-item" :class="{ active: currentTab === 'account' }" @click="showTab('account')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>

@@ -91,6 +91,10 @@ function openDouyin() {
   window.open('https://www.douyin.com/user/MS4wLjABAAAAVgKoJHBKLxQ4nQk-FQp_9sJZk3NBZ3FD2vN7R8QnWqI', '_blank')
 }
 
+function goQQ() {
+  window.open('https://qm.qq.com/q/FHAbiDBIQO', '_blank')
+}
+
 function copyQQ() {
   navigator.clipboard.writeText('3969066287').then(() => alert('已复制 QQ 号：3969066287'))
 }
@@ -204,7 +208,7 @@ const stats = computed(() => [
           <span class="hero-tag-item hero-tag-combo">互动宣教 · 多元交流</span>
         </div>
         <div class="hero-btns">
-          <button class="btn-dark" @click="$router.push('/query')">进入万能墙</button>
+          <button class="btn-dark" @click="goQQ">进入万能墙</button>
           <button class="btn-outline" @click="openDouyin">北关鱼的驿站</button>
         </div>
       </div>
