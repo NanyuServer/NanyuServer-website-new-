@@ -26,6 +26,7 @@ const currentRoles = ref([])
 const roleLimits = ref({})
 
 const errors = ref({})
+const totalCountMismatch = ref(false)
 
 function getRoles() {
   if (mediaType.value === '视频') {
@@ -82,24 +83,28 @@ function updateRoles(type) {
 
 function setRoleCount(role, val) {
   const num = parseInt(val) || 0
-  roles.value[role] = Math.max(0, num)
-  accounts.value[role] = accounts.value[role] || []
-  while (accounts.value[role].length < num) accounts.value[role].push('')
-  while (accounts.value[role].length > num) accounts.value[role].pop()
+  const newRoles = { ...roles.value, [role]: Math.max(0, num) }
+  roles.value = newRoles
+  const newAccounts = { ...accounts.value }
+  if (!newAccounts[role]) newAccounts[role] = []
+  while (newAccounts[role].length < num) newAccounts[role].push('')
+  while (newAccounts[role].length > num) newAccounts[role].pop()
+  accounts.value = newAccounts
   validateRoles()
+  totalCountMismatch.value = totalCount() !== peopleCount.value
 }
 
 function validateRoles() {
   const limit = roleLimits.value
+  const newErrors = {}
   for (const role of Object.keys(roles.value)) {
     const val = roles.value[role]
     const max = limit[role] || Infinity
     if (val > max) {
-      errors.value[role] = `该身份人数超过限制`
-    } else {
-      delete errors.value[role]
+      newErrors[role] = '该身份人数超过限制'
     }
   }
+  errors.value = newErrors
 }
 
 function roleErrors() {
@@ -203,7 +208,7 @@ function resetForm() {
               <div v-if="errors[role]" class="cq-error">{{ errors[role] }}</div>
             </div>
           </div>
-          <div class="cq-total">当前已分配 <strong>{{ totalCount() }}</strong> / {{ peopleCount }} 人</div>
+          <div class="cq-total" :class="{ 'cq-mismatch': totalCountMismatch }">当前已分配 <strong>{{ totalCount() }}</strong> / {{ peopleCount }} 人<span v-if="totalCountMismatch">（不一致，请调整）</span></div>
         </div>
 
         <!-- Q4: 抖音号填写 -->
@@ -370,6 +375,10 @@ function resetForm() {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-top: 1rem;
+}
+.cq-mismatch {
+  color: var(--color-error, #e53935);
+  font-weight: 600;
 }
 .cq-account-list {
   display: flex;
