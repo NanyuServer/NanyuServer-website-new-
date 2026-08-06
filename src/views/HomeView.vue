@@ -1562,16 +1562,11 @@ const stats = computed(() => [
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
-    justify-items: center;
-  }
-
-  .stat-item {
-    text-align: center;
+    align-items: stretch;
   }
 
   .stat-item:last-child {
     grid-column: 1 / -1;
-    width: 50%;
   }
 
   .draw-outer-card {
