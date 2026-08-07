@@ -42,6 +42,7 @@ const recruitDesc = ref('')
 const recruitTags = ref('')
 const recruitEditId = ref('')
 const recruitApply = ref('')
+const recruitingOpen = ref(true)
 
 const withdrawalRecords = ref([])
 const cocreationRecords = ref([])
@@ -679,8 +680,19 @@ async function loadRecruitData() {
   try {
     const json = await recruitmentsApi.getAll()
     recruitData.value = Array.isArray(json.data) ? json.data : []
+    recruitingOpen.value = json.recruiting_open !== false
   } catch (e) {
     showToast('招聘数据加载失败：' + e.message, 'error')
+  }
+}
+
+async function toggleRecruiting() {
+  try {
+    await recruitmentsApi.setRecruitingOpen(!recruitingOpen.value)
+    recruitingOpen.value = !recruitingOpen.value
+    showToast(recruitingOpen.value ? '招募通道已开启' : '招募通道已关闭', 'success')
+  } catch (e) {
+    showToast('切换失败：' + e.message, 'error')
   }
 }
 
@@ -1113,6 +1125,18 @@ onMounted(() => {
 
       <!-- Recruit Tab -->
       <div v-show="currentTab === 'recruit'">
+        <!-- 招募通道开关 -->
+        <div class="form-card glass-card" style="margin-bottom: 1rem;">
+          <div class="recruit-toggle-row">
+            <div>
+              <div class="recruit-toggle-title">招募通道</div>
+              <div class="recruit-toggle-desc">{{ recruitingOpen ? '当前已开启，招贤纳士页面正常显示岗位' : '当前已关闭，招贤纳士页面显示"暂无招募计划"' }}</div>
+            </div>
+            <button class="toggle-switch" :class="{ on: recruitingOpen }" @click="toggleRecruiting" type="button">
+              <span class="toggle-knob" />
+            </button>
+          </div>
+        </div>
         <div class="form-card glass-card">
 
           <div class="form-card-title">招贤纳士岗位管理</div>
@@ -1670,6 +1694,54 @@ onMounted(() => {
 .stat-label {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+/* 招募通道开关 */
+.recruit-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.recruit-toggle-title {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+.recruit-toggle-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 30px;
+  border-radius: 100px;
+  background: rgba(179, 157, 219, 0.2);
+  border: 1px solid rgba(179, 157, 219, 0.2);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toggle-switch.on {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toggle-switch.on .toggle-knob {
+  transform: translateX(22px);
 }
 
 /* ═══ Forms ═══ */

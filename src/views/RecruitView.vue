@@ -6,6 +6,7 @@ import { useToast } from '@/composables/useToast'
 const { show: showToast } = useToast()
 
 const positions = ref([])
+const recruitingOpen = ref(true)
 const selectedPositionId = ref('')
 const selectedGrade = ref('')
 const selectedContactType = ref('QQ')
@@ -86,6 +87,7 @@ onMounted(async () => {
   try {
     const json = await recruitmentsApi.getAll()
     positions.value = Array.isArray(json.data) ? json.data : []
+    recruitingOpen.value = json.recruiting_open !== false
   } catch (e) {
     console.warn('加载招聘岗位失败:', e)
   }
@@ -118,7 +120,16 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="content-section">
-      <div class="stepper-container">
+      <!-- 招募通道关闭时的提示 -->
+      <div v-if="!recruitingOpen" class="recruit-closed">
+        <div class="recruit-closed-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+        </div>
+        <h2 class="recruit-closed-title">南渝万能墙目前暂无招募计划</h2>
+        <p class="recruit-closed-desc">请留意后续通知，感谢你对南渝万能墙的支持！</p>
+      </div>
+
+      <div v-else class="stepper-container">
         <div class="step-indicator-row">
           <div class="step-indicator">
             <div class="step-indicator-inner" :class="currentStep === 0 ? 'active' : currentStep > 0 ? 'complete' : 'inactive'">
@@ -292,6 +303,46 @@ onBeforeUnmount(() => {
 @keyframes trSlideOut {
   from { transform: translateY(0); opacity: 1; }
   to { transform: translateY(-120%); opacity: 0; }
+}
+
+/* 招募关闭提示 */
+.recruit-closed {
+  margin: 0 auto;
+  max-width: 28rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  box-shadow: 0 4px 16px rgba(126, 87, 194, 0.08), 0 12px 40px rgba(126, 87, 194, 0.05);
+  padding: 3.5rem 2rem;
+  text-align: center;
+}
+.recruit-closed-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  background: rgba(179, 157, 219, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-dark);
+}
+.recruit-closed-icon svg {
+  width: 32px;
+  height: 32px;
+}
+.recruit-closed-title {
+  font-family: var(--font-title);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
+}
+.recruit-closed-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
 /* Stepper */

@@ -3,7 +3,7 @@ const { validateAdminSecret } = require('./adminAuth');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-secret');
 
   if (req.method === 'OPTIONS') {
@@ -21,18 +21,50 @@ module.exports = async function handler(req, res) {
       created_at timestamptz DEFAULT NOW()
     )
   `);
+  await sql(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key varchar(64) PRIMARY KEY,
+      value text DEFAULT ''
+    )
+  `);
 
+  /* ── GET → 读取招募状态 ── */
   if (req.method === 'GET') {
     try {
-      const rows = await sql(
-        `SELECT id, title, description, tags, apply_url, created_at
-         FROM recruit_positions
-         ORDER BY created_at DESC`
-      );
-      return res.status(200).json({ data: rows });
+      const [rows, setting] = await Promise.all([
+        sql(`SELECT id, title, description, tags, apply_url, created_at FROM recruit_positions ORDER BY created_at DESC`),
+        sql(`SELECT value FROM app_settings WHERE key = 'recruiting_open'`)
+      ]);
+      const recruitingOpen = setting.length > 0 ? setting[0].value === '1' : true;
+      return res.status(200).json({ data: rows, recruiting_open: recruitingOpen });
     } catch (err) {
       console.error('[GET /api/recruitments]', err);
       return res.status(500).json({ error: '数据库查询失败', detail: err.message });
+    }
+  }
+
+  /* ── PATCH → 切换招募开关（仅管理员） ── */
+  if (req.method === 'PATCH') {
+    const adminSecret = req.headers['x-admin-secret'];
+    if (!(await validateAdminSecret(adminSecret))) {
+      return res.status(401).json({ error: '未授权，请检查管理员密钥' });
+    }
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+    const { recruiting_open } = body || {};
+    if (recruiting_open === undefined) {
+      return res.status(400).json({ error: '缺少 recruiting_open 字段' });
+    }
+    try {
+      await sql(
+        `INSERT INTO app_settings (key, value) VALUES ('recruiting_open', $1)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+        [recruiting_open ? '1' : '0']
+      );
+      return res.status(200).json({ recruiting_open: !!recruiting_open });
+    } catch (err) {
+      console.error('[PATCH /api/recruitments]', err);
+      return res.status(500).json({ error: '更新失败', detail: err.message });
     }
   }
 

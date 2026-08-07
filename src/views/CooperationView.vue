@@ -139,7 +139,11 @@ function validate() {
   if (!mediaType.value) { errors._general = '请选择共创媒体类型'; return false }
   if (currentRoles.value.length === 0) { errors._general = '请选择有效的媒体类型'; return false }
   validateRoles()
-  if (roleErrors()) { errors._general = '部分身份人数超过限制'; return false }
+  if (roleErrors()) {
+    const roleErrList = Object.keys(errors.value).map(r => `${r}身份人数超过限制`).join('；')
+    errors._general = roleErrList
+    return false
+  }
   const sum = totalCount()
   if (sum !== peopleCount.value) { errors._general = `您选择的身份总人数(${sum})和共创人数(${peopleCount.value})不符`; return false }
   // Q4：每个抖音号必须填写

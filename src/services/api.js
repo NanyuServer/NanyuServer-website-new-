@@ -68,6 +68,13 @@ export const recruitmentsApi = {
   getAll() {
     return request('/recruitments')
   },
+  setRecruitingOpen(open) {
+    return request('/recruitments', {
+      method: 'PATCH',
+      headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' },
+      body: JSON.stringify({ recruiting_open: open })
+    })
+  },
   create(payload) {
     return request('/recruitments', {
       method: 'POST',
