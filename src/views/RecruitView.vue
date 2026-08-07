@@ -311,8 +311,16 @@ onBeforeUnmount(() => {
 }
 
 /* 招募关闭提示 */
+.recruit-closed-wrap {
+  max-width: none;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
 .recruit-closed {
-  margin: 0 auto;
+  width: 100%;
   max-width: 28rem;
   border-radius: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.7);
