@@ -80,21 +80,25 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // 记录撤稿
-      const inserted = await sql(
-        `INSERT INTO withdrawals (submission_id, submission_content, qq_number)
-         VALUES ($1, $2, $3) RETURNING id`,
-        [target.id, target.content, qq_number.trim()]
-      );
-
-      // 标记稿件隐藏
-      await sql(`UPDATE submissions SET hidden = TRUE WHERE id = $1`, [target.id]);
-
-      return res.status(200).json({
-        success: true,
-        message: '你的稿件已被隐藏',
-        withdrawal_id: inserted[0].id
-      });
+      // 记录撤稿 + 标记隐藏（事务保护，保证原子性）
+      await sql('BEGIN');
+      try {
+        const inserted = await sql(
+          `INSERT INTO withdrawals (submission_id, submission_content, qq_number)
+           VALUES ($1, $2, $3) RETURNING id`,
+          [target.id, target.content, qq_number.trim()]
+        );
+        await sql(`UPDATE submissions SET hidden = TRUE WHERE id = $1`, [target.id]);
+        await sql('COMMIT');
+        return res.status(200).json({
+          success: true,
+          message: '你的稿件已被隐藏',
+          withdrawal_id: inserted[0].id
+        });
+      } catch (txErr) {
+        await sql('ROLLBACK');
+        throw txErr;
+      }
     } catch (err) {
       console.error('[POST /api/withdrawals]', err);
       return res.status(500).json({ error: '提交失败', detail: err.message });

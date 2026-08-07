@@ -101,18 +101,20 @@ module.exports = async function handler(req, res) {
     params.push(parseInt(limit, 10) || 9999);
 
     try {
-      // 先尝试查询含 hidden 字段（新库）
-      let rows;
-      try {
-        const hiddenCond = hidden !== 'true' ? (where ? ' AND hidden = FALSE' : 'WHERE hidden = FALSE') : '';
-        rows = await sql(`SELECT id, created_at, content, type, hidden FROM submissions ${where}${hiddenCond} ORDER BY created_at ${sortDir} LIMIT $${params.length}`, params);
-      } catch (colErr) {
-        // hidden 列不存在（旧库未迁移），回退到无 hidden 查询
-        rows = await sql(`SELECT id, created_at, content, type FROM submissions ${where} ORDER BY created_at ${sortDir} LIMIT $${params.length}`, params);
-      }
+      // hidden 列过滤：COALESCE 兼容迁移前的 NULL 历史数据
+      const hiddenCond = hidden !== 'true' ? (where ? ' AND COALESCE(hidden, FALSE) = FALSE' : 'WHERE COALESCE(hidden, FALSE) = FALSE') : '';
+      const rows = await sql(
+        `SELECT id, created_at, content, type, COALESCE(hidden, FALSE) AS hidden
+         FROM submissions ${where}${hiddenCond}
+         ORDER BY created_at ${sortDir} LIMIT $${params.length}`,
+        params
+      );
       return res.status(200).json({ data: rows });
     } catch (err) {
       console.error('[GET /api/submissions]', err);
+      if (String(err.message || err).includes('hidden')) {
+        return res.status(500).json({ error: '数据库缺少 hidden 字段，请执行 scripts/withdrawal-migration.sql 迁移', detail: err.message });
+      }
       return res.status(500).json({ error: '查询失败', detail: err.message });
     }
   }
