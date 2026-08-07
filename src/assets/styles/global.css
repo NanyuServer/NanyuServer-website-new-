@@ -265,14 +265,17 @@ a:hover {
   background: var(--text-primary);
   color: white;
 }
+a.glass-btn-primary:hover,
 .glass-btn-primary:hover {
   background: var(--accent-deep);
+  color: white;
 }
 
 .glass-btn-ghost {
   background: rgba(179, 157, 219, 0.12);
   color: var(--text-secondary);
 }
+a.glass-btn-ghost:hover,
 .glass-btn-ghost:hover {
   background: rgba(179, 157, 219, 0.2);
   color: var(--text-primary);
