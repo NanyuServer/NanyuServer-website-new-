@@ -7,6 +7,7 @@ const { show: showToast } = useToast()
 
 const positions = ref([])
 const recruitingOpen = ref(true)
+const showClosedPopup = ref(false)
 const selectedPositionId = ref('')
 const selectedGrade = ref('')
 const selectedContactType = ref('QQ')
@@ -91,6 +92,7 @@ onMounted(async () => {
   } catch (e) {
     console.warn('加载招聘岗位失败:', e)
   }
+  showClosedPopup.value = !recruitingOpen.value
 
   rotatingTimer = setInterval(() => {
     rotatingTextIndex.value = (rotatingTextIndex.value + 1) % ROTATING_TEXTS.length
@@ -257,17 +259,22 @@ onBeforeUnmount(() => {
     </div>
     </template>
 
-    <!-- 招募关闭：只显示关闭提示 -->
-    <div v-else class="content-section recruit-closed-wrap">
-      <div class="recruit-closed">
-        <div class="recruit-closed-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-        </div>
-        <h2 class="recruit-closed-title">南渝万能墙目前暂无招募计划</h2>
-        <p class="recruit-closed-desc">请留意后续通知，感谢你对南渝万能墙的支持！</p>
-      </div>
-    </div>
+    <!-- 招募关闭：不显示页面主体，弹出关闭提示 -->
+    <div v-else class="recruit-closed-wrap"></div>
   </div>
+
+  <!-- 招募关闭弹窗（共创计划同款） -->
+  <Teleport to="body">
+    <Transition name="pop">
+      <div v-if="showClosedPopup" class="popup-overlay" @click.self="showClosedPopup = false">
+        <div class="popup-card glass-card">
+          <div class="popup-title">南渝万能墙目前暂无招募计划</div>
+          <div class="popup-text">请留意后续通知，感谢你对南渝万能墙的支持！</div>
+          <button class="glass-btn glass-btn-primary popup-btn" @click="showClosedPopup = false">我知道了</button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -310,52 +317,68 @@ onBeforeUnmount(() => {
   to { transform: translateY(-120%); opacity: 0; }
 }
 
-/* 招募关闭提示 */
+/* 招募关闭：空白容器 */
 .recruit-closed-wrap {
-  max-width: none;
-  min-height: 70vh;
+  min-height: 100vh;
+}
+
+/* 弹窗（共创计划同款样式） */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.25rem;
+  background: rgba(245, 240, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1rem;
 }
-.recruit-closed {
-  width: 100%;
-  max-width: 28rem;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(20px) saturate(200%);
-  -webkit-backdrop-filter: blur(20px) saturate(200%);
-  box-shadow: 0 4px 16px rgba(126, 87, 194, 0.08), 0 12px 40px rgba(126, 87, 194, 0.05);
-  padding: 3.5rem 2rem;
+.popup-card {
+  width: min(480px, 90%);
+  padding: 2.5rem 2rem;
   text-align: center;
 }
-.recruit-closed-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 1.25rem;
-  border-radius: 50%;
-  background: rgba(179, 157, 219, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent-dark);
-}
-.recruit-closed-icon svg {
-  width: 32px;
-  height: 32px;
-}
-.recruit-closed-title {
+.popup-title {
   font-family: var(--font-title);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0.6rem;
+  margin-bottom: 1rem;
 }
-.recruit-closed-desc {
+.popup-text {
   font-size: 0.9rem;
-  color: var(--text-muted);
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+.popup-btn {
+  margin-top: 0.5rem;
+}
+.pop-enter-active {
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pop-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+.pop-enter-from,
+.pop-leave-to {
+  opacity: 0;
+}
+.pop-enter-from .popup-card {
+  transform: translateY(24px) scale(0.92);
+  opacity: 0;
+}
+.pop-enter-active .popup-card {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pop-leave-active .popup-card {
+  transition: transform 0.2s cubic-bezier(0.55, 0, 0.55, 0.2), opacity 0.2s cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+.pop-leave-to .popup-card {
+  transform: translateY(-10px) scale(0.95);
+  opacity: 0;
 }
 
 /* Stepper */
