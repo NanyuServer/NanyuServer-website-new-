@@ -8,6 +8,9 @@ const STATIC_ROLES = ['出镜', '策划', '拍摄', '文案', '后期']
 const VIDEO_LIMITS = { '出镜': Infinity, '配音': Infinity, '后期': 1, '导演': 1, '编剧': 1, '创作支持': 2 }
 const STATIC_LIMITS = { '出镜': Infinity, '策划': Infinity, '拍摄': Infinity, '文案': Infinity, '后期': Infinity }
 
+/* Q4 抖音号填写框上限：后期/导演/编剧最多1个，创作支持最多2个，其余跟随人数 */
+const ACCOUNT_CAPS = { '后期': 1, '导演': 1, '编剧': 1, '创作支持': 2 }
+
 const step = ref(1)
 const peopleCount = ref(0)
 const mediaType = ref('')
@@ -87,8 +90,10 @@ function setRoleCount(role, val) {
   roles.value = newRoles
   const newAccounts = { ...accounts.value }
   if (!newAccounts[role]) newAccounts[role] = []
-  while (newAccounts[role].length < num) newAccounts[role].push('')
-  while (newAccounts[role].length > num) newAccounts[role].pop()
+  /* Q4 填写框数量受 ACCOUNT_CAPS 限制 */
+  const fieldCount = Math.min(num, ACCOUNT_CAPS[role] || Infinity)
+  while (newAccounts[role].length < fieldCount) newAccounts[role].push('')
+  while (newAccounts[role].length > fieldCount) newAccounts[role].pop()
   accounts.value = newAccounts
   validateRoles()
   totalCountMismatch.value = totalCount() !== peopleCount.value
@@ -225,6 +230,7 @@ function resetForm() {
         <div class="cq-block" v-if="currentRoles.length > 0 && totalCount() > 0">
           <div class="cq-num">Q4</div>
           <div class="cq-title">各身份抖音号</div>
+          <div class="cq-cap-hint">后期 / 导演 / 编剧 各最多 1 个，创作支持最多 2 个</div>
           <div class="cq-account-list">
             <template v-for="role in currentRoles" :key="role">
               <div v-for="(acc, idx) in (accounts[role] || [])" :key="role + idx" class="cq-account-item">
@@ -312,6 +318,11 @@ function resetForm() {
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 1rem;
+}
+.cq-cap-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.8rem;
 }
 .cq-options {
   display: flex;

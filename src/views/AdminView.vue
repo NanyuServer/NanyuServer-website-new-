@@ -860,8 +860,9 @@ onMounted(() => {
 
     <!-- Main -->
     <div class="admin-main">
+      <div class="admin-content">
       <div class="admin-topbar">
-        <div>
+        <div class="admin-topbar-left">
           <div class="admin-topbar-title">{{ tabTitles[currentTab]?.title }}</div>
           <div class="admin-topbar-sub">{{ tabTitles[currentTab]?.sub }}</div>
         </div>
@@ -1362,6 +1363,7 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      </div><!-- admin-content -->
     </div>
 
     <!-- 手机端底部导航栏（仅移动端显示） -->
@@ -1595,6 +1597,13 @@ onMounted(() => {
   margin-left: 220px;
   min-height: 100vh;
   padding: 2rem 2.5rem;
+  flex: 1;
+  width: calc(100% - 220px);
+}
+
+.admin-content {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .admin-topbar {
@@ -1602,8 +1611,11 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1.2rem;
+  padding: 0 0 1.2rem;
   border-bottom: 1px solid rgba(179, 157, 219, 0.12);
+}
+.admin-topbar-left {
+  min-width: 0;
 }
 .admin-topbar-title {
   font-family: var(--font-title);
@@ -2028,7 +2040,7 @@ onMounted(() => {
   .sidebar-section-label, .sidebar-logout span { display: none; }
   .sidebar-logo { padding: 1rem; justify-content: center; }
   .sidebar-link { justify-content: center; padding: 0.7rem; }
-  .admin-main { margin-left: 60px; padding: 1.5rem; }
+  .admin-main { margin-left: 60px; padding: 1.5rem; width: calc(100% - 60px); }
   .form-grid-3 { grid-template-columns: 1fr 1fr; }
 }
 
@@ -2040,6 +2052,10 @@ onMounted(() => {
     padding: 1.25rem;
     padding-bottom: 80px;
     overflow-x: hidden;
+    width: 100%;
+  }
+  .admin-content {
+    padding: 0;
   }
   .form-grid-3 { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
