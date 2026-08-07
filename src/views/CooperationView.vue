@@ -23,6 +23,8 @@ const warningTitle = ref('')
 const warningText = ref('')
 const showSuccessPopup = ref(false)
 const verificationCode = ref('')
+const showErrorPopup = ref(false)
+const errorPopupText = ref('')
 
 /* Q3 默认显示视频身份 */
 const currentRoles = ref([...VIDEO_ROLES])
@@ -156,7 +158,12 @@ function validate() {
 
 async function submitForm() {
   errors.value = {}
-  if (!validate()) return
+  if (!validate()) {
+    /* 校验失败使用弹窗提示 */
+    errorPopupText.value = errors.value._general || '表单信息有误，请检查后重试'
+    showErrorPopup.value = true
+    return
+  }
 
   try {
     const json = await cocreationApi.submit({
@@ -170,7 +177,8 @@ async function submitForm() {
     showSuccessPopup.value = true
     resetForm()
   } catch (e) {
-    errors.value._general = e.message || '提交失败'
+    errorPopupText.value = e.message || '提交失败'
+    showErrorPopup.value = true
   }
 }
 
@@ -275,6 +283,19 @@ function resetForm() {
       </div>
     </div>
   </div>
+
+  <!-- 校验失败弹窗 -->
+  <Teleport to="body">
+    <Transition name="pop">
+      <div v-if="showErrorPopup" class="popup-overlay" @click.self="showErrorPopup = false">
+        <div class="popup-card glass-card">
+          <div class="popup-title">无法提交</div>
+          <div class="popup-text">{{ errorPopupText }}</div>
+          <button class="glass-btn glass-btn-primary popup-btn" @click="showErrorPopup = false">我知道了</button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- 警告弹窗 -->
   <Teleport to="body">
