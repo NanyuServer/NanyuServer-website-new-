@@ -8,7 +8,8 @@ const routes = [
   { path: '/cooperation', name: 'Cooperation', component: () => import('@/views/CooperationView.vue') },
   { path: '/recruit', name: 'Recruit', component: () => import('@/views/RecruitView.vue') },
   { path: '/about', name: 'About', component: () => import('@/views/AboutView.vue') },
-  { path: '/admin', name: 'Admin', component: () => import('@/views/AdminView.vue') }
+  { path: '/admin', name: 'Admin', component: () => import('@/views/AdminView.vue') },
+  { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('@/views/NotFoundView.vue') }
 ]
 
 const router = createRouter({
