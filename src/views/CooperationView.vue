@@ -13,7 +13,7 @@ const ACCOUNT_CAPS = { '后期': 1, '导演': 1, '编剧': 1, '创作支持': 2 
 
 const step = ref(1)
 const peopleCount = ref(0)
-const mediaType = ref('')
+const mediaType = ref('视频')
 const roles = ref({})
 const accounts = ref({})
 const confirmed = ref(false)
@@ -24,9 +24,10 @@ const warningText = ref('')
 const showSuccessPopup = ref(false)
 const verificationCode = ref('')
 
-const currentRoles = ref([])
+/* Q3 默认显示视频身份 */
+const currentRoles = ref([...VIDEO_ROLES])
 
-const roleLimits = ref({})
+const roleLimits = ref({ ...VIDEO_LIMITS })
 
 const errors = ref({})
 const totalCountMismatch = ref(false)
@@ -66,7 +67,12 @@ function selectMediaType(type) {
 
 function dismissWarning() {
   showWarningPopup.value = false
-  mediaType.value = ''
+  mediaType.value = '视频'
+  currentRoles.value = [...VIDEO_ROLES]
+  roleLimits.value = { ...VIDEO_LIMITS }
+  roles.value = {}
+  accounts.value = {}
+  errors.value = {}
 }
 
 function updateRoles(type) {
@@ -91,7 +97,12 @@ function setRoleCount(role, val) {
   const newAccounts = { ...accounts.value }
   if (!newAccounts[role]) newAccounts[role] = []
   /* Q4 填写框数量受 ACCOUNT_CAPS 限制 */
-  const fieldCount = Math.min(num, ACCOUNT_CAPS[role] || Infinity)
+  let fieldCount = Math.min(num, ACCOUNT_CAPS[role] || Infinity)
+  /* Q4 总填写框数不得超过 Q1 人数 */
+  const otherFields = Object.keys(newAccounts)
+    .filter(r => r !== role)
+    .reduce((s, r) => s + newAccounts[r].length, 0)
+  fieldCount = Math.min(fieldCount, Math.max(0, peopleCount.value - otherFields))
   while (newAccounts[role].length < fieldCount) newAccounts[role].push('')
   while (newAccounts[role].length > fieldCount) newAccounts[role].pop()
   accounts.value = newAccounts
@@ -166,8 +177,9 @@ async function submitForm() {
 function resetForm() {
   step.value = 1
   peopleCount.value = 0
-  mediaType.value = ''
-  currentRoles.value = []
+  mediaType.value = '视频'
+  currentRoles.value = [...VIDEO_ROLES]
+  roleLimits.value = { ...VIDEO_LIMITS }
   roles.value = {}
   accounts.value = {}
   confirmed.value = false
@@ -201,7 +213,7 @@ function resetForm() {
         </div>
 
         <!-- Q2: 共创媒体类型 -->
-        <div class="cq-block" v-if="peopleCount > 0">
+        <div class="cq-block">
           <div class="cq-num">Q2</div>
           <div class="cq-title">共创媒体类型</div>
           <div class="cq-options">
@@ -213,7 +225,7 @@ function resetForm() {
         </div>
 
         <!-- Q3: 身份人数分配 -->
-        <div class="cq-block" v-if="currentRoles.length > 0">
+        <div class="cq-block">
           <div class="cq-num">Q3</div>
           <div class="cq-title">身份人数分配（共需 {{ peopleCount }} 人）</div>
           <div class="cq-role-grid">
@@ -230,7 +242,7 @@ function resetForm() {
         <div class="cq-block" v-if="currentRoles.length > 0 && totalCount() > 0">
           <div class="cq-num">Q4</div>
           <div class="cq-title">各身份抖音号</div>
-          <div class="cq-cap-hint">后期 / 导演 / 编剧 各最多 1 个，创作支持最多 2 个</div>
+          <div class="cq-cap-hint">后期 / 导演 / 编剧 各最多 1 个，创作支持最多 2 个，总填写框数不超过共创人数</div>
           <div class="cq-account-list">
             <template v-for="role in currentRoles" :key="role">
               <div v-for="(acc, idx) in (accounts[role] || [])" :key="role + idx" class="cq-account-item">
@@ -266,29 +278,33 @@ function resetForm() {
 
   <!-- 警告弹窗 -->
   <Teleport to="body">
-    <div v-if="showWarningPopup" class="popup-overlay" @click.self="dismissWarning">
-      <div class="popup-card glass-card">
-        <div class="popup-title">{{ warningTitle }}</div>
-        <div class="popup-text">{{ warningText }}</div>
-        <button class="glass-btn glass-btn-primary popup-btn" @click="dismissWarning">我已知晓</button>
+    <Transition name="pop">
+      <div v-if="showWarningPopup" class="popup-overlay" @click.self="dismissWarning">
+        <div class="popup-card glass-card">
+          <div class="popup-title">{{ warningTitle }}</div>
+          <div class="popup-text">{{ warningText }}</div>
+          <button class="glass-btn glass-btn-primary popup-btn" @click="dismissWarning">我已知晓</button>
+        </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 
   <!-- 成功弹窗 -->
   <Teleport to="body">
-    <div v-if="showSuccessPopup" class="popup-overlay" @click.self="showSuccessPopup = false">
-      <div class="popup-card glass-card success-popup">
-        <div class="popup-title">您的共创申请已提交</div>
-        <div class="popup-text">
-          为确保北关鱼的驿站（抖音号:cqnyzxwnq）正确处理您的共创申请，请您在私信发送您的素材前，将6位身份验证码私信发给北关鱼的驿站：
-        </div>
+    <Transition name="pop">
+      <div v-if="showSuccessPopup" class="popup-overlay" @click.self="showSuccessPopup = false">
+        <div class="popup-card glass-card success-popup">
+          <div class="popup-title">您的共创申请已提交</div>
+          <div class="popup-text">
+            为确保北关鱼的驿站（抖音号:cqnyzxwnq）正确处理您的共创申请，请您在私信发送您的素材前，将6位身份验证码私信发给北关鱼的驿站：
+          </div>
         <div class="verification-code">
           <span v-for="(digit, i) in verificationCode.split('')" :key="i" class="code-digit">{{ digit }}</span>
         </div>
         <button class="glass-btn glass-btn-primary popup-btn" @click="showSuccessPopup = false">确定</button>
       </div>
-    </div>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -327,18 +343,18 @@ function resetForm() {
 .cq-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.7rem;
+  gap: 0.6rem;
 }
 .cq-radio {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
+  gap: 0.45rem;
+  padding: 0.5rem 1.1rem;
   border: 1px solid rgba(179, 157, 219, 0.2);
   background: rgba(255, 255, 255, 0.5);
   border-radius: 100px;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   transition: all 0.25s;
   font-family: var(--font-ui);
@@ -353,8 +369,8 @@ function resetForm() {
   border-color: var(--accent-dark);
 }
 .cq-radio-dot {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   border: 2px solid rgba(179, 157, 219, 0.3);
   transition: all 0.2s;
@@ -504,5 +520,53 @@ function resetForm() {
 }
 .success-popup {
   max-width: 520px;
+}
+
+/* 弹窗三阶贝塞尔过渡 */
+.pop-enter-active {
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pop-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+.pop-enter-from,
+.pop-leave-to {
+  opacity: 0;
+}
+.pop-enter-from .popup-card {
+  transform: translateY(24px) scale(0.92);
+  opacity: 0;
+}
+.pop-enter-active .popup-card {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pop-leave-active .popup-card {
+  transition: transform 0.2s cubic-bezier(0.55, 0, 0.55, 0.2), opacity 0.2s cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+.pop-leave-to .popup-card {
+  transform: translateY(-10px) scale(0.95);
+  opacity: 0;
+}
+
+/* 手机端优化 */
+@media (max-width: 768px) {
+  .cocreation-card {
+    padding: 1.25rem;
+    border-radius: 20px;
+  }
+  .cq-radio {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+  }
+  .cq-role-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+  }
+  .cq-title {
+    font-size: 1rem;
+  }
+  .cq-block {
+    padding: 1rem 0;
+  }
 }
 </style>
