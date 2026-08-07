@@ -6,7 +6,7 @@ const props = defineProps({
   options: { type: Array, default: () => [] },
   placeholder: { type: String, default: '请选择' }
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'open'])
 
 const open = ref(false)
 const wrapRef = ref(null)
@@ -24,8 +24,15 @@ function select(val) {
 
 function toggle() {
   open.value = !open.value
-  if (open.value) nextTick(updateDropPosition)
+  if (open.value) {
+    emit('open')
+    nextTick(updateDropPosition)
+  }
 }
+
+defineExpose({
+  close() { open.value = false }
+})
 
 function updateDropPosition() {
   if (!triggerRef.value) return

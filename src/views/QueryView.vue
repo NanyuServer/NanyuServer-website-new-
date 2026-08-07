@@ -17,6 +17,19 @@ const dateEnd = ref('')
 const typeFilter = ref('')
 const keywordFilter = ref('')
 
+/* 三个控件互斥：只允许一个展开 */
+const dateStartRef = ref(null)
+const dateEndRef = ref(null)
+const typeFilterRef = ref(null)
+const activeControl = ref('')
+
+function onControlOpen(name) {
+  activeControl.value = name
+  if (name !== 'start' && dateStartRef.value) dateStartRef.value.close()
+  if (name !== 'end' && dateEndRef.value) dateEndRef.value.close()
+  if (name !== 'type' && typeFilterRef.value) typeFilterRef.value.close()
+}
+
 const types = ['寻物启事', '表白', '挂人', '扩列', '吐槽', '交易', '捞人、物', '打听资讯', '寻找搭子', '有啥说啥']
 const typeOptions = [{ value: '', label: '全部类型' }, ...types.map(t => ({ value: t, label: t }))]
 
@@ -144,6 +157,8 @@ async function submitWithdrawal() {
   try {
     await withdrawalsApi.submit(withdrawalContent.value.trim(), withdrawalQQ.value.trim())
     withdrawalSuccess.value = true
+    // 撤稿成功：自动刷新稿件显示区域
+    await reloadData()
     setTimeout(() => {
       withdrawalSuccess.value = false
       showWithdrawalForm.value = false
@@ -155,6 +170,17 @@ async function submitWithdrawal() {
     withdrawalError.value = e.message || '提交失败'
   } finally {
     withdrawalLoading.value = false
+  }
+}
+
+async function reloadData() {
+  try {
+    const json = await submissionsApi.getAll()
+    const data = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
+    allData.value = data
+    applyFilter()
+  } catch (e) {
+    console.warn('刷新数据失败:', e)
   }
 }
 </script>
@@ -173,22 +199,24 @@ async function submitWithdrawal() {
     <div class="filter-bar">
       <div class="filter-group">
         <div class="filter-label">开始时间</div>
-        <GlassDateTime v-model="dateStart" placeholder="选择开始日期" date-only />
+        <GlassDateTime ref="dateStartRef" v-model="dateStart" placeholder="选择开始日期" date-only @open="onControlOpen('start')" />
       </div>
       <div class="filter-group">
         <div class="filter-label">结束时间</div>
-        <GlassDateTime v-model="dateEnd" placeholder="选择结束日期" date-only />
+        <GlassDateTime ref="dateEndRef" v-model="dateEnd" placeholder="选择结束日期" date-only @open="onControlOpen('end')" />
       </div>
       <div class="filter-group">
         <div class="filter-label">投稿类型</div>
-        <GlassSelect v-model="typeFilter" :options="typeOptions" placeholder="全部类型" />
+        <GlassSelect ref="typeFilterRef" v-model="typeFilter" :options="typeOptions" placeholder="全部类型" @open="onControlOpen('type')" />
       </div>
       <div class="filter-group">
         <div class="filter-label">内容关键词</div>
         <input type="text" class="glass-input" v-model="keywordFilter" placeholder="输入关键词搜索" />
       </div>
-      <button class="glass-btn glass-btn-primary glass-btn-sm" @click="applyFilter">搜索</button>
-      <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="resetFilter">重置</button>
+      <div class="filter-buttons">
+        <button class="glass-btn glass-btn-primary glass-btn-sm" @click="applyFilter">搜索</button>
+        <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="resetFilter">重置</button>
+      </div>
     </div>
   </div>
 
@@ -203,7 +231,9 @@ async function submitWithdrawal() {
       <div v-if="showWithdrawalForm" class="withdrawal-form glass-card">
         <!-- 成功弹窗 -->
         <div v-if="withdrawalSuccess" class="withdrawal-success">
-          <div class="success-icon">✓</div>
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><polyline points="20 6 9 17 4 12" /></svg>
+          </div>
           <div class="success-text">你的稿件已被隐藏</div>
         </div>
         <!-- 撤稿表单 -->
@@ -635,9 +665,17 @@ async function submitWithdrawal() {
   color: var(--text-primary);
 }
 
+.filter-buttons {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-end;
+}
+
 @media (max-width: 768px) {
   .filter-bar { flex-direction: column; gap: 1rem; padding: 1.2rem; }
   .filter-group { min-width: 100%; }
+  .filter-buttons { width: 100%; justify-content: center; }
+  .filter-buttons .glass-btn { flex: 1; }
   .results-meta { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
   .card-header { flex-direction: column; gap: 0.4rem; }
 }

@@ -6,7 +6,7 @@ const props = defineProps({
   placeholder: { type: String, default: '选择日期时间' },
   dateOnly: { type: Boolean, default: false }
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'open'])
 
 const open = ref(false)
 const wrapRef = ref(null)
@@ -126,6 +126,7 @@ function toggle() {
   open.value = !open.value
   openYearDrop.value = false
   openMonthDrop.value = false
+  if (open.value) emit('open')
   if (open.value && props.modelValue) {
     const parts = props.modelValue.split(' ')
     if (parts[0]) {
@@ -166,6 +167,14 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', onScroll, true)
   window.removeEventListener('resize', onScroll)
+})
+
+defineExpose({
+  close() {
+    open.value = false
+    openYearDrop.value = false
+    openMonthDrop.value = false
+  }
 })
 </script>
 
