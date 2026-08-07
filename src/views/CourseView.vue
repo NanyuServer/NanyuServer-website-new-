@@ -1,5 +1,5 @@
 <script setup>
-const originalPdfUrl = 'https://videotourl.com/documents/1777475377797-4308193f-0dd7-4ebf-a2fc-f5abceadccd4.pdf'
+const originalPdfUrl = '/course.pdf'
 </script>
 
 <template>

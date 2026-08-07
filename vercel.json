@@ -1,6 +1,6 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/((?!assets/|card/|logomini|wechat|douyin|websitelogo).*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|card/|logomini|wechat|douyin|websitelogo|course\\.pdf).*)", "destination": "/index.html" }
   ]
 }
