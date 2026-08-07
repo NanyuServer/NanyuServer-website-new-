@@ -104,32 +104,25 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="recruit-page">
-    <div class="page-hero">
-      <div class="page-orb" />
-      <div class="page-hero-content">
-        <h1 class="page-title">
-          欢迎加入
-          <span class="tr-wrap">
-            <TransitionGroup name="tr">
-              <span :key="rotatingTextIndex" class="tr-text">{{ ROTATING_TEXTS[rotatingTextIndex] }}</span>
-            </TransitionGroup>
-          </span>
-        </h1>
-        <p class="page-sub">加入南渝万能墙运营团队</p>
-      </div>
-    </div>
-
-    <div class="content-section">
-      <!-- 招募通道关闭时的提示 -->
-      <div v-if="!recruitingOpen" class="recruit-closed">
-        <div class="recruit-closed-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+    <!-- 招募开启：显示完整页面 -->
+    <template v-if="recruitingOpen">
+      <div class="page-hero">
+        <div class="page-orb" />
+        <div class="page-hero-content">
+          <h1 class="page-title">
+            欢迎加入
+            <span class="tr-wrap">
+              <TransitionGroup name="tr">
+                <span :key="rotatingTextIndex" class="tr-text">{{ ROTATING_TEXTS[rotatingTextIndex] }}</span>
+              </TransitionGroup>
+            </span>
+          </h1>
+          <p class="page-sub">加入南渝万能墙运营团队</p>
         </div>
-        <h2 class="recruit-closed-title">南渝万能墙目前暂无招募计划</h2>
-        <p class="recruit-closed-desc">请留意后续通知，感谢你对南渝万能墙的支持！</p>
       </div>
 
-      <div v-else class="stepper-container">
+      <div class="content-section">
+        <div class="stepper-container">
         <div class="step-indicator-row">
           <div class="step-indicator">
             <div class="step-indicator-inner" :class="currentStep === 0 ? 'active' : currentStep > 0 ? 'complete' : 'inactive'">
@@ -260,6 +253,18 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div v-if="formMsg" class="form-note" :style="{ color: formMsgColor }">{{ formMsg }}</div>
+      </div>
+    </div>
+    </template>
+
+    <!-- 招募关闭：只显示关闭提示 -->
+    <div v-else class="content-section recruit-closed-wrap">
+      <div class="recruit-closed">
+        <div class="recruit-closed-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+        </div>
+        <h2 class="recruit-closed-title">南渝万能墙目前暂无招募计划</h2>
+        <p class="recruit-closed-desc">请留意后续通知，感谢你对南渝万能墙的支持！</p>
       </div>
     </div>
   </div>
