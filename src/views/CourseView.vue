@@ -1,7 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const pdfUrl = 'https://videotourl.com/documents/1777475377797-4308193f-0dd7-4ebf-a2fc-f5abceadccd4.pdf'
+const originalPdfUrl = 'https://videotourl.com/documents/1777475377797-4308193f-0dd7-4ebf-a2fc-f5abceadccd4.pdf'
+/* 通过本站代理读取，绕开目标服务器无 CORS 头导致的跨域失败 */
+const pdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(originalPdfUrl)}`
 const pdfLib = ref(null)
 const pdfDoc = ref(null)
 const currentPage = ref(1)
@@ -100,7 +102,7 @@ onMounted(async () => {
             <span class="page-info">页 {{ currentPage }}{{ totalPages ? ' / ' + totalPages : '' }}</span>
             <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="nextPage" :disabled="currentPage >= totalPages">下一页 →</button>
           </div>
-          <a :href="pdfUrl" target="_blank" class="glass-btn glass-btn-primary glass-btn-sm">下载 PDF</a>
+          <a :href="originalPdfUrl" target="_blank" rel="noopener" class="glass-btn glass-btn-primary glass-btn-sm">下载 PDF</a>
         </div>
 
         <div class="pdf-viewer">
@@ -113,7 +115,7 @@ onMounted(async () => {
           <template v-else-if="error">
             <div class="pdf-error">
               <p>PDF加载失败: {{ error }}</p>
-              <a :href="pdfUrl" target="_blank" style="color: var(--accent-dark);">点击下载查看</a>
+              <a :href="originalPdfUrl" target="_blank" rel="noopener" style="color: var(--accent-dark);">点击下载查看</a>
             </div>
           </template>
           <canvas id="pdf-canvas" style="display: block; max-width: 100%; height: auto;" />
