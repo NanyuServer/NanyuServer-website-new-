@@ -14,6 +14,7 @@ const items = [
   { label: '公益课程', link: '/course' },
   { label: '共创计划', link: '/cooperation' },
   { label: '招贤纳士', link: '/recruit' },
+  { label: '回忆录', link: '/memory' },
   { label: '关于我们', link: '/about' }
 ]
 

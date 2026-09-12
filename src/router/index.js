@@ -7,6 +7,7 @@ const routes = [
   { path: '/feedback', name: 'Feedback', component: () => import('@/views/FeedbackView.vue') },
   { path: '/cooperation', name: 'Cooperation', component: () => import('@/views/CooperationView.vue') },
   { path: '/recruit', name: 'Recruit', component: () => import('@/views/RecruitView.vue') },
+  { path: '/memory', name: 'MemoryCollect', component: () => import('@/views/MemoryCollectView.vue') },
   { path: '/about', name: 'About', component: () => import('@/views/AboutView.vue') },
   { path: '/admin', name: 'Admin', component: () => import('@/views/AdminView.vue') },
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('@/views/NotFoundView.vue') }

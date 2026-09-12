@@ -12,6 +12,7 @@ const navLinks = [
   { label: '公益课程', to: '/course' },
   { label: '共创计划', to: '/cooperation' },
   { label: '招贤纳士', to: '/recruit' },
+  { label: '回忆录', to: '/memory' },
   { label: '关于我们', to: '/about' }
 ]
 

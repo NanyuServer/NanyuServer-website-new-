@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { submissionsApi, adminFeedbackApi, recruitmentsApi, recruitApplicantsApi, authApi, withdrawalsApi, cocreationApi } from '@/services/api'
+import { submissionsApi, adminFeedbackApi, recruitmentsApi, recruitApplicantsApi, authApi, withdrawalsApi, cocreationApi, memorySubmissionsApi } from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import GlassSelect from '@/components/common/GlassSelect.vue'
 import GlassDateTime from '@/components/common/GlassDateTime.vue'
@@ -52,6 +52,9 @@ const cocreationEditPeople = ref(1)
 const cocreationEditMedia = ref('')
 const cocreationEditRoles = ref('')
 const cocreationEditAccounts = ref('')
+
+const memoryRecords = ref([])
+const memorySearch = ref('')
 
 const accountOldPass = ref('')
 const accountNewPass = ref('')
@@ -149,6 +152,7 @@ const tabTitles = {
   recruit: { title: '招贤纳士管理', sub: '管理岗位和报名数据' },
   withdrawal: { title: '撤稿管理', sub: '查看和撤销当事人撤稿记录' },
   cocreation: { title: '共创审核', sub: '查看和管理共创计划申请' },
+  memory: { title: '活动信息收集', sub: '查看和管理回忆录收集表单数据' },
   account: { title: '账户设置', sub: '修改密码和管理账户' }
 }
 
@@ -159,6 +163,7 @@ function showTab(tab) {
   if (tab === 'recruit') { loadRecruitData(); loadRecruitApplicants() }
   if (tab === 'withdrawal') loadWithdrawals()
   if (tab === 'cocreation') loadCocreations()
+  if (tab === 'memory') loadMemoryData()
   if (tab === 'account') { /* no-op */ }
 }
 
@@ -637,6 +642,41 @@ async function toggleCocreationPublished(r) {
   }
 }
 
+const memoryFiltered = computed(() => {
+  const q = memorySearch.value.toLowerCase()
+  if (!q) return memoryRecords.value
+  return memoryRecords.value.filter(r =>
+    r.nickname.toLowerCase().includes(q) ||
+    (r.real_name || '').toLowerCase().includes(q) ||
+    (r.text_content || '').toLowerCase().includes(q) ||
+    (r.contact_value || '').toLowerCase().includes(q)
+  )
+})
+
+async function loadMemoryData() {
+  try {
+    const json = await memorySubmissionsApi.getAll()
+    memoryRecords.value = Array.isArray(json.data) ? json.data : []
+  } catch (e) {
+    showToast('回忆录数据加载失败：' + e.message, 'error')
+  }
+}
+
+function deleteMemory(id) {
+  if (!confirm('确认删除该条记录？')) return
+  const secret = ADMIN_SECRET.value
+  fetch(`/api/memory-submissions?id=${id}`, {
+    method: 'DELETE',
+    headers: { 'x-admin-secret': secret }
+  }).then(res => {
+    if (!res.ok) throw new Error('删除失败')
+    memoryRecords.value = memoryRecords.value.filter(r => r.id !== id)
+    showToast('记录已删除', 'success')
+  }).catch(e => {
+    showToast('删除失败：' + e.message, 'error')
+  })
+}
+
 async function handleFeedbackAction(id, action) {
   if (action === 'reply') {
     currentReplyId.value = id
@@ -847,6 +887,10 @@ onMounted(() => {
         <button class="sidebar-link" :class="{ active: currentTab === 'cocreation' }" @click="showTab('cocreation')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           <span>共创审核</span>
+        </button>
+        <button class="sidebar-link" :class="{ active: currentTab === 'memory' }" @click="showTab('memory')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg>
+          <span>活动信息收集</span>
         </button>
         <button class="sidebar-link" :class="{ active: currentTab === 'account' }" @click="showTab('account')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -1354,6 +1398,56 @@ onMounted(() => {
           <div class="form-actions">
             <button class="glass-btn glass-btn-ghost glass-btn-sm" @click="cocreationEditVisible = false">取消</button>
             <button class="glass-btn glass-btn-primary glass-btn-sm" @click="saveCocreationEdit">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Collect Tab -->
+      <div v-show="currentTab === 'memory'">
+        <div class="table-card glass-card">
+          <div class="table-toolbar">
+            <div class="table-toolbar-title">活动信息收集数据</div>
+            <input type="text" class="glass-input table-search-input" v-model="memorySearch" placeholder="搜索昵称、姓名、内容…" />
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">ID</th>
+                  <th style="width: 90px;">提交时间</th>
+                  <th style="width: 80px;">昵称</th>
+                  <th style="width: 70px;">姓名</th>
+                  <th style="width: 100px;">回忆类型</th>
+                  <th>文字回忆</th>
+                  <th style="width: 100px;">联系方式</th>
+                  <th style="width: 60px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-if="memoryFiltered.length">
+                  <tr v-for="r in memoryFiltered" :key="r.id">
+                    <td style="color: #7b55d4; font-size: 0.75rem">#{{ r.id }}</td>
+                    <td style="white-space: nowrap; font-size: 0.78rem">{{ formatDT(r.created_at) }}</td>
+                    <td>{{ r.nickname }}</td>
+                    <td>{{ r.real_name || '—' }}</td>
+                    <td>
+                      <span v-for="t in r.memory_types" :key="t" class="type-badge" style="margin-right:4px;">{{ t }}</span>
+                    </td>
+                    <td class="content-cell" :title="r.text_content">{{ r.text_content || '—' }}</td>
+                    <td style="font-size: 0.78rem;">{{ r.contact_type }}：{{ r.contact_value }}</td>
+                    <td>
+                      <button class="action-btn action-delete" @click="deleteMemory(r.id)">删除</button>
+                    </td>
+                  </tr>
+                </template>
+                <template v-else>
+                  <tr><td colspan="8" class="empty-table">暂无数据</td></tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <div class="table-count">共 {{ memoryFiltered.length }} 条</div>
           </div>
         </div>
       </div>

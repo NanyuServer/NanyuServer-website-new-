@@ -164,6 +164,20 @@ export const cocreationApi = {
   }
 }
 
+export const memorySubmissionsApi = {
+  getAll() {
+    return request('/memory-submissions', {
+      headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
+    })
+  },
+  submit(payload) {
+    return request('/memory-submissions', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  }
+}
+
 export const withdrawalsApi = {
   submit(content, qq_number) {
     return request('/withdrawals', {
