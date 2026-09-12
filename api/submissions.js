@@ -6,7 +6,7 @@
 // DELETE /api/submissions?id=123  → 删除
 
 const { neon } = require('@neondatabase/serverless');
-const { validateAdminSecret } = require('./adminAuth');
+const { validateAdminSecret } = require('./_lib/adminAuth');
 
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -126,13 +126,54 @@ module.exports = async function handler(req, res) {
       if (!(await validateAdminSecret(adminSecret))) {
         return res.status(401).json({ error: '未授权' });
       }
+
       const body = await parseJsonBody(req);
+
+      // Bulk import mode: POST ?bulk=1
+      if (req.query.bulk === '1') {
+        const { rows: bulkRows } = body;
+        if (!Array.isArray(bulkRows) || bulkRows.length === 0) {
+          return res.status(400).json({ error: '请提供 rows 数组' });
+        }
+        if (bulkRows.length > 500) {
+          return res.status(400).json({ error: '单次最多导入 500 条' });
+        }
+        const valid = [];
+        const errors = [];
+        bulkRows.forEach((row, i) => {
+          const idx = i + 1;
+          const content = String(row.content || '').trim();
+          const type = String(row.type || '').trim();
+          const created_at = row.created_at ? new Date(row.created_at) : new Date();
+          if (!content) { errors.push(`第 ${idx} 行：内容为空`); return; }
+          if (!type) { errors.push(`第 ${idx} 行：类型为空`); return; }
+          if (!VALID_TYPES.includes(type)) { errors.push(`第 ${idx} 行：无效类型「${type}」`); return; }
+          if (isNaN(created_at.getTime())) { errors.push(`第 ${idx} 行：时间格式错误`); return; }
+          valid.push({ created_at: created_at.toISOString(), content, type });
+        });
+        if (valid.length === 0) {
+          return res.status(400).json({ error: '无有效数据', details: errors });
+        }
+        let inserted = 0;
+        let skipped = errors.length;
+        for (const row of valid) {
+          const dupes = await sql(
+            `SELECT id FROM submissions WHERE created_at = $1 AND content = $2 AND type = $3 LIMIT 1`,
+            [row.created_at, row.content, row.type]
+          );
+          if (dupes.length > 0) { skipped++; continue; }
+          await sql(`INSERT INTO submissions (created_at, content, type) VALUES ($1, $2, $3)`, [row.created_at, row.content, row.type]);
+          inserted++;
+        }
+        return res.status(200).json({ success: true, imported: inserted, skipped, errors: errors.length > 0 ? errors : undefined });
+      }
+
+      // Single create mode
       const { created_at, content, type } = body || {};
       if (!created_at || !content || !type) return res.status(400).json({ error: '缺少必填字段' });
       if (!VALID_TYPES.includes(type)) return res.status(400).json({ error: `无效类型：${type}` });
       if (content.length < 5 || content.length > 2000) return res.status(400).json({ error: '内容长度须在5~2000字' });
 
-      // 查重：时间、内容、类型均一致则判定为重复
       const dupes = await sql(
         `SELECT id FROM submissions WHERE created_at = $1::timestamptz AND content = $2 AND type = $3 LIMIT 1`,
         [created_at, content.trim(), type]

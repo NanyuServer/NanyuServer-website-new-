@@ -1,5 +1,5 @@
 const { neon } = require('@neondatabase/serverless');
-const { validateAdminSecret } = require('./adminAuth');
+const { validateAdminSecret } = require('./_lib/adminAuth');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

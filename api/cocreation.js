@@ -5,7 +5,7 @@
 // DELETE /api/cocreation?id=123   → 管理端删除共创申请
 
 const { neon } = require('@neondatabase/serverless');
-const { validateAdminSecret } = require('./adminAuth');
+const { validateAdminSecret } = require('./_lib/adminAuth');
 
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {

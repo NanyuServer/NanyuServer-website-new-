@@ -83,14 +83,14 @@ export const recruitmentsApi = {
     })
   },
   update(id, payload) {
-    return request(`/recruitments/${id}`, {
+    return request(`/recruitments?id=${id}`, {
       method: 'PATCH',
       headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' },
       body: JSON.stringify(payload)
     })
   },
   remove(id) {
-    return request(`/recruitments/${id}`, {
+    return request(`/recruitments?id=${id}`, {
       method: 'DELETE',
       headers: { 'x-admin-secret': localStorage.getItem('adminToken') || '' }
     })

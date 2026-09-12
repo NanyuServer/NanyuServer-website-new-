@@ -465,7 +465,7 @@ async function submitBulkImport() {
   bulkResult.value = null
 
   try {
-    const res = await fetch('/api/submissions-bulk', {
+    const res = await fetch('/api/submissions?bulk=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -4,7 +4,7 @@
 // DELETE /api/withdrawals?id=123       → 管理端取消撤稿（恢复稿件可见）
 
 const { neon } = require('@neondatabase/serverless');
-const { validateAdminSecret } = require('./adminAuth');
+const { validateAdminSecret } = require('./_lib/adminAuth');
 
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
